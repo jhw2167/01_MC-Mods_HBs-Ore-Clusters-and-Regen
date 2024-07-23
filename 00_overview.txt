@@ -1,0 +1,140 @@
+Overview
+---
+
+Technologies:
+Jetbrains Intelij 
+Forge 1.20.1 Mod Development Kit
+
+
+Broad Overview:
+- Hijack Minecraft chunk initializing flow after the chunk has been generated
+- Determine if the chunk is valid to contain an ore cluster
+- If it is valid, attempt to spawn a cluster of a random ore type
+
+
+Sample Configurable settings:
+---
+
+{
+  "baseOreClusterSpawnRate": "small",
+  "baseOreClusterVolume": "32x32x32",
+  "baseOreClusterDensity": "60%",
+  "baseOreClusterShape": "bowl",
+  "oreClusterMaxYPropagate": 64,
+  "minChunksBetweenOreClusters": 0,
+  "maxChunksBetweenOreClusters": 9,
+  "baseOreVeinModifier": 5,
+  "oreClusterReplaceableBlocks": [
+    "stone",
+    "cobblestone",
+    "endStone",
+    "woodenPlanks",
+    "andesite"
+  ],
+  "regenerateOreClusters": true,
+  "oreClusters": [
+    {
+      "ore": "iron",
+      "veinSpawning": {
+        "spawnRateModifier": 0.5
+      },
+      "clusterSpawning": {
+        "spawnRate": 0.5,
+        "volume": "32x32x32",
+        "density": "60%",
+        "shape": "bowl",
+        "maxYPropagate": 64
+      }
+    }
+  ]
+}
+
+Sample yaml describing these settings:
+---
+baseOreClusterSpawnRate:
+  description: "Defines the initial spawn rate of ore clusters. The percent chance that a given chunk 
+	contains a cluster. This is overwritten by values set for specific ores below"
+  possibleValues: [0-100]
+  value: "small"
+
+baseOreClusterVolume:
+  description: "Specifies the dimensions of the ore cluster."
+  possibleValues: ["32x32x32", "other possible sizes"]
+  value: "32x32x32"
+
+baseOreClusterDensity:
+  description: "Determines the density of ore within a cluster."
+  possibleValues: ["60%", "other possible densities"]
+  value: "60%"
+
+baseOreClusterShape:
+  description: "Defines the shape of the ore cluster."
+  possibleValues: ["bowl", "anvil", "shale", "none"]
+  value: "bowl"
+
+oreClusterMaxYPropagate:
+  description: "Maximum Y-level at which ore clusters can propagate."
+  possibleValues: ["64", "other possible values"]
+  value: 64
+
+minChunksBetweenOreClusters:
+  description: "Minimum number of chunks between ore clusters."
+  possibleValues: [0, 96, "range between 0-96"]
+  value: 0
+
+maxChunksBetweenOreClusters:
+  description: "Maximum number of chunks between ore clusters."
+  possibleValues: [9, "other possible values"]
+  value: 9
+
+baseOreVeinModifier:
+  description: "Scales the presence of regular ore veins."
+  possibleValues: [0, 10, "range between 0-10"]
+  value: 5
+
+oreClusterReplaceableBlocks:
+  description: "List of blocks that can be replaced by ore clusters."
+  possibleValues: ["stone", "cobblestone", "endStone", "woodenPlanks", "andesite"]
+  value: ["stone", "cobblestone", "endStone", "woodenPlanks", "andesite"]
+
+regenerateOreClusters:
+  description: "Flag indicating if ore clusters should regenerate."
+  possibleValues: [1, "yes", "true"]
+  value: true
+
+oreClusters:
+  description: "List of specific ore clusters with detailed spawn parameters."
+  value:
+    - ore:
+        description: "Specifies the type of ore in the cluster."
+        possibleValues: ["iron", "other ores"]
+        value: "iron"
+      veinSpawning:
+        description: "Parameters for vein spawning within the cluster."
+        spawnRateModifier:
+          description: "Modifier for the spawn rate of veins."
+          possibleValues: [0, 1, "range between 0-1"]
+          value: 0.5
+      clusterSpawning:
+        description: "Parameters for cluster spawning."
+        spawnRate:
+          description: "Specifies the percentage chance of an ore being part of a cluster."
+          possibleValues: [0, 1, "range between 0-1"]
+          value: 0.5
+        volume:
+          description: "Dimensions of the ore cluster."
+          possibleValues: ["32x32x32", "other possible sizes"]
+          value: "32x32x32"
+        density:
+          description: "Density of ore within the cluster."
+          possibleValues: ["60%", "other possible densities"]
+          value: "60%"
+        shape:
+          description: "Shape of the ore cluster."
+          possibleValues: ["bowl", "anvil", "shale", "none", "any"]
+          value: "bowl"
+        maxYPropagate:
+          description: "Maximum Y-level at which ore clusters can propagate."
+          possibleValues: ["64", "other possible values"]
+          value: 64
+
