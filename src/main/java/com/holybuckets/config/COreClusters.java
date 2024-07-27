@@ -33,6 +33,7 @@ public class COreClusters extends ConfigBase {
         oreClusterReplaceableBlocks = s("stone,cobblestone,endStone,woodenPlanks,andesite", "oreClusterReplaceableBlocks", Comments.ORE_CLUSTER_REPLACEABLE_BLOCKS);
         oreClusterReplaceableEmptyBlock = s("air", "oreClusterReplaceableEmptyBlock", Comments.ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCK);
         regenerateOreClusters = b(true, "regenerateOreClusters", Comments.REGENERATE_ORE_CLUSTERS);
+        oreClusters = l(new ArrayList<>(), OreClusterConfig.class, "oreClusters", Comments.ORE_CLUSTERS);
     }
 
     @Override
