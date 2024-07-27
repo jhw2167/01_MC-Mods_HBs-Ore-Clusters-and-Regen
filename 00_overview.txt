@@ -20,7 +20,7 @@ Sample Configurable settings:
   "baseOreClusterVolume": "32x32x32",
   "baseOreClusterDensity": "60%",
   "baseOreClusterShape": "bowl",
-  "oreClusterMaxYPropagate": 64,
+  "oreClusterMaxYLevelSpawn": 64,
   "minChunksBetweenOreClusters": 0,
   "maxChunksBetweenOreClusters": 9,
   "baseOreVeinModifier": 5,
@@ -43,7 +43,7 @@ Sample Configurable settings:
         "volume": "32x32x32",
         "density": "60%",
         "shape": "bowl",
-        "maxYPropagate": 64
+        "maxYLevelSpawn": 64
       }
     }
   ]
@@ -58,7 +58,8 @@ baseOreClusterSpawnRate:
   value: "small"
 
 baseOreClusterVolume:
-  description: "Specifies the dimensions of the ore cluster."
+  description: "Specifies the dimensions of the ore cluster.<X>x<Y>x<Z>. The true cluster will always
+be smaller than this box because it will choose a shape that roughly fits inside it"
   possibleValues: ["32x32x32", "other possible sizes"]
   value: "32x32x32"
 
@@ -72,7 +73,7 @@ baseOreClusterShape:
   possibleValues: ["bowl", "anvil", "shale", "none"]
   value: "bowl"
 
-oreClusterMaxYPropagate:
+oreClusterMaxYLevelSpawn:
   description: "Maximum Y-level at which ore clusters can propagate."
   possibleValues: ["64", "other possible values"]
   value: 64
@@ -133,7 +134,7 @@ oreClusters:
           description: "Shape of the ore cluster."
           possibleValues: ["bowl", "anvil", "shale", "none", "any"]
           value: "bowl"
-        maxYPropagate:
+        maxYLevelSpawn:
           description: "Maximum Y-level at which ore clusters can propagate."
           possibleValues: ["64", "other possible values"]
           value: 64
