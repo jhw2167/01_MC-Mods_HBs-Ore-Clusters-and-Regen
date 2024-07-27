@@ -4,6 +4,7 @@ import com.holybuckets.foundation.ConfigBase;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class COreClusters extends ConfigBase {
@@ -19,7 +20,17 @@ public class COreClusters extends ConfigBase {
     public final ConfigString oreClusterReplaceableBlocks = s("stone,cobblestone,endStone,woodenPlanks,andesite", "oreClusterReplaceableBlocks", Comments.ORE_CLUSTER_REPLACEABLE_BLOCKS);
     public final ConfigString oreClusterReplaceableEmptyBlock = s("air", "oreClusterReplaceableEmptyBlock", Comments.ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCK);
     public final ConfigBool regenerateOreClusters = b(true, "regenerateOreClusters", Comments.REGENERATE_ORE_CLUSTERS);
-    public final ConfigList<OreClusterConfig> oreClusters = l(new ArrayList<>(), OreClusterConfig.class, "oreClusters", Comments.ORE_CLUSTERS);
+
+    //Define some static OreClusterConfigs for
+
+        //minecraft:iron_ore
+
+            //public final OreClusterConfig ironOre = new OreClusterConfig("iron_ore");
+            public final OreClusterConfig ironOre = new OreClusterConfig();
+            //public final OreClusterConfig diamondOre = new OreClusterConfig("diamond_ore");
+
+    public final ConfigList<OreClusterConfig> oreClusters = l( new ArrayList<>(Arrays.asList(ironOre)),
+            OreClusterConfig.class, "oreClusters", Comments.ORE_CLUSTERS);
 
 
     @Override
@@ -42,38 +53,37 @@ public class COreClusters extends ConfigBase {
         public static final String ORE_CLUSTERS = "Definition of various cluster parameters per specific ore block ";
     }
 
-    public static class OreClusterConfig {
-        public ConfigString ore;
-        public ConfigFloat veinSpawningSpawnRateModifier;
-        public ConfigString veinSpawningReplaceableEmptyBlock;
-        public ConfigFloat clusterSpawningSpawnRate;
-        public ConfigString clusterSpawningVolume;
-        public ConfigString clusterSpawningDensity;
-        public ConfigString clusterSpawningShape;
-        public ConfigInt clusterSpawningMaxYLevelSpawn;
-        public ConfigString clusterSpawningReplaceableEmptyBlock;
+    public static class OreClusterConfig extends ConfigBase {
 
-        public static final String ORE_COMMENT = "Specifies the type of ore in the cluster";
-        public static final String VEIN_SPAWNING_SPAWN_RATE_MODIFIER_COMMENT = "Modifier for the spawn rate of veins";
-        public static final String VEIN_SPAWNING_REPLACEABLE_EMPTY_BLOCK_COMMENT = "Block used to fill empty spaces in veins";
-        public static final String CLUSTER_SPAWNING_SPAWN_RATE_COMMENT = "Specifies the percentage chance of an ore being part of a cluster";
-        public static final String CLUSTER_SPAWNING_VOLUME_COMMENT = "Dimensions of the ore cluster";
-        public static final String CLUSTER_SPAWNING_DENSITY_COMMENT = "Density of ore within the cluster";
-        public static final String CLUSTER_SPAWNING_SHAPE_COMMENT = "Shape of the ore cluster";
-        public static final String CLUSTER_SPAWNING_MAX_Y_LEVEL_SPAWN_COMMENT = "Maximum Y-level at which ore clusters can propagate";
-        public static final String CLUSTER_SPAWNING_REPLACEABLE_EMPTY_BLOCK_COMMENT = "Block used to fill empty spaces in clusters";
+        static final String ORE_COMMENT = "Fully qualified name of the block/ore we are configuring";
+        static final String VEIN_SPAWNING_SPAWN_RATE_MODIFIER_COMMENT = "Modifier for the spawn rate of veins";
+        static final String VEIN_SPAWNING_REPLACEABLE_EMPTY_BLOCK_COMMENT = "Block used to fill empty spaces in veins";
+        static final String CLUSTER_SPAWNING_SPAWN_RATE_COMMENT = "Specifies the percentage chance of an ore being part of a cluster";
+        static final String CLUSTER_SPAWNING_VOLUME_COMMENT = "Dimensions of the ore cluster";
+        static final String CLUSTER_SPAWNING_DENSITY_COMMENT = "Density of ore within the cluster";
+        static final String CLUSTER_SPAWNING_SHAPE_COMMENT = "Shape of the ore cluster";
+        static final String CLUSTER_SPAWNING_MAX_Y_LEVEL_SPAWN_COMMENT = "Maximum Y-level at which ore clusters can propagate";
+        static final String CLUSTER_SPAWNING_REPLACEABLE_EMPTY_BLOCK_COMMENT = "Block used to fill empty spaces in clusters";
 
-        public OreClusterConfig(COreClusters parent, String oreName) {
-            ore = parent.s(oreName, "ore", ORE_COMMENT);
-            veinSpawningSpawnRateModifier = parent.f(0.5f, 0, 1, "veinSpawningSpawnRateModifier", VEIN_SPAWNING_SPAWN_RATE_MODIFIER_COMMENT);
-            veinSpawningReplaceableEmptyBlock = parent.s("stone", "veinSpawningReplaceableEmptyBlock", VEIN_SPAWNING_REPLACEABLE_EMPTY_BLOCK_COMMENT);
-            clusterSpawningSpawnRate = parent.f(0.5f, 0, 1, "clusterSpawningSpawnRate", CLUSTER_SPAWNING_SPAWN_RATE_COMMENT);
-            clusterSpawningVolume = parent.s("32x32x32", "clusterSpawningVolume", CLUSTER_SPAWNING_VOLUME_COMMENT);
-            clusterSpawningDensity = parent.s("60%", "clusterSpawningDensity", CLUSTER_SPAWNING_DENSITY_COMMENT);
-            clusterSpawningShape = parent.s("bowl", "clusterSpawningShape", CLUSTER_SPAWNING_SHAPE_COMMENT);
-            clusterSpawningMaxYLevelSpawn = parent.i(64, -64, 1024, "clusterSpawningMaxYLevelSpawn", CLUSTER_SPAWNING_MAX_Y_LEVEL_SPAWN_COMMENT);
-            clusterSpawningReplaceableEmptyBlock = parent.s("stone", "clusterSpawningReplaceableEmptyBlock", CLUSTER_SPAWNING_REPLACEABLE_EMPTY_BLOCK_COMMENT);
+        static final String oreName = "iron_ore";
+        public final ConfigGroup base = group(0, oreName, "Configuring specific cluster and vein parameters for ore");
+        public final ConfigString ore = s(oreName, "ore", ORE_COMMENT);
+        public final ConfigFloat veinSpawningSpawnRateModifier = f(0.5f, 0, 1, "veinSpawningSpawnRateModifier", VEIN_SPAWNING_SPAWN_RATE_MODIFIER_COMMENT);
+        public final ConfigString veinSpawningReplaceableEmptyBlock = s("stone", "veinSpawningReplaceableEmptyBlock", VEIN_SPAWNING_REPLACEABLE_EMPTY_BLOCK_COMMENT);
+        public final ConfigFloat clusterSpawningSpawnRate = f(0.5f, 0, 1, "clusterSpawningSpawnRate", CLUSTER_SPAWNING_SPAWN_RATE_COMMENT);
+        public final ConfigString clusterSpawningVolume = s("32x32x32", "clusterSpawningVolume", CLUSTER_SPAWNING_VOLUME_COMMENT);
+        public final ConfigString clusterSpawningDensity = s("60%", "clusterSpawningDensity", CLUSTER_SPAWNING_DENSITY_COMMENT);
+        public final ConfigString clusterSpawningShape = s("bowl", "clusterSpawningShape", CLUSTER_SPAWNING_SHAPE_COMMENT);
+        public final ConfigInt clusterSpawningMaxYLevelSpawn = i(64, -64, 1024, "clusterSpawningMaxYLevelSpawn", CLUSTER_SPAWNING_MAX_Y_LEVEL_SPAWN_COMMENT);
+        public final ConfigString clusterSpawningReplaceableEmptyBlock = s("stone", "clusterSpawningReplaceableEmptyBlock", CLUSTER_SPAWNING_REPLACEABLE_EMPTY_BLOCK_COMMENT);
+
+
+        //implement getName
+        @Override
+        public String getName() {
+            return ore.get();
         }
+
     }
 
 }
