@@ -4,48 +4,39 @@ import com.holybuckets.foundation.ConfigBase;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class COreClusters extends ConfigBase {
 
-    public final ConfigInt clusterSize;
-    public final ConfigInt clusterCount;
-    public final ConfigInt minHeight;
-    public final ConfigInt maxHeight;
-    public final ConfigFloat discardChanceOnAirExposure;
-    public final ConfigFloat replacementChance;
-    public final ConfigFloat replacementChanceIncrease;
-    public final ConfigFloat replacementChanceDecrease;
-    public final ConfigFloat replacementChanceMin;
-    public final ConfigFloat replacementChanceMax;
-    public final ConfigInt replacementRadius;
-    public final ConfigInt replacementRadiusIncrease;
-    public final ConfigInt replacementRadiusDecrease;
-    public final ConfigInt replacementRadiusMin;
-    public final ConfigInt replacementRadiusMax;
-    public final ConfigInt replacementMaxCount;
+    public final ConfigInt baseOreClusterSpawnRate;
+    public final ConfigString baseOreClusterVolume;
+    public final ConfigFloat baseOreClusterDensity;
+    public final ConfigString baseOreClusterShape;
+    public final ConfigInt oreClusterMaxYLevelSpawn;
+    public final ConfigInt minChunksBetweenOreClusters;
+    public final ConfigInt maxChunksBetweenOreClusters;
+    public final ConfigFloat baseOreVeinModifier;
+    public final ConfigStringList oreClusterReplaceableBlocks;
+    public final ConfigString oreClusterReplaceableEmptyBlock;
+    public final ConfigBool regenerateOreClusters;
 
     public final List<OreClusterConfig> oreClusters;
 
     public COreClusters(ForgeConfigSpec.Builder builder) {
         super(builder);
 
-        clusterSize = i(64, 1, "clusterSize", "The size of each ore cluster");
-        clusterCount = i(8, 1, "clusterCount", "The number of clusters per chunk");
-        minHeight = i(-64, -64, "minHeight", "The minimum height for ore generation");
-        maxHeight = i(320, -64, "maxHeight", "The maximum height for ore generation");
-        discardChanceOnAirExposure = f(0.5f, 0, 1, "discardChanceOnAirExposure", "The chance to discard a block placement if it would be exposed to air");
-        replacementChance = f(0.05f, 0, 1, "replacementChance", "The chance to replace a block in the cluster");
-        replacementChanceIncrease = f(0.05f, 0, 1, "replacementChanceIncrease", "The amount to increase replacement chance by on each iteration");
-        replacementChanceDecrease = f(0.05f, 0, 1, "replacementChanceDecrease", "The amount to decrease replacement chance by on each iteration");
-        replacementChanceMin = f(0.01f, 0, 1, "replacementChanceMin", "The minimum replacement chance");
-        replacementChanceMax = f(0.5f, 0, 1, "replacementChanceMax", "The maximum replacement chance");
-        replacementRadius = i(5, 1, "replacementRadius", "The radius to check for replaceable blocks");
-        replacementRadiusIncrease = i(1, 0, "replacementRadiusIncrease", "The amount to increase the replacement radius by on each iteration");
-        replacementRadiusDecrease = i(1, 0, "replacementRadiusDecrease", "The amount to decrease the replacement radius by on each iteration");
-        replacementRadiusMin = i(1, 1, "replacementRadiusMin", "The minimum replacement radius");
-        replacementRadiusMax = i(10, 1, "replacementRadiusMax", "The maximum replacement radius");
-        replacementMaxCount = i(16, 1, "replacementMaxCount", "The maximum number of blocks to replace in a single iteration");
+        baseOreClusterSpawnRate = i(1, 0, 96, "baseOreClusterSpawnRate", "Defines the initial spawn rate of ore clusters. The number of expected ore clusters per 96 chunks");
+        baseOreClusterVolume = s("32x32x32", "baseOreClusterVolume", "Specifies the dimensions of the ore cluster. <X>x<Y>x<Z>. The true cluster will always be smaller than this box because it will choose a shape that roughly fits inside it");
+        baseOreClusterDensity = f(0.60f, 0, 1, "baseOreClusterDensity", "Determines the density of ore within a cluster");
+        baseOreClusterShape = s("bowl", "baseOreClusterShape", "Defines the shape of the ore cluster. Defaults to none, which takes a random shape");
+        oreClusterMaxYLevelSpawn = i(64, -64, 1024, "oreClusterMaxYLevelSpawn", "Maximum Y-level at which ore clusters can propagate");
+        minChunksBetweenOreClusters = i(0, 0, 96, "minChunksBetweenOreClusters", "Minimum number of chunks between ore clusters");
+        maxChunksBetweenOreClusters = i(9, 9, 96, "maxChunksBetweenOreClusters", "Maximum number of chunks between ore clusters");
+        baseOreVeinModifier = f(1f, 0, 10, "baseOreVeinModifier", "Scales the presence of regular ore veins");
+        oreClusterReplaceableBlocks = sl(Arrays.asList("stone", "cobblestone", "endStone", "woodenPlanks", "andesite"), "oreClusterReplaceableBlocks", "List of blocks that can be replaced by the specified ore of the cluster during cluster generation");
+        oreClusterReplaceableEmptyBlock = s("air", "oreClusterReplaceableEmptyBlock", "Block used to fill in the ore cluster shape when we want the ore to be more sparse");
+        regenerateOreClusters = b(true, "regenerateOreClusters", "Flag indicating if ore clusters should regenerate by default");
 
         oreClusters = new ArrayList<>();
     }
@@ -56,24 +47,26 @@ public class COreClusters extends ConfigBase {
     }
 
     public static class OreClusterConfig {
-        public final String oreType;
-        public final ConfigInt clusterSize;
-        public final ConfigInt clusterCount;
-        public final ConfigInt minHeight;
-        public final ConfigInt maxHeight;
-        public final ConfigFloat discardChanceOnAirExposure;
-        public final ConfigFloat replacementChance;
-        public final ConfigInt replacementRadius;
+        public final ConfigString ore;
+        public final ConfigFloat veinSpawningSpawnRateModifier;
+        public final ConfigString veinSpawningReplaceableEmptyBlock;
+        public final ConfigFloat clusterSpawningSpawnRate;
+        public final ConfigString clusterSpawningVolume;
+        public final ConfigString clusterSpawningDensity;
+        public final ConfigString clusterSpawningShape;
+        public final ConfigInt clusterSpawningMaxYLevelSpawn;
+        public final ConfigString clusterSpawningReplaceableEmptyBlock;
 
-        public OreClusterConfig(COreClusters parent, String oreType) {
-            this.oreType = oreType;
-            this.clusterSize = parent.i(parent.clusterSize.get(), 1, "clusterSize", "The size of each " + oreType + " cluster");
-            this.clusterCount = parent.i(parent.clusterCount.get(), 1, "clusterCount", "The number of " + oreType + " clusters per chunk");
-            this.minHeight = parent.i(parent.minHeight.get(), -64, "minHeight", "The minimum height for " + oreType + " generation");
-            this.maxHeight = parent.i(parent.maxHeight.get(), -64, "maxHeight", "The maximum height for " + oreType + " generation");
-            this.discardChanceOnAirExposure = parent.f(parent.discardChanceOnAirExposure.getF(), 0, 1, "discardChanceOnAirExposure", "The chance to discard a " + oreType + " block placement if it would be exposed to air");
-            this.replacementChance = parent.f(parent.replacementChance.getF(), 0, 1, "replacementChance", "The chance to replace a block with " + oreType + " in the cluster");
-            this.replacementRadius = parent.i(parent.replacementRadius.get(), 1, "replacementRadius", "The radius to check for replaceable blocks for " + oreType);
+        public OreClusterConfig(COreClusters parent, String oreName) {
+            ore = parent.s(oreName, "ore", "Specifies the type of ore in the cluster");
+            veinSpawningSpawnRateModifier = parent.f(0.5f, 0, 1, "veinSpawningSpawnRateModifier", "Modifier for the spawn rate of veins");
+            veinSpawningReplaceableEmptyBlock = parent.s("stone", "veinSpawningReplaceableEmptyBlock", "Block used to fill empty spaces in veins");
+            clusterSpawningSpawnRate = parent.f(0.5f, 0, 1, "clusterSpawningSpawnRate", "Specifies the percentage chance of an ore being part of a cluster");
+            clusterSpawningVolume = parent.s("32x32x32", "clusterSpawningVolume", "Dimensions of the ore cluster");
+            clusterSpawningDensity = parent.s("60%", "clusterSpawningDensity", "Density of ore within the cluster");
+            clusterSpawningShape = parent.s("bowl", "clusterSpawningShape", "Shape of the ore cluster");
+            clusterSpawningMaxYLevelSpawn = parent.i(64, -64, 1024, "clusterSpawningMaxYLevelSpawn", "Maximum Y-level at which ore clusters can propagate");
+            clusterSpawningReplaceableEmptyBlock = parent.s("stone", "clusterSpawningReplaceableEmptyBlock", "Block used to fill empty spaces in clusters");
         }
     }
 
