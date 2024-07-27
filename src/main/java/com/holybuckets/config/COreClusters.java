@@ -8,27 +8,20 @@ import java.util.List;
 
 public class COreClusters extends ConfigBase {
 
-    public ConfigInt baseOreClusterSpawnRate;
-    public ConfigString baseOreClusterVolume;
-    public ConfigFloat baseOreClusterDensity;
-    public ConfigString baseOreClusterShape;
-    public ConfigInt oreClusterMaxYLevelSpawn;
-    public ConfigInt minChunksBetweenOreClusters;
-    public ConfigInt maxChunksBetweenOreClusters;
-    public ConfigFloat baseOreVeinModifier;
-    public ConfigString oreClusterReplaceableBlocks;
-    public ConfigString oreClusterReplaceableEmptyBlock;
-    public ConfigBool regenerateOreClusters;
+    public final ConfigInt baseOreClusterSpawnRate;
+    public final ConfigString baseOreClusterVolume;
+    public final ConfigFloat baseOreClusterDensity;
+    public final ConfigString baseOreClusterShape;
+    public final ConfigInt oreClusterMaxYLevelSpawn;
+    public final ConfigInt minChunksBetweenOreClusters;
+    public final ConfigInt maxChunksBetweenOreClusters;
+    public final ConfigFloat baseOreVeinModifier;
+    public final ConfigString oreClusterReplaceableBlocks;
+    public final ConfigString oreClusterReplaceableEmptyBlock;
+    public final ConfigBool regenerateOreClusters;
+    public final ConfigList<OreClusterConfig> oreClusters;
 
-    public final List<OreClusterConfig> oreClusters;
-
-    public COreClusters(ForgeConfigSpec.Builder builder) {
-        super(builder);
-        oreClusters = new ArrayList<>();
-        initializeValues();
-    }
-
-    private void initializeValues() {
+    public COreClusters() {
         baseOreClusterSpawnRate = i(1, 0, 96, "baseOreClusterSpawnRate", Comments.BASE_ORE_CLUSTER_SPAWN_RATE);
         baseOreClusterVolume = s("32x32x32", "baseOreClusterVolume", Comments.BASE_ORE_CLUSTER_VOLUME);
         baseOreClusterDensity = f(0.60f, 0, 1, "baseOreClusterDensity", Comments.BASE_ORE_CLUSTER_DENSITY);
