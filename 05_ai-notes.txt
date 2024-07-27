@@ -1,0 +1,21 @@
+Implementation of COreClusters.java:
+
+1. The COreClusters class extends ConfigBase to utilize its configuration management capabilities.
+
+2. Main configuration options are defined as class fields using the appropriate config types (ConfigInt, ConfigFloat) from the ConfigBase class.
+
+3. Each configuration option is initialized in the constructor using the corresponding method (i for integer, f for float) from ConfigBase.
+
+4. The default values, ranges, and descriptions are set according to the provided oreClusters.yaml file.
+
+5. An inner class OreClusterConfig is created to handle specific ore type configurations.
+
+6. The OreClusterConfig class contains fields for ore-specific configurations, initialized with the parent COreClusters values as defaults.
+
+7. A List<OreClusterConfig> is maintained to store configurations for different ore types.
+
+8. An addOreCluster method is provided to add new ore type configurations to the list.
+
+9. The getName method is overridden to return "OreClusters" as the configuration name.
+
+This implementation allows for a flexible configuration system where global settings can be defined and then overridden for specific ore types as needed. The use of ConfigBase provides a consistent way to manage and access these configurations throughout the mod.
