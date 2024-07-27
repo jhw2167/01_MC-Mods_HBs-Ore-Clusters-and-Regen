@@ -1,56 +1,22 @@
-Overview
+
+1. Generating Ore config
 ---
 
-Technologies:
-Jetbrains Intelij 
-Forge 1.20.1 Mod Development Kit
+Consider the oreClusters.yaml file in com.holybuckets.config . Consider the CClient, CCommon, and CServer abstraction 
+configuration files and consider the concrete example of configurations from CFluids.java. Please clear the existing
+configurations from the client, server and common classes to start with a clean slate. Then Please apply these abstractions
+to the set of configurations I have included in oreClusters.yaml into COreClusters.java file. Note that these are all
+server configurations at this point. Use the <value> field of the yaml as the default value, the <description> as the comment. Note that
+<oreClusters> is an array of undetermined length where speficic or types can be specified by string and the values defined for their
+particular cluster will override the base values defined above. Transcribe your implementation to ./05_ai-notes.txt.
 
 
-Broad Overview:
-- Hijack Minecraft chunk initializing flow after the chunk has been generated
-- Determine if the chunk is valid to contain an ore cluster
-- If it is valid, attempt to spawn a cluster of a random ore type
-
-
-Sample Configurable settings:
+2. Refine implementation.
 ---
 
-{
-  "baseOreClusterSpawnRate": "small",
-  "baseOreClusterVolume": "32x32x32",
-  "baseOreClusterDensity": "60%",
-  "baseOreClusterShape": "bowl",
-  "oreClusterMaxYLevelSpawn": 64,
-  "minChunksBetweenOreClusters": 0,
-  "maxChunksBetweenOreClusters": 9,
-  "baseOreVeinModifier": 5,
-  "oreClusterReplaceableBlocks": [
-    "stone",
-    "cobblestone",
-    "endStone",
-    "woodenPlanks",
-    "andesite"
-  ],
-  "regenerateOreClusters": true,
-  "oreClusters": [
-    {
-      "ore": "iron",
-      "veinSpawning": {
-        "spawnRateModifier": 0.5
-      },
-      "clusterSpawning": {
-        "spawnRate": 0.5,
-        "volume": "32x32x32",
-        "density": "60%",
-        "shape": "bowl",
-        "maxYLevelSpawn": 64
-      }
-    }
-  ]
-}
+This implementation is incorrect. Please read all the files in this project to understand the context. COreClusters.java class should be defined
+and implemented like the CFluids.java class except with the below parameters:
 
-Sample yaml describing these settings:
----
 baseOreClusterSpawnRate:
   description: "Defines the initial spawn rate of ore clusters. The number of expected ore clusters per 96 chunks"
   possibleValues: [0-96]
@@ -151,3 +117,22 @@ oreClusters:
           possibleValues: [0, 1, "range between 0-1"]
           value: 0.5
 
+
+3. Refine implementation.
+---
+
+Please make a static class Comments in COreClusters to store the string comments and use that to initialize the values. There does not
+need to be a ConfigStringList class or sl() method, just read in string arrays as strings, we will parse the value later. Values should not
+be initialized in the constructor.
+
+4. Refine implementation.
+---
+
+Initialize the state variables in COreClusters as public final variables, this class uses the default constructor. Implement the s method in ConfigBase.
+Also define a type for reading in toml arrays in ConfigBase and define a method for its initialization, List<> oreClusters should be defaulted to
+empty array, but will be overwritten by any values in the .toml file at runtime.
+
+5. Clean up existing classes
+---
+
+Clean up CServer.java, CClient.java and CCommon.java to remove variables and classes not found in this project. Import the correct directory for the ConfigBase class and set the correct package
