@@ -193,4 +193,11 @@ public abstract class ConfigBase {
         }
     }
 
+    //Create a config for String using ValueSpec from forge library, any string is valid
+    public class ConfigString extends CValue<String, ConfigValue<String>> {
+        public ConfigString(String name, String current, String... comment) {
+            super(name, builder -> builder.define(name, current), comment);
+        }
+    }
+
 }
