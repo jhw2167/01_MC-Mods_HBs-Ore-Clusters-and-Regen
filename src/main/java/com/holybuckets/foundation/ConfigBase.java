@@ -67,6 +67,15 @@ public abstract class ConfigBase {
         return i(current, Integer.MIN_VALUE, Integer.MAX_VALUE, name, comment);
     }
 
+    protected ConfigString s(String current, String name, String... comment) {
+        return new ConfigString(name, current, comment);
+    }
+
+    protected <T> ConfigList<T> l(List<T> current, Class<T> type, String name, String... comment) {
+        return new ConfigList<>(name, current, type, comment);
+    }
+
+
     protected <T extends Enum<T>> ConfigEnum<T> e(T defaultValue, String name, String... comment) {
         return new ConfigEnum<>(name, defaultValue, comment);
     }
@@ -197,6 +206,19 @@ public abstract class ConfigBase {
     public class ConfigString extends CValue<String, ConfigValue<String>> {
         public ConfigString(String name, String current, String... comment) {
             super(name, builder -> builder.define(name, current), comment);
+        }
+    }
+
+    public class ConfigList<T> extends CValue<List<? extends T>, ConfigValue<List<? extends T>>> {
+        private final Class<T> type;
+
+        public ConfigList(String name, List<T> def, Class<T> type, String... comment) {
+            super(name, builder -> builder.defineList(name, def, o -> type.isInstance(o)), comment);
+            this.type = type;
+        }
+
+        public List<T> get() {
+            return new ArrayList<>(super.get());
         }
     }
 
