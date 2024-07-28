@@ -2,7 +2,7 @@ package com.holybuckets.orecluster;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.holybuckets.config.AllConfigs;
+import com.holybuckets.orecluster.config.AllConfigs;
 import com.mojang.logging.LogUtils;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;

@@ -1,12 +1,10 @@
-package com.holybuckets.config;
+package com.holybuckets.orecluster.config;
 
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
 
-import com.holybuckets.orecluster.OreClustersAndRegen;
-import net.minecraftforge.fml.common.Mod;
 import org.apache.commons.lang3.tuple.Pair;
 
 import net.minecraftforge.common.ForgeConfigSpec;

@@ -1,4 +1,4 @@
-package com.holybuckets.config;
+package com.holybuckets.orecluster.config;
 
 import com.holybuckets.foundation.ConfigBase;
 

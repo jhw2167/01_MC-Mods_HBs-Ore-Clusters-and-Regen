@@ -32,13 +32,19 @@ public class OreClusterConfigModel {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("oreClusterType", oreClusterType);
         jsonObject.addProperty("baseOreClusterSpawnRate", baseOreClusterSpawnRate);
-        jsonObject.addProperty("baseOreClusterVolume", baseOreClusterVolume.getLeft() + "x" + baseOreClusterVolume.getMiddle() + "x" + baseOreClusterVolume.getRight());
+        jsonObject.addProperty("baseOreClusterVolume", baseOreClusterVolume.a
+                + "x" + baseOreClusterVolume.b
+                + "x" + baseOreClusterVolume.c
+        );
         jsonObject.addProperty("baseOreClusterDensity", baseOreClusterDensity);
         jsonObject.addProperty("baseOreClusterShape", baseOreClusterShape);
         jsonObject.addProperty("oreClusterMaxYLevelSpawn", oreClusterMaxYLevelSpawn);
         jsonObject.addProperty("minChunksBetweenOreClusters", minChunksBetweenOreClusters);
         jsonObject.addProperty("maxChunksBetweenOreClusters", maxChunksBetweenOreClusters);
-        return gson.toJson(jsonObject);
+        System.err.println("jsonObject: " + jsonObject);
+        return gson.toJson(jsonObject).
+                //replace("\",", "\"," + System.getProperty("line.separator") ).
+                replace('"', "'".toCharArray()[0]);
     }
 
     public void deserialize(String jsonString) {
@@ -117,17 +123,6 @@ public class OreClusterConfigModel {
         return new Triple<>(Integer.parseInt(volumeArray[0]),
                 Integer.parseInt(volumeArray[1]),
                 Integer.parseInt(volumeArray[2]));
-    }
-
-
-    //use GSON library to serialize into JSON
-    public String serialize() {
-        return " 'jsonProperty' : '" + this.oreClusterType + "'";
-    }
-
-    //use GSON library to deserialize from JSON
-    public void deserialize( String json) {
-
     }
 
 
