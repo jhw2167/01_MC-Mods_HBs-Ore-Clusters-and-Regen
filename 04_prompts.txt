@@ -136,3 +136,19 @@ empty array, but will be overwritten by any values in the .toml file at runtime.
 ---
 
 Clean up CServer.java, CClient.java and CCommon.java to remove variables and classes not found in this project. Import the correct directory for the ConfigBase class and set the correct package
+
+
+6. Writing Serialize function
+---
+
+	Use the com.google.code.gson libraries to implement OreCLusterConfigModel.serialize where the each state variable is converted to a string
+	representing a JSON object. Implement deserialize where a plain string is read in and the state variables are set by the JSON values. Record
+	any errors encountered in a String builder and set a state variable "oreClusterConfigModelContructionErrors" listing all the errors.
+	After each error, attempt to catch continue setting all remaining parameters. Include any necessary dependencies in the appropriate
+	gradle or maven files. Summarize your work.
+
+
+7. Writing Serialize function
+---
+
+

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import com.electronwill.nightconfig.core.ConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
 import net.minecraftforge.common.ForgeConfigSpec.Builder;
@@ -73,13 +74,12 @@ public abstract class ConfigBase {
         return new ConfigString(name, current, comment);
     }
 
-    protected <T> ConfigList<T> l(List<T> current, Class<T> type, String name, String... comment) {
-        return new ConfigList<>(name, current, type, comment);
-    }
-
-
     protected <T extends Enum<T>> ConfigEnum<T> e(T defaultValue, String name, String... comment) {
         return new ConfigEnum<>(name, defaultValue, comment);
+    }
+
+    protected ConfigList list(List<String> def, String name, String... comment) {
+        return new ConfigList(name, def, comment);
     }
 
     protected ConfigGroup group(int depth, String name, String... comment) {
@@ -186,6 +186,16 @@ public abstract class ConfigBase {
 
     }
 
+    //Create a sourcer for ConfigList<String> don't use generic
+    public class ConfigList extends CValue<List<String>, ForgeConfigSpec.ConfigValue<List<String>>>
+    {
+        public ConfigList(String name, List<String> def, String... comment)
+        {
+            super(name, builder -> builder.define(name, def), comment);
+        }
+    }
+
+
     public class ConfigFloat extends CValue<Double, DoubleValue> {
 
         public ConfigFloat(String name, float current, float min, float max, String... comment) {
@@ -211,17 +221,5 @@ public abstract class ConfigBase {
         }
     }
 
-    public class ConfigList<T> extends CValue<List<? extends T>, ConfigValue<List<? extends T>>> {
-        private final Class<T> type;
-
-        public ConfigList(String name, List<T> def, Class<T> type, String... comment) {
-            super(name, builder -> builder.defineList(name, def, o -> type.isInstance(o)), comment);
-            this.type = type;
-        }
-
-        public List<T> get() {
-            return new ArrayList<>(super.get());
-        }
-    }
 
 }
