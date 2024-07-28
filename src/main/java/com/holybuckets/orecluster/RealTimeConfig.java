@@ -9,7 +9,7 @@ import net.minecraftforge.fml.common.Mod;
     * This class will manifest that data behind simple methods and efficient data structures.
 
  */
-@Mod.EventBusSubscriber(modid = OreClustersAndRegen.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+@Mod.EventBusSubscriber(modid = OreClustersAndRegenMain.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class RealTimeConfig
 {
 
