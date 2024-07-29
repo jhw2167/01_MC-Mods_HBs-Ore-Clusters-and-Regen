@@ -25,22 +25,27 @@ import com.holybuckets.orecluster.config.AllConfigs;
 public class RealTimeConfig
 {
 
-        OreClusterConfigModel defaultConfig;
-        Map<String, OreClusterConfigModel> oreConfigs;
+        OreClusterConfigModel defaultConfig = null;
+        Map<String, OreClusterConfigModel> oreConfigs = null;
 
         //Constructor initializes the defaultConfigs and oreConfigs from forge properties
         public RealTimeConfig()
         {
+
+            System.err.println("RealTimeConfig constructor called");
             COreClusters clusterConfig = AllConfigs.server().cOreClusters;
             defaultConfig = new OreClusterConfigModel(clusterConfig);
 
             //Create new oreConfig for each element in cOreClusters list
+            System.err.println("RealTimeConfig setting ore config hashmaps");
             oreConfigs = new HashMap<>();
             List<String> jsonOreConfigs = AllConfigs.server().cOreClusters.oreClusters.get();
             for (String oreConfig : jsonOreConfigs) {
                 OreClusterConfigModel cluster = new OreClusterConfigModel(oreConfig);
                 oreConfigs.put(cluster.oreClusterType, cluster);
             }
+
+            System.err.println("Initialized RealTimeConfig");
 
         }
 

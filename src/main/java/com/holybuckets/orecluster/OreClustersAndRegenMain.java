@@ -30,6 +30,8 @@ public class OreClustersAndRegenMain
             .disableHtmlEscaping()
             .create();
 
+    public static RealTimeConfig realTimeConfig = null;
+
     /** Use the {@link Random} of a local {@link Level} or {@link Entity} or create one */
     @Deprecated
     public static final Random RANDOM = new Random();

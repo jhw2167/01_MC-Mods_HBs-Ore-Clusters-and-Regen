@@ -105,6 +105,9 @@ public abstract class ConfigBase {
 
     public class CValue<V, T extends ConfigValue<V>> {
         protected ConfigValue<V> value;
+        protected V defaultValue;
+        protected float min;
+        protected float max;
         protected String name;
         private IValueProvider<V, T> provider;
 
@@ -135,6 +138,10 @@ public abstract class ConfigBase {
 
         public V get() {
             return value.get();
+        }
+
+        public V getDefault() {
+            return defaultValue;
         }
 
         public void set(V value) {
@@ -200,13 +207,11 @@ public abstract class ConfigBase {
 
     public class ConfigFloat extends CValue<Double, DoubleValue> {
 
-        private float min;
-        private float max;
-
         public ConfigFloat(String name, float current, float min, float max, String... comment) {
             super(name, builder -> builder.defineInRange(name, current, min, max), comment);
             this.min = min;
             this.max = max;
+            this.defaultValue = (double) current;
         }
 
         public float getF() {
@@ -220,13 +225,11 @@ public abstract class ConfigBase {
 
     public class ConfigInt extends CValue<Integer, IntValue> {
 
-        private int min;
-        private int max;
-
         public ConfigInt(String name, int current, int min, int max, String... comment) {
             super(name, builder -> builder.defineInRange(name, current, min, max), comment);
             this.min = min;
             this.max = max;
+            this.defaultValue = current;
         }
 
         public boolean test(int value) {

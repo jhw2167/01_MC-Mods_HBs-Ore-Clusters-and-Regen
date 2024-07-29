@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
 
+import com.holybuckets.orecluster.OreClustersAndRegenMain;
+import com.holybuckets.orecluster.RealTimeConfig;
 import org.apache.commons.lang3.tuple.Pair;
 
 import net.minecraftforge.common.ForgeConfigSpec;
@@ -69,6 +71,10 @@ public class AllConfigs {
 			if (config.specification == event.getConfig()
 				.getSpec())
 				config.onLoad();
+
+		OreClustersAndRegenMain.realTimeConfig = new RealTimeConfig();
+		System.err.println("RealTimeConfig initialized current JSON property: ");
+		System.err.println(AllConfigs.server().cOreClusters.oreClusters.get());
 	}
 
 	@SubscribeEvent
@@ -77,6 +83,10 @@ public class AllConfigs {
 			if (config.specification == event.getConfig()
 				.getSpec())
 				config.onReload();
+
+		OreClustersAndRegenMain.realTimeConfig = new RealTimeConfig();
+		System.err.println("RealTimeConfig initialized current JSON property: ");
+		System.err.println(AllConfigs.server().cOreClusters.oreClusters.get());
 	}
 
 }
