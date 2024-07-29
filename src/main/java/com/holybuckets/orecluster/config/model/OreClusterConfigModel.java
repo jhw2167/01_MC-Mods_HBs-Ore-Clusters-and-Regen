@@ -316,60 +316,79 @@ public class OreClusterConfigModel extends ConfigModelBase {
     }
 
     public void deserialize(String jsonString) {
-        StringBuilder errorBuilder = new StringBuilder();
         JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 
         try {
-            oreClusterType = jsonObject.get("oreClusterType").getAsString();
-            oreClusterType = processMinecraftBlockTypeSyntax(oreClusterType);
+            setOreClusterType(jsonObject.get("oreClusterType").getAsString());
         } catch (Exception e) {
-            errorBuilder.append("Error parsing oreClusterType: ").append(e.getMessage()).append("\n");
+            LoggerBase.logError("Error parsing " + COreClusters.oreClusterType.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
-            oreClusterSpawnRate = jsonObject.get("defaultOreClusterSpawnRate").getAsInt();
+            setOreClusterSpawnRate(jsonObject.get("oreClusterSpawnRate").getAsInt());
         } catch (Exception e) {
-            errorBuilder.append("Error parsing defaultOreClusterSpawnRate: ").append(e.getMessage()).append("\n");
+            LoggerBase.logError("Error parsing " + COreClusters.defaultOreClusterSpawnRate.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
-            setOreClusterVolume(jsonObject.get("defaultOreClusterVolume").getAsString());
-
+            setOreClusterVolume(jsonObject.get("oreClusterVolume").getAsString());
         } catch (Exception e) {
-            errorBuilder.append("Error parsing defaultOreClusterVolume: ").append(e.getMessage()).append("\n");
+            LoggerBase.logError("Error parsing " + COreClusters.defaultOreClusterVolume.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
-            oreClusterDensity = jsonObject.get("defaultOreClusterDensity").getAsFloat();
+            setOreClusterDensity(jsonObject.get("oreClusterDensity").getAsFloat());
         } catch (Exception e) {
-            errorBuilder.append("Error parsing defaultOreClusterDensity: ").append(e.getMessage()).append("\n");
+            LoggerBase.logError("Error parsing " + COreClusters.defaultOreClusterDensity.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
-            oreClusterShape = jsonObject.get("defaultOreClusterShape").getAsString();
+            setOreClusterShape(jsonObject.get("oreClusterShape").getAsString());
         } catch (Exception e) {
-            errorBuilder.append("Error parsing defaultOreClusterShape: ").append(e.getMessage()).append("\n");
+            LoggerBase.logError("Error parsing " + COreClusters.defaultOreClusterShape.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
-            oreClusterMaxYLevelSpawn = jsonObject.get("oreClusterMaxYLevelSpawn").getAsInt();
+            setOreClusterMaxYLevelSpawn(jsonObject.get("oreClusterMaxYLevelSpawn").getAsInt());
         } catch (Exception e) {
-            errorBuilder.append("Error parsing oreClusterMaxYLevelSpawn: ").append(e.getMessage()).append("\n");
+            LoggerBase.logError("Error parsing " + COreClusters.oreClusterMaxYLevelSpawn.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
-            minChunksBetweenOreClusters = jsonObject.get("minChunksBetweenOreClusters").getAsInt();
+            setMinChunksBetweenOreClusters(jsonObject.get("minChunksBetweenOreClusters").getAsInt());
         } catch (Exception e) {
-            errorBuilder.append("Error parsing minChunksBetweenOreClusters: ").append(e.getMessage()).append("\n");
+            LoggerBase.logError("Error parsing " + COreClusters.minChunksBetweenOreClusters.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
-            maxChunksBetweenOreClusters = jsonObject.get("maxChunksBetweenOreClusters").getAsInt();
+            setMaxChunksBetweenOreClusters(jsonObject.get("maxChunksBetweenOreClusters").getAsInt());
         } catch (Exception e) {
-            errorBuilder.append("Error parsing maxChunksBetweenOreClusters: ").append(e.getMessage()).append("\n");
+            LoggerBase.logError("Error parsing " + COreClusters.maxChunksBetweenOreClusters.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
-        oreClusterConfigModelConstructionErrors = errorBuilder.toString();
+        try {
+            setOreVeinModifier(jsonObject.get("oreVeinModifier").getAsFloat());
+        } catch (Exception e) {
+            LoggerBase.logError("Error parsing " + COreClusters.defaultOreVeinModifier.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
+        }
+
+        try {
+            setOreClusterReplaceableBlocks(jsonObject.get("oreClusterReplaceableBlocks").getAsString());
+        } catch (Exception e) {
+            LoggerBase.logError("Error parsing " + COreClusters.defaultOreClusterNonReplaceableBlocks.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
+        }
+
+        try {
+            setOreClusterReplaceableEmptyBlock(jsonObject.get("oreClusterReplaceableEmptyBlock").getAsString());
+        } catch (Exception e) {
+            LoggerBase.logError("Error parsing " + COreClusters.defaultOreClusterReplaceableEmptyBlock.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
+        }
+
+        try {
+            setOreClusterDoesRegenerate(jsonObject.get("oreClusterDoesRegenerate").getAsString());
+        } catch (Exception e) {
+            LoggerBase.logError("Error parsing " + COreClusters.regenerateOreClusters.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
+        }
     }
 
 
