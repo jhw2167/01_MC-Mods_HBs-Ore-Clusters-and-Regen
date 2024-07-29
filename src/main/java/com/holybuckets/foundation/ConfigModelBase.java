@@ -21,7 +21,7 @@ public class ConfigModelBase {
         error.append(f.getName());
         error.append(element);
         error.append(" using default value of ");
-        error.append(f.get() + " instead");
+        error.append(f.getDefault() + " instead");
 
         if( f.test(value) )
             return true;
@@ -37,7 +37,7 @@ public class ConfigModelBase {
         error.append(i.getName() + " ");
         error.append(element);
         error.append(" using default value of ");
-        error.append(i.get() + " instead");
+        error.append(i.getDefault() + " instead");
 
         if( i.test(value) )
             return true;

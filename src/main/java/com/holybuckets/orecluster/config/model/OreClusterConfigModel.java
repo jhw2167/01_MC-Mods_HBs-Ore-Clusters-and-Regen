@@ -1,10 +1,8 @@
 package com.holybuckets.orecluster.config.model;
 
-import com.holybuckets.foundation.ConfigBase;
 import com.holybuckets.foundation.ConfigModelBase;
 import com.holybuckets.foundation.LoggerBase;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.common.ForgeConfigSpec;
 import org.antlr.v4.runtime.misc.Triple;
 
 //Java
@@ -31,19 +29,17 @@ public class OreClusterConfigModel extends ConfigModelBase {
     public Integer minChunksBetweenOreClusters = COreClusters.MIN_CHUNKS_BETWEEN_ORE_CLUSTERS;
     public Integer maxChunksBetweenOreClusters = COreClusters.MAX_CHUNKS_BETWEEN_ORE_CLUSTERS;
     public Float oreVeinModifier = COreClusters.DEF_ORE_VEIN_MODIFIER;
-    public HashSet<String> oreClusterReplaceableBlocks = processReplaceableBlocks(COreClusters.ORE_CLUSTER_NONREPLACEABLE_BLOCKS);
-    public HashSet<String> oreClusterReplaceableEmptyBlock = processReplaceableBlocks(COreClusters.ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCK);
+    public HashSet<String> oreClusterNonReplaceableBlocks = processReplaceableBlocks(COreClusters.ORE_CLUSTER_NONREPLACEABLE_BLOCKS);
+    public HashSet<String> oreClusterReplaceableEmptyBlocks = processReplaceableBlocks(COreClusters.ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS);
     public Boolean oreClusterDoesRegenerate = COreClusters.REGENERATE_ORE_CLUSTERS;
     public Map<String, Integer> oreClusterRegenPeriods = null;
 
-    public String oreClusterConfigModelConstructionErrors;
-
-    private static final COreClusters oreClusterDefaultConfigs = new COreClusters(); //Used for default values
     private static final Gson gson = new GsonBuilder().create();
+    private static final COreClusters oreClusterDefaultConfigs = new COreClusters(); //Used for default values
 
 
     public OreClusterConfigModel(Block oreClusterBlock ) {
-        this.oreClusterType = oreClusterBlock.getName().toString();
+        this.oreClusterType = oreClusterBlock.toString();
         this.oreClusterType = processMinecraftBlockTypeSyntax(oreClusterType);
     }
 
@@ -58,6 +54,8 @@ public class OreClusterConfigModel extends ConfigModelBase {
         }
         if( cOreClusters.subSeed.get() != null || !cOreClusters.subSeed.get().isEmpty() )
             this.subSeed = cOreClusters.subSeed.get();  //initialized to null
+        else
+            this.subSeed = "";
 
         this.validOreClusterOreBlocks = new HashSet<>(
             processValidOreClusterOreBlocks(cOreClusters.validOreClusterOreBlocks.get()));
@@ -69,12 +67,15 @@ public class OreClusterConfigModel extends ConfigModelBase {
         this.minChunksBetweenOreClusters = cOreClusters.minChunksBetweenOreClusters.get();
         this.maxChunksBetweenOreClusters = cOreClusters.maxChunksBetweenOreClusters.get();
         this.oreVeinModifier = cOreClusters.defaultOreVeinModifier.getF();
-        this.oreClusterReplaceableBlocks = processReplaceableBlocks(cOreClusters.defaultOreClusterNonReplaceableBlocks.get());
-        this.oreClusterReplaceableEmptyBlock = processReplaceableBlocks(cOreClusters.defaultOreClusterReplaceableEmptyBlock.get());
+        this.oreClusterNonReplaceableBlocks = processReplaceableBlocks(cOreClusters.defaultOreClusterNonReplaceableBlocks.get());
+        this.oreClusterReplaceableEmptyBlocks = processReplaceableBlocks(cOreClusters.defaultOreClusterReplaceableEmptyBlocks.get());
         this.oreClusterDoesRegenerate = cOreClusters.regenerateOreClusters.get();
 
         //Iterate through the oreClusterRegenPeriods and add them to the map
-
+        oreClusterRegenPeriods = new HashMap<>();
+        this.oreClusterRegenPeriods = processRegenPeriods(
+            cOreClusters.regenerateOreClusterUpgradeItems.get().split(","),
+            cOreClusters.regenerateOreClusterPeriodLengths.get().split(","));
 
         }
     //END CONSTRUCTOR
@@ -97,7 +98,10 @@ public class OreClusterConfigModel extends ConfigModelBase {
 
     //Setup static methods to process oreClusterReplaceableBlocks and oreClusterReplaceableEmptyBlock
     public static HashSet<String> processReplaceableBlocks(String replaceableBlocks) {
-        return new HashSet<>(Arrays.asList(replaceableBlocks.split(",")));
+
+        return Arrays.stream(replaceableBlocks.split(",")) //Split the string by commas
+                .map(String::trim) //Trim each element
+                .collect(Collectors.toCollection(HashSet::new));
     }
 
     public static Triple<Integer, Integer, Integer> processVolume(String ore, String volume)
@@ -108,14 +112,14 @@ public class OreClusterConfigModel extends ConfigModelBase {
         volumeNotParsedCorrectlyError.append(volume);
         volumeNotParsedCorrectlyError.append(" is not formatted correctly for ore: ");
         volumeNotParsedCorrectlyError.append(ore);
-        volumeNotParsedCorrectlyError.append("Using default cluster volume of 32x32x32 instead");
+        volumeNotParsedCorrectlyError.append(" Using default cluster volume of 32x32x32 instead");
 
         StringBuilder volumeNotWithinBoundsError = new StringBuilder();
         volumeNotWithinBoundsError.append("Volume value: ");
         volumeNotWithinBoundsError.append(volume);
         volumeNotWithinBoundsError.append(" is out of bounds for ore: ");
         volumeNotWithinBoundsError.append(ore);
-        volumeNotWithinBoundsError.append("Using default cluster volume of 32x32x32 instead");
+        volumeNotWithinBoundsError.append(" Using default cluster volume of 32x32x32 instead");
 
         /********************************/
 
@@ -148,16 +152,17 @@ public class OreClusterConfigModel extends ConfigModelBase {
 
     public static HashMap<String, Integer> processRegenPeriods(String [] upgrades, String [] oreClusterRegenPeriodArray) {
         HashMap<String, Integer> oreClusterRegenPeriods = new HashMap<>();
+
         int i = 0;
         try {
             for (String item : upgrades) {
                 //before putting into map,check if there is a valid corresponding length
                 if (i < oreClusterRegenPeriodArray.length) {
-                    oreClusterRegenPeriods.put(item, Integer.parseInt(oreClusterRegenPeriodArray[i]));
+                    oreClusterRegenPeriods.put(item, Integer.parseInt(oreClusterRegenPeriodArray[i].trim()));
                     i++;
                 } else {
                     //If there is no corresponding length, use last number we got
-                    oreClusterRegenPeriods.put(item, Integer.parseInt(oreClusterRegenPeriodArray[i]));
+                    oreClusterRegenPeriods.put(item, Integer.parseInt(oreClusterRegenPeriodArray[i].trim()));
                 }
 
             }
@@ -166,9 +171,9 @@ public class OreClusterConfigModel extends ConfigModelBase {
             //Reset map to default values given error
             StringBuilder error = new StringBuilder();
             error.append("Error parsing oreClusterRegenPeriods, use comma separated list of integers" +
-             "default values have been set instead");
+             " default values have been set instead");
             LoggerBase.logWarning(error.toString());
-            oreClusterRegenPeriods = null;
+            oreClusterRegenPeriods = new HashMap<>();
             upgrades = COreClusters.REGENERATE_ORE_CLUSTER_UPGRDADE_ITEMS.split(",");
             oreClusterRegenPeriodArray = COreClusters.REGENERATE_ORE_CLUSTER_PERIOD_LENGTHS.split(",");
             i = 0;
@@ -265,12 +270,17 @@ public class OreClusterConfigModel extends ConfigModelBase {
             this.oreVeinModifier = oreVeinModifier;
     }
 
-    public void setOreClusterReplaceableBlocks(String oreClusterReplaceableBlocks) {
-        this.oreClusterReplaceableBlocks = processReplaceableBlocks(oreClusterReplaceableBlocks);
+    public void setOreClusterNonReplaceableBlocks(String oreClusterNonReplaceableBlocks) {
+        this.oreClusterNonReplaceableBlocks = processReplaceableBlocks(oreClusterNonReplaceableBlocks);
     }
 
-    public void setOreClusterReplaceableEmptyBlock(String oreClusterReplaceableEmptyBlock) {
-        this.oreClusterReplaceableEmptyBlock = processReplaceableBlocks(oreClusterReplaceableEmptyBlock);
+    public void setOreClusterReplaceableEmptyBlocks(String oreClusterReplaceableEmptyBlocks) {
+        this.oreClusterReplaceableEmptyBlocks = processReplaceableBlocks(oreClusterReplaceableEmptyBlocks);
+        //If an entry does not contain ':' add the minecraft namespace
+        this.oreClusterReplaceableEmptyBlocks = this.oreClusterReplaceableEmptyBlocks.stream()
+                .map(block -> block.contains(":") ? block : "minecraft:" + block)
+                .collect(Collectors.toCollection(HashSet::new));
+
     }
 
     public void setOreClusterDoesRegenerate(String oreClusterDoesRegenerate) {
@@ -303,92 +313,111 @@ public class OreClusterConfigModel extends ConfigModelBase {
         jsonObject.addProperty("maxChunksBetweenOreClusters", maxChunksBetweenOreClusters);
 
         jsonObject.addProperty("oreVeinModifier", oreVeinModifier);
-        jsonObject.addProperty("oreClusterReplaceableBlocks",
-            oreClusterReplaceableBlocks.stream().collect(Collectors.joining(", ")));
-        jsonObject.addProperty("oreClusterReplaceableEmptyBlock",
-            oreClusterReplaceableEmptyBlock.stream().collect(Collectors.joining(", ")));
+        jsonObject.addProperty("oreClusterNonReplaceableBlocks",
+            oreClusterNonReplaceableBlocks.stream().collect(Collectors.joining(", ")));
+        jsonObject.addProperty("oreClusterReplaceableEmptyBlocks",
+            oreClusterReplaceableEmptyBlocks.stream().collect(Collectors.joining(", ")));
         jsonObject.addProperty("oreClusterDoesRegenerate", oreClusterDoesRegenerate);
 
-        System.err.println("jsonObject: " + jsonObject);
+        //System.err.println("jsonObject: " + jsonObject);
         return gson.toJson(jsonObject).
                 //replace("\",", "\"," + System.getProperty("line.separator") ).
                         replace('"', "'".toCharArray()[0]);
     }
 
     public void deserialize(String jsonString) {
-        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+        JsonObject jsonObject = JsonParser.parseString(jsonString.replace("'".toCharArray()[0], '"')).getAsJsonObject();
 
         try {
             setOreClusterType(jsonObject.get("oreClusterType").getAsString());
         } catch (Exception e) {
-            LoggerBase.logError("Error parsing " + COreClusters.oreClusterType.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
+            LoggerBase.logError("Error parsing oreClusterType for an undefined ore" + e.getMessage());
         }
 
         try {
             setOreClusterSpawnRate(jsonObject.get("oreClusterSpawnRate").getAsInt());
         } catch (Exception e) {
-            LoggerBase.logError("Error parsing " + COreClusters.defaultOreClusterSpawnRate.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
+            LoggerBase.logError("Error parsing " +
+            oreClusterDefaultConfigs.defaultOreClusterSpawnRate.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
             setOreClusterVolume(jsonObject.get("oreClusterVolume").getAsString());
         } catch (Exception e) {
-            LoggerBase.logError("Error parsing " + COreClusters.defaultOreClusterVolume.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
+            LoggerBase.logError("Error parsing " +
+            oreClusterDefaultConfigs.defaultOreClusterVolume.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
             setOreClusterDensity(jsonObject.get("oreClusterDensity").getAsFloat());
         } catch (Exception e) {
-            LoggerBase.logError("Error parsing " + COreClusters.defaultOreClusterDensity.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
+            LoggerBase.logError("Error parsing " +
+            oreClusterDefaultConfigs.defaultOreClusterDensity.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
             setOreClusterShape(jsonObject.get("oreClusterShape").getAsString());
         } catch (Exception e) {
-            LoggerBase.logError("Error parsing " + COreClusters.defaultOreClusterShape.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
+            LoggerBase.logError("Error parsing " +
+            oreClusterDefaultConfigs.defaultOreClusterShape.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
             setOreClusterMaxYLevelSpawn(jsonObject.get("oreClusterMaxYLevelSpawn").getAsInt());
         } catch (Exception e) {
-            LoggerBase.logError("Error parsing " + COreClusters.oreClusterMaxYLevelSpawn.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
+            LoggerBase.logError("Error parsing " +
+            oreClusterDefaultConfigs.oreClusterMaxYLevelSpawn.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
             setMinChunksBetweenOreClusters(jsonObject.get("minChunksBetweenOreClusters").getAsInt());
         } catch (Exception e) {
-            LoggerBase.logError("Error parsing " + COreClusters.minChunksBetweenOreClusters.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
+            LoggerBase.logError("Error parsing " +
+            oreClusterDefaultConfigs.minChunksBetweenOreClusters.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
             setMaxChunksBetweenOreClusters(jsonObject.get("maxChunksBetweenOreClusters").getAsInt());
         } catch (Exception e) {
-            LoggerBase.logError("Error parsing " + COreClusters.maxChunksBetweenOreClusters.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
+            LoggerBase.logError("Error parsing " +
+            oreClusterDefaultConfigs.maxChunksBetweenOreClusters.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
             setOreVeinModifier(jsonObject.get("oreVeinModifier").getAsFloat());
         } catch (Exception e) {
-            LoggerBase.logError("Error parsing " + COreClusters.defaultOreVeinModifier.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
+            LoggerBase.logError("Error parsing " +
+            oreClusterDefaultConfigs.defaultOreVeinModifier.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
-            setOreClusterReplaceableBlocks(jsonObject.get("oreClusterReplaceableBlocks").getAsString());
+            setOreClusterNonReplaceableBlocks(jsonObject.get("oreClusterNonReplaceableBlocks").getAsString());
         } catch (Exception e) {
-            LoggerBase.logError("Error parsing " + COreClusters.defaultOreClusterNonReplaceableBlocks.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
+            LoggerBase.logError("Error parsing " +
+            oreClusterDefaultConfigs.defaultOreClusterNonReplaceableBlocks.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
-            setOreClusterReplaceableEmptyBlock(jsonObject.get("oreClusterReplaceableEmptyBlock").getAsString());
+            setOreClusterReplaceableEmptyBlocks(jsonObject.get("oreClusterReplaceableEmptyBlocks").getAsString());
         } catch (Exception e) {
-            LoggerBase.logError("Error parsing " + COreClusters.defaultOreClusterReplaceableEmptyBlock.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
+            LoggerBase.logError("Error parsing " +
+            oreClusterDefaultConfigs.defaultOreClusterReplaceableEmptyBlocks.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
             setOreClusterDoesRegenerate(jsonObject.get("oreClusterDoesRegenerate").getAsString());
         } catch (Exception e) {
-            LoggerBase.logError("Error parsing " + COreClusters.regenerateOreClusters.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
+            LoggerBase.logError("Error parsing " +
+            oreClusterDefaultConfigs.regenerateOreClusters.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
+
+        StringBuilder complete = new StringBuilder();
+        complete.append("OreClusterConfigModel for ");
+        complete.append(oreClusterType);
+        complete.append(" has been created with the following properties: \n");
+        complete.append(serialize());
+        complete.append("\n\n");
+        LoggerBase.logInfo(complete.toString());
     }
 
 
