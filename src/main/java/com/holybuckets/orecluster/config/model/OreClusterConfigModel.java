@@ -333,7 +333,7 @@ public class OreClusterConfigModel extends ConfigModelBase {
         }
 
         try {
-            oreClusterVolume = processVolume(oreClusterType, jsonObject.get("defaultOreClusterVolume").getAsString());
+            setOreClusterVolume(jsonObject.get("defaultOreClusterVolume").getAsString());
 
         } catch (Exception e) {
             errorBuilder.append("Error parsing defaultOreClusterVolume: ").append(e.getMessage()).append("\n");
