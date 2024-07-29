@@ -13,6 +13,7 @@ import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 import net.minecraftforge.common.ForgeConfigSpec.DoubleValue;
 import net.minecraftforge.common.ForgeConfigSpec.EnumValue;
 import net.minecraftforge.common.ForgeConfigSpec.IntValue;
+import net.minecraftforge.fml.Logging;
 
 public abstract class ConfigBase {
 
@@ -143,6 +144,7 @@ public abstract class ConfigBase {
         public String getName() {
             return name;
         }
+
     }
 
     /**
@@ -198,19 +200,37 @@ public abstract class ConfigBase {
 
     public class ConfigFloat extends CValue<Double, DoubleValue> {
 
+        private float min;
+        private float max;
+
         public ConfigFloat(String name, float current, float min, float max, String... comment) {
             super(name, builder -> builder.defineInRange(name, current, min, max), comment);
+            this.min = min;
+            this.max = max;
         }
 
         public float getF() {
             return get().floatValue();
         }
+
+        public boolean test(float value) {
+            return ( value <= max && value >= min);
+        }
     }
 
     public class ConfigInt extends CValue<Integer, IntValue> {
 
+        private int min;
+        private int max;
+
         public ConfigInt(String name, int current, int min, int max, String... comment) {
             super(name, builder -> builder.defineInRange(name, current, min, max), comment);
+            this.min = min;
+            this.max = max;
+        }
+
+        public boolean test(int value) {
+            return ( value <= max && value >= min);
         }
     }
 

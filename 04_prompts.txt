@@ -148,7 +148,18 @@ Clean up CServer.java, CClient.java and CCommon.java to remove variables and cla
 	gradle or maven files. Summarize your work.
 
 
-7. Writing Serialize function
+7. Writing Deseriaize function
 ---
 
+	Rewrite the deserialize function of OreClusterConfigModel.java to use the setProperty methods. By sure still to catch the exceptions
+	if the JSON parser fails but use LoggerBase.logError() to log the particular error, mention the property that failed using COreClusters.<appropriateProperty>.getName()
+	and mention the particular ore that failed.
+
+
+8. Writing Deseriaize function
+---
+
+
+9. Writing Deseriaize function
+---
 
