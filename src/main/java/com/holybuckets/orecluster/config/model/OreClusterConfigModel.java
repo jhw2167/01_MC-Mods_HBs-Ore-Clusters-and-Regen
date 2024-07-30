@@ -22,7 +22,7 @@ public class OreClusterConfigModel extends ConfigModelBase {
     public String oreClusterType = "default";
     public HashSet<String> validOreClusterOreBlocks;
     public Integer oreClusterSpawnRate = COreClusters.DEF_ORE_CLUSTER_SPAWN_RATE;
-    public Triple<Integer, Integer, Integer> oreClusterVolume = processVolume( oreClusterType, COreClusters.DEF_ORE_CLUSTER_VOLUME);
+    public Triple<Integer, Integer, Integer> oreClusterVolume = processVolume( COreClusters.DEF_ORE_CLUSTER_VOLUME);
     public Float oreClusterDensity = COreClusters.DEF_ORE_CLUSTER_DENSITY;
     public String oreClusterShape = COreClusters.DEF_ORE_CLUSTER_SHAPE;
     public Integer oreClusterMaxYLevelSpawn = COreClusters.ORE_CLUSTER_MAX_Y_LEVEL_SPAWN;
@@ -60,7 +60,7 @@ public class OreClusterConfigModel extends ConfigModelBase {
         this.validOreClusterOreBlocks = new HashSet<>(
             processValidOreClusterOreBlocks(cOreClusters.validOreClusterOreBlocks.get()));
         this.oreClusterSpawnRate = cOreClusters.defaultOreClusterSpawnRate.get();
-        this.oreClusterVolume = processVolume(oreClusterType, cOreClusters.defaultOreClusterVolume.get());
+        this.oreClusterVolume = processVolume(cOreClusters.defaultOreClusterVolume.get());
         this.oreClusterDensity = cOreClusters.defaultOreClusterDensity.getF();
         this.oreClusterShape = cOreClusters.defaultOreClusterShape.get();
         this.oreClusterMaxYLevelSpawn = cOreClusters.oreClusterMaxYLevelSpawn.get();
@@ -104,30 +104,26 @@ public class OreClusterConfigModel extends ConfigModelBase {
                 .collect(Collectors.toCollection(HashSet::new));
     }
 
-    public static Triple<Integer, Integer, Integer> processVolume(String ore, String volume)
+    public Triple<Integer, Integer, Integer> processVolume(String volume)
     {
         /** Define Errors for validation **/
         StringBuilder volumeNotParsedCorrectlyError = new StringBuilder();
         volumeNotParsedCorrectlyError.append("Volume value: ");
         volumeNotParsedCorrectlyError.append(volume);
-        volumeNotParsedCorrectlyError.append(" is not formatted correctly for ore: ");
-        volumeNotParsedCorrectlyError.append(ore);
-        volumeNotParsedCorrectlyError.append(" Using default cluster volume of 32x32x32 instead");
+        volumeNotParsedCorrectlyError.append(" is not formatted correctly ");
 
         StringBuilder volumeNotWithinBoundsError = new StringBuilder();
         volumeNotWithinBoundsError.append("Volume value: ");
         volumeNotWithinBoundsError.append(volume);
-        volumeNotWithinBoundsError.append(" is out of bounds for ore: ");
-        volumeNotWithinBoundsError.append(ore);
-        volumeNotWithinBoundsError.append(" Using default cluster volume of 32x32x32 instead");
+        volumeNotWithinBoundsError.append(" is out of bounds ");
 
         /********************************/
 
 
         String[] volumeArray = volume.toLowerCase().split("x");
         if(volume == null || volume.isEmpty() || volumeArray.length != 3) {
-            LoggerBase.logWarning(volumeNotParsedCorrectlyError.toString());
             volumeArray = COreClusters.DEF_ORE_CLUSTER_VOLUME.split("x");
+            logPropertyWarning(volumeNotParsedCorrectlyError.toString(), this.oreClusterType, null, volumeArray.toString() );
         }
 
         String[] mins = COreClusters.MIN_ORE_CLUSTER_VOLUME.split("x");
@@ -138,9 +134,10 @@ public class OreClusterConfigModel extends ConfigModelBase {
             int vol = Integer.parseInt(volumeArray[i]);
             int min = Integer.parseInt(mins[i]);
             int max = Integer.parseInt(maxs[i]);
-            if (vol < min || vol > max) {
-                LoggerBase.logWarning(volumeNotWithinBoundsError.toString());
+            if (vol < min || vol > max)
+            {
                 volumeArray = COreClusters.DEF_ORE_CLUSTER_VOLUME.split("x");
+                logPropertyWarning(volumeNotWithinBoundsError.toString(), this.oreClusterType, null, volumeArray.toString() );
                 break;
             }
         }
@@ -150,7 +147,11 @@ public class OreClusterConfigModel extends ConfigModelBase {
                 Integer.parseInt(volumeArray[2]));
     }
 
-    public static HashMap<String, Integer> processRegenPeriods(String [] upgrades, String [] oreClusterRegenPeriodArray) {
+    public HashMap<String, Integer> processRegenPeriods(String [] upgrades, String [] oreClusterRegenPeriodArray)
+    {
+        String numberFormatError = "Error parsing oreClusterRegenPeriods, use comma separated list of integers with no spaces";
+
+
         HashMap<String, Integer> oreClusterRegenPeriods = new HashMap<>();
 
         int i = 0;
@@ -169,10 +170,6 @@ public class OreClusterConfigModel extends ConfigModelBase {
         }
         catch (NumberFormatException e) {
             //Reset map to default values given error
-            StringBuilder error = new StringBuilder();
-            error.append("Error parsing oreClusterRegenPeriods, use comma separated list of integers" +
-             " default values have been set instead");
-            LoggerBase.logWarning(error.toString());
             oreClusterRegenPeriods = new HashMap<>();
             upgrades = COreClusters.REGENERATE_ORE_CLUSTER_UPGRDADE_ITEMS.split(",");
             oreClusterRegenPeriodArray = COreClusters.REGENERATE_ORE_CLUSTER_PERIOD_LENGTHS.split(",");
@@ -181,6 +178,8 @@ public class OreClusterConfigModel extends ConfigModelBase {
                 oreClusterRegenPeriods.put(item, Integer.parseInt(oreClusterRegenPeriodArray[i]));
                 i++;
             }
+
+            logPropertyWarning(numberFormatError, this.oreClusterType, null, oreClusterRegenPeriods.toString() );
         }
         return oreClusterRegenPeriods;
     }
@@ -205,24 +204,20 @@ public class OreClusterConfigModel extends ConfigModelBase {
     }
 
     public void setOreClusterVolume(String oreClusterVolume) {
-        Triple<Integer, Integer, Integer> volume = processVolume(oreClusterType, oreClusterVolume);
+        Triple<Integer, Integer, Integer> volume = processVolume(oreClusterVolume);
         this.oreClusterVolume = volume;
     }
 
     public void setOreClusterShape(String oreClusterShape)
     {
-        StringBuilder error = new StringBuilder();
-        error.append("Error setting oreClusterShape for ore: ");
-        error.append(oreClusterType);
-        error.append(" using default value of shape: ");
-        error.append(COreClusters.DEF_ORE_CLUSTER_SHAPE + " instead");
+        String error = "Error setting oreClusterShape for ore: ";
 
         if( oreClusterShape == null || oreClusterShape.isEmpty() )
             oreClusterShape = COreClusters.DEF_ORE_CLUSTER_SHAPE;
 
         if( !COreClusters.ORE_CLUSTER_VALID_SHAPES.contains( oreClusterShape ) ) {
             oreClusterShape = COreClusters.DEF_ORE_CLUSTER_SHAPE;
-            LoggerBase.logWarning(error.toString());
+            logPropertyWarning(error, this.oreClusterType, null, oreClusterShape);
         }
 
         this.oreClusterShape = oreClusterShape;
