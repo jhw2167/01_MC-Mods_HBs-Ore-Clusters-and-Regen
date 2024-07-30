@@ -5,10 +5,13 @@ package com.holybuckets.foundation;
 
  */
 
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.registries.ForgeRegistries;
+
 public class Validator {
 
     public static boolean blockExists(String blockName) {
-        return true;
+        return ForgeRegistries.BLOCKS.containsKey( new ResourceLocation(blockName) );
     }
 
     public static boolean blockHasProperty(String blockName, String propertyname) {
@@ -16,6 +19,6 @@ public class Validator {
     }
 
     public static boolean itemExists(String itemname) {
-        return true;
+        return ForgeRegistries.ITEMS.containsKey( new ResourceLocation(itemname) );
     }
 }

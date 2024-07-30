@@ -18,7 +18,7 @@ import com.google.gson.JsonParser;
 
 public class OreClusterConfigModel extends ConfigModelBase {
 
-    public String subSeed = null;
+    public Long subSeed = null;
     public String oreClusterType = "default";
     public HashSet<String> validOreClusterOreBlocks;
     public Integer oreClusterSpawnRate = COreClusters.DEF_ORE_CLUSTER_SPAWN_RATE;
@@ -53,9 +53,9 @@ public class OreClusterConfigModel extends ConfigModelBase {
             return;
         }
         if( cOreClusters.subSeed.get() != null || !cOreClusters.subSeed.get().isEmpty() )
-            this.subSeed = cOreClusters.subSeed.get();  //initialized to null
+            this.subSeed = (long) cOreClusters.subSeed.get().hashCode();  //initialized to null
         else
-            this.subSeed = "";
+            this.subSeed = null;
 
         this.validOreClusterOreBlocks = new HashSet<>(
             processValidOreClusterOreBlocks(cOreClusters.validOreClusterOreBlocks.get()));
@@ -246,20 +246,56 @@ public class OreClusterConfigModel extends ConfigModelBase {
             this.oreClusterMaxYLevelSpawn = oreClusterMaxYLevelSpawn;
     }
 
-    public void setMinChunksBetweenOreClusters(Integer minChunksBetweenOreClusters) {
+    public void setMinChunksBetweenOreClusters(Integer minChunksBetweenOreClusters)
+    {
+        String minChunksLogicError = "minChunksBetweenOreClusters is too high for the spawnrate of the cluster";
+
         Boolean validConfig = validateInteger(minChunksBetweenOreClusters, oreClusterDefaultConfigs.minChunksBetweenOreClusters,
         "for ore: " + this.oreClusterType);
 
         if( validConfig )
+        {
+            //Validate there is enough cluster space to meet expected chunks per cluster
+            double chunkAreaReservedPerCluster = Math.pow( 2*minChunksBetweenOreClusters + 1, 2) / 2;
+            double expectedChunksPerCluster = (COreClusters.DEF_ORE_CLUSTER_SPAWNRATE_AREA / oreClusterSpawnRate);
+
+            if (chunkAreaReservedPerCluster < expectedChunksPerCluster)
+            {
+                this.oreClusterSpawnRate = (int) (COreClusters.DEF_ORE_CLUSTER_SPAWN_RATE / chunkAreaReservedPerCluster);
+                logPropertyWarning(minChunksLogicError, this.oreClusterType,
+                "scaling down oreClusterSpawnrate to ", this.oreClusterSpawnRate.toString());
+            }
+
             this.minChunksBetweenOreClusters = minChunksBetweenOreClusters;
+        }
+
     }
 
-    public void setMaxChunksBetweenOreClusters(Integer maxChunksBetweenOreClusters) {
+    public void setMaxChunksBetweenOreClusters(Integer maxChunksBetweenOreClusters)
+    {
+        String maxChunksLogicError = "maxChunksBetweenOreClusters is too low for the spawnrate of the cluster ";
+
         Boolean validConfig = validateInteger(maxChunksBetweenOreClusters, oreClusterDefaultConfigs.maxChunksBetweenOreClusters,
         "for ore: " + this.oreClusterType);
 
         if( validConfig )
+        {
+            //Validate there is enough cluster space to meet expected chunks per cluster
+
+            double minimumClustersPerArea = COreClusters.DEF_ORE_CLUSTER_SPAWNRATE_AREA /
+                 Math.pow( 2*maxChunksBetweenOreClusters + 1, 2) ;
+
+            if ( ( this.oreClusterSpawnRate / 2 ) < minimumClustersPerArea )
+            {
+                this.oreClusterSpawnRate = (int) minimumClustersPerArea * 2;
+                logPropertyWarning(maxChunksLogicError, this.oreClusterType,
+                "scaling up oreClusterSpawnrate to ", this.oreClusterSpawnRate.toString());
+            }
+
             this.maxChunksBetweenOreClusters = maxChunksBetweenOreClusters;
+
+        }
+
     }
 
     public void setOreVeinModifier(Float oreVeinModifier) {
@@ -288,6 +324,19 @@ public class OreClusterConfigModel extends ConfigModelBase {
     }
 
 
+    private static void logPropertyWarning(String message, String ore, String defaultMessage, String defaultValue)
+    {
+        if( defaultMessage == null )
+            defaultMessage = " Using default value of ";
+
+        StringBuilder error = new StringBuilder();
+        error.append(message);
+        error.append(" for ore: ");
+        error.append(ore);
+        error.append( defaultMessage );
+        error.append(defaultValue);
+        LoggerBase.logWarning(error.toString());
+    }
 
 
     /*
