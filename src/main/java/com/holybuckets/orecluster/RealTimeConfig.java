@@ -1,13 +1,14 @@
 package com.holybuckets.orecluster;
 
+//MC Imports
+
 //Forge Imports
 import com.holybuckets.orecluster.config.COreClusters;
 import net.minecraftforge.fml.common.Mod;
 
 //Java Imports
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+    import java.util.*;
+import java.util.function.Function;
 
 //Project imports
 import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
@@ -28,24 +29,50 @@ public class RealTimeConfig
         OreClusterConfigModel defaultConfig = null;
         Map<String, OreClusterConfigModel> oreConfigs = null;
 
+        //We will batch checks for which chunks have clusters by the next CHUNK_NORMALIZATION_TOTAL chunks at a time
+        // thus the spawnrate is normalized to 64 chunks
+        public static final Integer CHUNK_NORMALIZATION_TOTAL = COreClusters.DEF_ORE_CLUSTER_SPAWNRATE_AREA;
+        public static final Function<Integer, Double> CHUNK_DISTRIBUTION_STDV_FUNC = (mean ) -> {
+            if( mean < 4 )
+                return mean / 4.0;
+             else
+                return mean / (Math.log(mean) * 2);
+            };
+        public static final Integer CLUSTER_BATCH_TOTAL = 1000;
+
+        //Using minecraft world seed as default
+        public static Long CLUSTER_SEED = null;
+
         //Constructor initializes the defaultConfigs and oreConfigs from forge properties
         public RealTimeConfig()
         {
 
-            System.err.println("RealTimeConfig constructor called");
             COreClusters clusterConfig = AllConfigs.server().cOreClusters;
             defaultConfig = new OreClusterConfigModel(clusterConfig);
 
             //Create new oreConfig for each element in cOreClusters list
-            System.err.println("RealTimeConfig setting ore config hashmaps");
             oreConfigs = new HashMap<>();
             List<String> jsonOreConfigs = AllConfigs.server().cOreClusters.oreClusters.get();
+
+            for( String validOreCluster : defaultConfig.validOreClusterOreBlocks.stream().toList() ) {
+                OreClusterConfigModel defaultConfiguredCluster = new OreClusterConfigModel(defaultConfig.serialize());
+                defaultConfiguredCluster.setOreClusterType(validOreCluster);
+                oreConfigs.put(validOreCluster, defaultConfiguredCluster );
+            }
+
+            //Particular configs will overwrite the default data
             for (String oreConfig : jsonOreConfigs) {
                 OreClusterConfigModel cluster = new OreClusterConfigModel(oreConfig);
                 oreConfigs.put(cluster.oreClusterType, cluster);
             }
 
-            System.err.println("Initialized RealTimeConfig");
+
+            if( defaultConfig.subSeed != null ) {
+                CLUSTER_SEED = defaultConfig.subSeed;
+            } else {
+                CLUSTER_SEED = AllConfigs.WORLD_SEED;
+            }
+
 
         }
 

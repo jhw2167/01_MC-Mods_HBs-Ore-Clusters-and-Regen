@@ -12,6 +12,7 @@ public class COreClusters extends ConfigBase {
 
     //Put the defaults into public static final fields
     public static String SUB_SEED = "";
+    public static Integer DEF_ORE_CLUSTER_SPAWNRATE_AREA = 256;
     public static final String DEF_VALID_ORE_CLUSTER_ORE_BLOCKS = "minecraft:iron_ore,minecraft:diamond_ore,minecraft:gold_ore,minecraft:coal_ore";
     public static final int DEF_ORE_CLUSTER_SPAWN_RATE = 50;
     public static final String DEF_ORE_CLUSTER_VOLUME = "32x32x32";
@@ -36,13 +37,13 @@ public class COreClusters extends ConfigBase {
 
     public final ConfigString subSeed = s(SUB_SEED, "subSeed", Comments.DEF_SUB_SEED);
     public final ConfigString validOreClusterOreBlocks = s(DEF_VALID_ORE_CLUSTER_ORE_BLOCKS, "validOreClusterOreBlocks", Comments.DEF_VALID_ORE_CLUSTER_ORE_BLOCKS);
-    public final ConfigInt defaultOreClusterSpawnRate = i(DEF_ORE_CLUSTER_SPAWN_RATE, 0, 96, "defaultOreClusterSpawnRate", Comments.DEF_ORE_CLUSTER_SPAWN_RATE);
+    public final ConfigInt defaultOreClusterSpawnRate = i(DEF_ORE_CLUSTER_SPAWN_RATE, 0, DEF_ORE_CLUSTER_SPAWNRATE_AREA, "defaultOreClusterSpawnRate", Comments.DEF_ORE_CLUSTER_SPAWN_RATE);
     public final ConfigString defaultOreClusterVolume = s(DEF_ORE_CLUSTER_VOLUME, "defaultOreClusterVolume", Comments.DEF_ORE_CLUSTER_VOLUME);
     public final ConfigFloat defaultOreClusterDensity = f(DEF_ORE_CLUSTER_DENSITY, 0, 1, "defaultOreClusterDensity", Comments.DEF_ORE_CLUSTER_DENSITY);
     public final ConfigString defaultOreClusterShape = s(DEF_ORE_CLUSTER_SHAPE, "defaultOreClusterShape", Comments.DEF_ORE_CLUSTER_SHAPE);
     public final ConfigInt oreClusterMaxYLevelSpawn = i(ORE_CLUSTER_MAX_Y_LEVEL_SPAWN, -64, 1024, "oreClusterMaxYLevelSpawn", Comments.ORE_CLUSTER_MAX_Y_LEVEL_SPAWN);
-    public final ConfigInt minChunksBetweenOreClusters = i(MIN_CHUNKS_BETWEEN_ORE_CLUSTERS, 0, 96, "minChunksBetweenOreClusters", Comments.MIN_CHUNKS_BETWEEN_ORE_CLUSTERS);
-    public final ConfigInt maxChunksBetweenOreClusters = i(MAX_CHUNKS_BETWEEN_ORE_CLUSTERS, 9, 96, "maxChunksBetweenOreClusters", Comments.MAX_CHUNKS_BETWEEN_ORE_CLUSTERS);
+    public final ConfigInt minChunksBetweenOreClusters = i(MIN_CHUNKS_BETWEEN_ORE_CLUSTERS, 0, DEF_ORE_CLUSTER_SPAWNRATE_AREA, "minChunksBetweenOreClusters", Comments.MIN_CHUNKS_BETWEEN_ORE_CLUSTERS);
+    public final ConfigInt maxChunksBetweenOreClusters = i(MAX_CHUNKS_BETWEEN_ORE_CLUSTERS, 1, DEF_ORE_CLUSTER_SPAWNRATE_AREA, "maxChunksBetweenOreClusters", Comments.MAX_CHUNKS_BETWEEN_ORE_CLUSTERS);
     public final ConfigFloat defaultOreVeinModifier = f(DEF_ORE_VEIN_MODIFIER, 0, 1, "defaultOreVeinModifier", Comments.DEF_ORE_VEIN_MODIFIER);
     public final ConfigString defaultOreClusterNonReplaceableBlocks = s(ORE_CLUSTER_NONREPLACEABLE_BLOCKS, "defaultOreClusterReplaceableBlocks", Comments.ORE_CLUSTER_NONREPLACEABLE_BLOCKS);
     public final ConfigString defaultOreClusterReplaceableEmptyBlocks = s(ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS, "defaultOreClusterReplaceableEmptyBlock", Comments.ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS);
@@ -50,11 +51,6 @@ public class COreClusters extends ConfigBase {
     public final ConfigString regenerateOreClusterPeriodLengths = s(REGENERATE_ORE_CLUSTER_PERIOD_LENGTHS, "regenerateOreClusterPeriodLengths", Comments.REGENERATE_ORE_CLUSTER_PERIOD_LENGTHS);
     public final ConfigString regenerateOreClusterUpgradeItems = s(REGENERATE_ORE_CLUSTER_UPGRDADE_ITEMS, "regenerateOreClusterUpgradeItems", Comments.REGENERATE_ORE_CLUSTER_UPGRADE_ITEMS);
 
-    //Define some static OreClusterConfigs for
-
-        //minecraft:iron_ore
-
-            //public final OreClusterConfig ironOre = new OreClusterConfig("iron_ore");
             public final OreClusterConfigModel ironOre = new OreClusterConfigModel(Blocks.IRON_ORE );
             public final OreClusterConfigModel diamondOre = new OreClusterConfigModel(Blocks.DIAMOND_ORE);
 
@@ -71,22 +67,30 @@ public class COreClusters extends ConfigBase {
         public static final String DEF_SUB_SEED = "Sub-seed used to generate random numbers for ore cluster generation - by default," +
          " Ore cluster generation uses the world seed to determine which chunks have ore clusters and their shape and size. By assigning a " +
           "sub-seed, you can adjust this randomness for the same world";
-        public static final String DEF_VALID_ORE_CLUSTER_ORE_BLOCKS = "List of valid ore blocks that can be used in ore clusters.  Clusters spawned from these " +
-         "ores will take default ore cluster parameters unless overridden in 'oreClusers' below";
-        public static final String DEF_ORE_CLUSTER_SPAWN_RATE = "Defines the default frequency of ore clusters. Takes an integer as the number of expected ore clusters per 96 chunks";
-        public static final String DEF_ORE_CLUSTER_VOLUME = "Specifies the dimensions of the ore cluster. <X>x<Y>x<Z>. The true cluster will always be smaller than this box because it will choose a shape that roughly fits inside it, max 96x96x96";
-        public static final String DEF_ORE_CLUSTER_DENSITY = "Determines the density of ore within a cluster";
-        public static final String DEF_ORE_CLUSTER_SHAPE = "Defines the shape of the ore cluster. Options are 'bowl', 'anvil', 'shale' or 'any'. Defaults to any, which takes a random shape";
-        public static final String ORE_CLUSTER_MAX_Y_LEVEL_SPAWN = "Maximum Y-level at which ore clusters can spawn";
-        public static final String MIN_CHUNKS_BETWEEN_ORE_CLUSTERS = "Minimum number of chunks between ore clusters - AFFECTS ALL ORE CLUSTERS";
-        public static final String MAX_CHUNKS_BETWEEN_ORE_CLUSTERS = "Maximum number of chunks between ore clusters - AFFECTS ALL ORE CLUSTERS";
-        public static final String DEF_ORE_VEIN_MODIFIER = "Scales the presence of normal (small) ore veins between 0 and 1. This mod" +
-         "replaces existing ore vein blocks in real time with the specified 'ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCK' block so can only" +
+        public static final String DEF_VALID_ORE_CLUSTER_ORE_BLOCKS = "List of blocks that the mod will attempt to create clusters for upon chunk load. " +
+         "Clusters created from these blocks will take all default ore cluster parameters unless overridden in 'oreClusters' below. " +
+          "If you are going to override the default parameters for an ore anyways, you don't need to include it in this list";
+        public static final String DEF_ORE_CLUSTER_SPAWN_RATE = "Defines the default frequency of ore clusters. Takes an integer" +
+         " as the number of expected ore clusters per " + DEF_ORE_CLUSTER_SPAWNRATE_AREA + " chunks";
+        public static final String DEF_ORE_CLUSTER_VOLUME = "Specifies the default dimensions of a cluster. <X>x<Y>x<Z>. " +
+         "The true cluster will always be smaller than this box because it will choose a shape that roughly fits inside it," +
+          " max 96x96x96 else it will revert to the default 32x32x32";
+        public static final String DEF_ORE_CLUSTER_DENSITY = "Determines the density of ore within a cluster. To reduce density" +
+         " ore blocks within the cluster will be replaced with blocks from 'ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS' below";
+        public static final String DEF_ORE_CLUSTER_SHAPE = "Defines the shape of the ore cluster. Options are 'bowl', 'anvil', 'shale' or 'any'. " +
+         "Defaults to any, which takes a random shape. Please use double quotes when you set the property!!";
+        public static final String ORE_CLUSTER_MAX_Y_LEVEL_SPAWN = "Maximum Y-level at which clusters can spawn";
+        public static final String MIN_CHUNKS_BETWEEN_ORE_CLUSTERS = "Minimum number of chunks between ore any clusters - AFFECTS ALL ORE CLUSTERS"+
+            "- this is a rough guideline, the random generation is not perfect";
+        public static final String MAX_CHUNKS_BETWEEN_ORE_CLUSTERS = "Maximum number of chunks between ore any clusters - AFFECTS ALL ORE CLUSTERS " +
+            "- this is a rough guideline, the random generation is not perfect";
+        public static final String DEF_ORE_VEIN_MODIFIER = "Scales the presence of normal (small) ore veins between 0 and 1. This mod " +
+         "replaces existing ore veins in real time with the specified first block in 'ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS' block so can only" +
           " reduce the frequency of ore veins, not increase it";
         public static final String ORE_CLUSTER_NONREPLACEABLE_BLOCKS = "List of blocks that should not be replaced by the specified ore during cluster generation. " +
          "For example, if you don't want ore clusters to replace bedrock - which is very reasonable - you would add 'minecraft:bedrock' to this list";
-        public static final String ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS = "Block used to fill in the ore cluster shape when we want the ore to be more sparse" +
-         "this field can take multiple comma seperated blocks; only the first block will be used to replace ore veins if ORE_VEIN_MODIFIER is below 1";
+        public static final String ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS = "Block used to fill in the ore cluster shape when we want the cluster to be more sparse" +
+         "this field can take multiple comma seperated blocks; but only the first block will be used to replace ore veins if ORE_VEIN_MODIFIER is below 1";
         public static final String REGENERATE_ORE_CLUSTERS = "Flag indicating if ore clusters should regenerate by default";
         public static final String ORE_CLUSTERS = " The formatting for this property sucks unfortunately, but it all MUST be on one line or" +
          " it will crash your game, edit it elsewhere and paste it back as a single line." +
