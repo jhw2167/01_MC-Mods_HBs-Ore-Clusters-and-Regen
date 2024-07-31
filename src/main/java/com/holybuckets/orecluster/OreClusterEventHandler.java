@@ -10,20 +10,20 @@ import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-@Mod(OreClustersAndRegenMain.MODID)
-@Mod.EventBusSubscriber
+
+@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, modid = OreClustersAndRegenMain.MODID)
 public class OreClusterEventHandler {
 
 
     //Subscribe to chunk load event
-    @SubscribeEvent
+    //@SubscribeEvent
     public static void onChunkLoad(final ChunkEvent.Load event) {
         OreClusterManager.onChunkLoad( event.getChunk() );
     }
 
 
 
-    @SubscribeEvent
+    //@SubscribeEvent
     public void onWorldLoad(final WorldLoadEvent event)
     {
         // Capture the world seed
