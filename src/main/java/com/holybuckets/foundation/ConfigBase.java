@@ -143,11 +143,13 @@ public abstract class ConfigBase {
         }
 
         public void register(ForgeConfigSpec.Builder builder) {
-
-            value = provider.apply(builder);
+            if(!isDisabled)
+                value = provider.apply(builder);
         }
 
         public V get() {
+            if(isDisabled)
+                return null;
             return value.get();
         }
 

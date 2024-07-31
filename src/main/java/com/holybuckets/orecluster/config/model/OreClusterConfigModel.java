@@ -66,7 +66,7 @@ public class OreClusterConfigModel extends ConfigModelBase {
         this.oreClusterShape = cOreClusters.defaultOreClusterShape.get();
         this.oreClusterMaxYLevelSpawn = cOreClusters.oreClusterMaxYLevelSpawn.get();
         this.minChunksBetweenOreClusters = cOreClusters.minChunksBetweenOreClusters.get();
-        this.maxChunksBetweenOreClusters = cOreClusters.maxChunksBetweenOreClusters.get();
+        //this.maxChunksBetweenOreClusters = cOreClusters.maxChunksBetweenOreClusters.get();
         this.oreVeinModifier = cOreClusters.defaultOreVeinModifier.getF();
         this.oreClusterNonReplaceableBlocks = processReplaceableBlocks(cOreClusters.defaultOreClusterNonReplaceableBlocks.get());
         this.oreClusterReplaceableEmptyBlocks = processReplaceableBlocks(cOreClusters.defaultOreClusterReplaceableEmptyBlocks.get());
@@ -360,7 +360,7 @@ public class OreClusterConfigModel extends ConfigModelBase {
         jsonObject.addProperty("oreClusterShape", oreClusterShape);
         jsonObject.addProperty("oreClusterMaxYLevelSpawn", oreClusterMaxYLevelSpawn);
         jsonObject.addProperty("minChunksBetweenOreClusters", minChunksBetweenOreClusters);
-        jsonObject.addProperty("maxChunksBetweenOreClusters", maxChunksBetweenOreClusters);
+        //jsonObject.addProperty("maxChunksBetweenOreClusters", maxChunksBetweenOreClusters);
 
         jsonObject.addProperty("oreVeinModifier", oreVeinModifier);
         jsonObject.addProperty("oreClusterNonReplaceableBlocks",
