@@ -1,6 +1,8 @@
 package com.holybuckets.foundation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -109,7 +111,10 @@ public abstract class ConfigBase {
         protected float min;
         protected float max;
         protected String name;
+        protected Boolean isDisabled;
         private IValueProvider<V, T> provider;
+
+        private static HashSet<String> disabledValues = new HashSet<>(Arrays.asList("maxChunksBetweenOreClusters"));
 
         public CValue(String name, IValueProvider<V, T> provider, String... comment) {
             this.name = name;
@@ -120,6 +125,11 @@ public abstract class ConfigBase {
             if (allValues == null)
                 allValues = new ArrayList<>();
             allValues.add(this);
+
+            if(disabledValues.contains(name))
+                isDisabled = true;
+            else
+                isDisabled = false;
         }
 
         public void addComments(Builder builder, String... comment) {
@@ -133,11 +143,16 @@ public abstract class ConfigBase {
         }
 
         public void register(ForgeConfigSpec.Builder builder) {
+
             value = provider.apply(builder);
         }
 
         public V get() {
             return value.get();
+        }
+
+        public boolean isDisabled() {
+            return isDisabled;
         }
 
         public V getDefault() {
