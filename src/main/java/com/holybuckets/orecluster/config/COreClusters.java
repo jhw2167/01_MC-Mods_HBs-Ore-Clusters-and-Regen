@@ -95,7 +95,10 @@ public class COreClusters extends ConfigBase {
         public static final String ORE_CLUSTERS = " The formatting for this property sucks unfortunately, but it all MUST be on one line or" +
          " it will crash your game, edit it elsewhere and paste it back as a single line." +
          " Array Pseudo JSON structures that allow you to override the default values" +
-         " above for a particular ore block. Use the examples to help set appropriate configurations for your ore clusters. ";
+         " above for a particular ore block. Any ore, or really any block at all can be added to this config and " +
+          "clusters will be created from it as long as it exists naturally in the terrain generation." +
+           " Use the examples to help set appropriate configurations ";
+
 
         public static final String REGENERATE_ORE_CLUSTER_PERIOD_LENGTHS = "Comma separated list of integer days it takes for clusters to regenerate their ores." +
          " All clusters will regenerate on the same schedule. After sacrificing the specified item in the array below, the period length is reduced";

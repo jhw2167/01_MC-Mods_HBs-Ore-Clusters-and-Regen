@@ -10,6 +10,8 @@ import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
+import java.util.logging.Level;
+
 
 @EventBusSubscriber(bus = EventBusSubscriber.Bus.FORGE, modid = OreClustersAndRegenMain.MODID)
 public class OreClusterEventHandler {
@@ -18,22 +20,29 @@ public class OreClusterEventHandler {
     //Subscribe to chunk load event
     @SubscribeEvent
     public static void onChunkLoad(final ChunkEvent.Load event) {
+        if( AllConfigs.WORLD_SEED == null )
+            AllConfigs.initWorldConfigs( event.getLevel().getServer() );
+
         OreClusterManager.onChunkLoad( event.getChunk() );
     }
 
 
+    /*
+    One Day...
 
-    //@SubscribeEvent
-    public void onWorldLoad(final WorldLoadEvent event)
+    @SubscribeEvent
+    public void onLevelLoad(final LevelEvent.Load level )
     {
         // Capture the world seed
+        LoggerBase.logInfo("**** WORLD LOAD EVENT ****");
         Minecraft mc = AllConfigs.mc;
         AllConfigs.WORLD_SEED = mc.level.getServer().overworld().getSeed();
         AllConfigs.WORLD_SPAWN = mc.level.getServer().overworld().getSharedSpawnPos();
-        LoggerBase.logInfo("**** WORLD LOAD EVENT ****");
         LoggerBase.logInfo("World Seed: " + AllConfigs.WORLD_SEED);
         LoggerBase.logInfo("World Spawn: " + AllConfigs.WORLD_SPAWN);
     }
+    */
+
 
 
 }
