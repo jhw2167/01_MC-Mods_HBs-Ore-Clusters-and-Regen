@@ -427,7 +427,7 @@ public class OreClusterConfigModel extends ConfigModelBase {
         }
 
         try {
-            setMaxChunksBetweenOreClusters(jsonObject.get("maxChunksBetweenOreClusters").getAsInt());
+            //setMaxChunksBetweenOreClusters(jsonObject.get("maxChunksBetweenOreClusters").getAsInt());
         } catch (Exception e) {
             LoggerBase.logError("Error parsing " +
             oreClusterDefaultConfigs.maxChunksBetweenOreClusters.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());

@@ -11,6 +11,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.telemetry.events.WorldLoadEvent;
 import net.minecraft.core.Vec3i;
 
+import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -78,6 +79,16 @@ public class AllConfigs {
 
 		for (Entry<ModConfig.Type, ConfigBase> pair : CONFIGS.entrySet())
 			context.registerConfig(pair.getKey(), pair.getValue().specification);
+	}
+
+	public static void initWorldConfigs( MinecraftServer server )
+	{
+		// Capture the world seed
+		LoggerBase.logInfo("**** WORLD LOAD EVENT ****");
+		WORLD_SEED = server.overworld().getSeed();
+		WORLD_SPAWN = server.overworld().getSharedSpawnPos();
+		LoggerBase.logInfo("World Seed: " + WORLD_SEED);
+		LoggerBase.logInfo("World Spawn: " + WORLD_SPAWN);
 	}
 
 	@SubscribeEvent
