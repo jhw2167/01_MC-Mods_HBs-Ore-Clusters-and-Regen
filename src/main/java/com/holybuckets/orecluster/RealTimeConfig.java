@@ -54,14 +54,17 @@ public class RealTimeConfig
             oreConfigs = new HashMap<>();
             List<String> jsonOreConfigs = AllConfigs.server().cOreClusters.oreClusters.get();
 
-            for( String validOreCluster : defaultConfig.validOreClusterOreBlocks.stream().toList() ) {
-                OreClusterConfigModel defaultConfiguredCluster = new OreClusterConfigModel(defaultConfig.serialize());
-                defaultConfiguredCluster.setOreClusterType(validOreCluster);
-                oreConfigs.put(validOreCluster, defaultConfiguredCluster );
+            //Default configs will be used for all valid ore clusters unless overwritten
+            for( String validOreCluster : defaultConfig.validOreClusterOreBlocks.stream().toList() )
+            {
+                OreClusterConfigModel oreConfig = new OreClusterConfigModel(defaultConfig.serialize());
+                oreConfig.setOreClusterType(validOreCluster);
+                oreConfigs.put(validOreCluster, oreConfig );
             }
 
             //Particular configs will overwrite the default data
-            for (String oreConfig : jsonOreConfigs) {
+            for (String oreConfig : jsonOreConfigs)
+            {
                 OreClusterConfigModel cluster = new OreClusterConfigModel(oreConfig);
                 oreConfigs.put(cluster.oreClusterType, cluster);
             }

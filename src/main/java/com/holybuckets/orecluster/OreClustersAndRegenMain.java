@@ -35,10 +35,11 @@ public class OreClustersAndRegenMain
     /** Use the {@link Random} of a local {@link Level} or {@link Entity} or create one */
     @Deprecated
     public static final Random RANDOM = new Random();
+    public static OreClusterManager oreClusterManager = new OreClusterManager();
 
     /**
      * <b>Other mods should not use this field!</b> If you are an addon developer, create your own instance of
-     * {@link CreateRegistrate}.
+     *
      *
     public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(ID);
 

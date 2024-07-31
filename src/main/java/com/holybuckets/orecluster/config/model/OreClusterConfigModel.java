@@ -1,5 +1,6 @@
 package com.holybuckets.orecluster.config.model;
 
+import com.holybuckets.foundation.ConfigBase;
 import com.holybuckets.foundation.ConfigModelBase;
 import com.holybuckets.foundation.LoggerBase;
 import net.minecraft.world.level.block.Block;
@@ -266,11 +267,16 @@ public class OreClusterConfigModel extends ConfigModelBase {
 
     }
 
+
     public void setMaxChunksBetweenOreClusters(Integer maxChunksBetweenOreClusters)
     {
         String maxChunksLogicError = "maxChunksBetweenOreClusters is too low for the spawnrate of the cluster ";
+        ConfigBase.ConfigInt config = oreClusterDefaultConfigs.maxChunksBetweenOreClusters;
 
-        Boolean validConfig = validateInteger(maxChunksBetweenOreClusters, oreClusterDefaultConfigs.maxChunksBetweenOreClusters,
+        if( config.isDisabled() )
+            return;
+
+        Boolean validConfig = validateInteger(maxChunksBetweenOreClusters, config,
         "for ore: " + this.oreClusterType);
 
         if( validConfig )

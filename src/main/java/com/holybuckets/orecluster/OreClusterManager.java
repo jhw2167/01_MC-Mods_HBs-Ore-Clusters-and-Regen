@@ -1,5 +1,6 @@
 package com.holybuckets.orecluster;
 
+import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.orecluster.config.AllConfigs;
 import com.mojang.blaze3d.vertex.VertexSorting;
 import net.minecraft.core.Vec3i;
@@ -48,6 +49,9 @@ public class OreClusterManager {
     public static String lastDeterminedClusterChunkId = "";
 
     /** Constructor **/
+    public OreClusterManager() {
+        init();
+    }
 
     /** Behavior **/
     public static void init() {
@@ -78,7 +82,9 @@ public class OreClusterManager {
      * Determines how to handle the newly loaded chunk upon loading
      * @param chunk
      */
-    public static void onChunkLoad(ChunkAccess chunk) {
+    public static void onChunkLoad(ChunkAccess chunk)
+    {
+        LoggerBase.logInfo("Chunk loaded: " + chunk.getPos());
         handleClustersForChunk( chunk );
     }
 

@@ -1,0 +1,73 @@
+b5397af HEAD@{0}: checkout: moving from 7da8cc8075ea3c30619ae5e800f79dc7da639da8 to main
+7da8cc8 HEAD@{1}: checkout: moving from main to 7da8cc8
+b5397af HEAD@{2}: reset: moving to HEAD
+b5397af HEAD@{3}: checkout: moving from b5397af8dbaa03cd5da9637e4897509ea52bf47c to main
+b5397af HEAD@{4}: checkout: moving from main to b5397af
+b5397af refs/remotes/origin/main@{0}: update by push
+b5397af HEAD@{5}: reset: moving to HEAD
+b5397af HEAD@{6}: checkout: moving from 73aba0d0eaf3a35e07abc81af09195cc91745206 to main
+73aba0d HEAD@{7}: checkout: moving from main to HEAD^^
+b5397af HEAD@{8}: checkout: moving from 6d639f2fcfe09b738d5d9934264c2b5af379b900 to main
+6d639f2 HEAD@{9}: checkout: moving from main to HEAD^
+921c15d refs/stash@{0}: WIP on main: b5397af - Reverted static methods in OreClusterConfigModel so they can log property errors correctly - Cleaned up processing volume and other deserialization methods to handle validation errors more cleanly
+b5397af HEAD@{10}: reset: moving to HEAD
+7da8cc8 refs/stash@{1}: WIP on main: b5397af - Reverted static methods in OreClusterConfigModel so they can log property errors correctly - Cleaned up processing volume and other deserialization methods to handle validation errors more cleanly
+b5397af HEAD@{11}: reset: moving to HEAD
+b5397af refs/heads/main@{0}: commit: - Reverted static methods in OreClusterConfigModel so they can log property errors correctly
+b5397af HEAD@{12}: commit: - Reverted static methods in OreClusterConfigModel so they can log property errors correctly
+6d639f2 refs/heads/main@{1}: commit: - Added handling for world seed, subscribing to server start event
+6d639f2 HEAD@{13}: commit: - Added handling for world seed, subscribing to server start event
+73aba0d refs/heads/main@{2}: commit: - Tested adding custom toml file succesfully
+73aba0d HEAD@{14}: commit: - Tested adding custom toml file succesfully
+3580cac refs/heads/main@{3}: commit: Rewrote the deserialize function of OreClusterConfigModel.java to use the setProperty methods and improved error logging.
+3580cac HEAD@{15}: commit: Rewrote the deserialize function of OreClusterConfigModel.java to use the setProperty methods and improved error logging.
+2118682 refs/heads/main@{4}: commit: Refactored OreClusterConfigModel to use a setter method for parsing the defaultOreClusterVolume field.
+2118682 HEAD@{16}: commit: Refactored OreClusterConfigModel to use a setter method for parsing the defaultOreClusterVolume field.
+cf11e8c refs/heads/main@{5}: commit: - Added defaultConfig and oreConfigs to RealTimeConfig class
+cf11e8c HEAD@{17}: commit: - Added defaultConfig and oreConfigs to RealTimeConfig class
+a400d5b refs/heads/main@{6}: commit: -Renamed main file to designate it as such
+a400d5b HEAD@{18}: commit: -Renamed main file to designate it as such
+8bfcf60 refs/remotes/origin/main@{1}: update by push
+8bfcf60 refs/heads/main@{7}: commit: -Added OreClusterConfigModel class to standardize the config with java variables instead of config variables
+8bfcf60 HEAD@{19}: commit: -Added OreClusterConfigModel class to standardize the config with java variables instead of config variables
+43eeedd refs/heads/main@{8}: commit: Implemented serialization and deserialization of OreClusterConfigModel using Gson library.
+43eeedd HEAD@{20}: commit: Implemented serialization and deserialization of OreClusterConfigModel using Gson library.
+149e0ec refs/heads/main@{9}: commit: Added Gson library dependency to the build.gradle file.
+149e0ec HEAD@{21}: commit: Added Gson library dependency to the build.gradle file.
+b4326c8 refs/heads/main@{10}: commit: Added a new Java class `OreClusterConfigModel` to handle the configuration of ore clusters.
+b4326c8 HEAD@{22}: commit: Added a new Java class `OreClusterConfigModel` to handle the configuration of ore clusters.
+28d3267 refs/remotes/origin/main@{2}: update by push
+28d3267 refs/heads/main@{11}: commit: - Editing COreCluster to add support for arrays. it is proving difficult
+28d3267 HEAD@{23}: commit: - Editing COreCluster to add support for arrays. it is proving difficult
+cfe492e refs/remotes/origin/main@{3}: update by push
+cfe492e refs/heads/main@{12}: commit: - Ensured AllConfigs was being registered in Main function
+cfe492e HEAD@{24}: commit: - Ensured AllConfigs was being registered in Main function
+9d4b7a5 refs/heads/main@{13}: commit: - Added CServer, Client and CCommon files
+9d4b7a5 HEAD@{25}: commit: - Added CServer, Client and CCommon files
+a784102 refs/heads/main@{14}: commit: Cleaned up CServer.java, CClient.java and CCommon.java to remove variables and classes not found in this project. Imported the correct directory for the ConfigBase class and set the correct package in each class.
+a784102 HEAD@{26}: commit: Cleaned up CServer.java, CClient.java and CCommon.java to remove variables and classes not found in this project. Imported the correct directory for the ConfigBase class and set the correct package in each class.
+d1dcef6 refs/heads/main@{15}: commit: Added new CClient configuration class.
+d1dcef6 HEAD@{27}: commit: Added new CClient configuration class.
+85fc7da refs/heads/main@{16}: commit: Initialized the state variables in COreClusters as public final variables, and implemented the s method in ConfigBase.
+85fc7da HEAD@{28}: commit: Initialized the state variables in COreClusters as public final variables, and implemented the s method in ConfigBase.
+292ddd9 refs/heads/main@{17}: commit: Converted class COreClusters to use final fields and removed unnecessary constructor.
+292ddd9 HEAD@{29}: commit: Converted class COreClusters to use final fields and removed unnecessary constructor.
+ba494b5 refs/heads/main@{18}: commit: Added a new ConfigString class that extends CValue and uses the ValueSpec from the forge library to define a configuration for a String value.
+ba494b5 HEAD@{30}: commit: Added a new ConfigString class that extends CValue and uses the ValueSpec from the forge library to define a configuration for a String value.
+ae6b622 refs/heads/main@{19}: commit: Implemented a static Comments class to store string comments and moved value initialization to a separate method.
+ae6b622 HEAD@{31}: commit: Implemented a static Comments class to store string comments and moved value initialization to a separate method.
+8570a08 refs/heads/main@{20}: commit: Implemented new COreClusters.java class based on the provided context and requirements.
+8570a08 HEAD@{32}: commit: Implemented new COreClusters.java class based on the provided context and requirements.
+9403892 refs/heads/main@{21}: commit: Implemented COreClusters class with configurations from oreClusters.yaml file.
+9403892 HEAD@{33}: commit: Implemented COreClusters class with configurations from oreClusters.yaml file.
+96876c3 refs/heads/main@{22}: commit: Added a new Java class `COreClusters` in the `com.holybuckets.config` package.
+96876c3 HEAD@{34}: commit: Added a new Java class `COreClusters` in the `com.holybuckets.config` package.
+98c0748 refs/heads/main@{23}: commit: 01-Setup Config:
+98c0748 HEAD@{35}: commit: 01-Setup Config:
+d9060ec refs/heads/main@{24}: commit: - Added base ore config classes to project
+d9060ec HEAD@{36}: commit: - Added base ore config classes to project
+17a90e6 refs/heads/main@{25}: commit: Initial Commit - added forge template and core note taking sheets. Prepared notes to begin defining objectives
+17a90e6 HEAD@{37}: commit: Initial Commit - added forge template and core note taking sheets. Prepared notes to begin defining objectives
+59f7efd refs/heads/main@{26}: clone: from https://github.com/jhw2167/01_MC-Mods_HBs-Ore-Clusters-and-Regen
+59f7efd refs/remotes/origin/HEAD@{0}: clone: from https://github.com/jhw2167/01_MC-Mods_HBs-Ore-Clusters-and-Regen
+59f7efd HEAD@{38}: clone: from https://github.com/jhw2167/01_MC-Mods_HBs-Ore-Clusters-and-Regen

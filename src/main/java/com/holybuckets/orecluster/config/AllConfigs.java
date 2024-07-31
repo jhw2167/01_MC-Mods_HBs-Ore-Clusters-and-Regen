@@ -5,13 +5,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
 
-import com.holybuckets.orecluster.OreClusterManager;
+//MineCraft Imports
 import com.holybuckets.orecluster.OreClustersAndRegenMain;
-import com.holybuckets.orecluster.RealTimeConfig;
-import com.mojang.realmsclient.dto.RealmsServer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.telemetry.events.WorldLoadEvent;
 import net.minecraft.core.Vec3i;
-import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.registries.ForgeRegistries;
+
+import net.minecraftforge.event.server.ServerStartedEvent;
 import org.apache.commons.lang3.tuple.Pair;
 
 import net.minecraftforge.common.ForgeConfigSpec;
@@ -22,13 +22,19 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 
 import com.holybuckets.foundation.ConfigBase;
+import com.holybuckets.foundation.LoggerBase;
+import com.holybuckets.orecluster.OreClusterManager;
+import com.holybuckets.orecluster.OreClustersAndRegenMain;
+import com.holybuckets.orecluster.RealTimeConfig;
+
 
 @EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD, modid = OreClustersAndRegenMain.MODID)
 public class AllConfigs {
 
 	/** World Data **/
-	public static Long WORLD_SEED = null;
-	public static Vec3i WORLD_SPAWN = null;
+	public static Minecraft mc = Minecraft.getInstance();
+	public static Long WORLD_SEED;
+	public static Vec3i WORLD_SPAWN;
 
 	/** Configuration Data **/
 
@@ -97,10 +103,12 @@ public class AllConfigs {
 	}
 
 	@SubscribeEvent
-	public void onServerStarting(ServerStartingEvent event) {
-		// Capture the world seed
-		WORLD_SEED = event.getServer().overworld().getSeed();
-		WORLD_SPAWN = event.getServer().overworld().getSharedSpawnPos();
+	public void onServerStarted(final ServerStartedEvent event)
+	{
+		LoggerBase.logInfo("**** SERVER STARTED EVENT ****");
 	}
+
+
+
 
 }
