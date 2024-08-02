@@ -1,14 +1,17 @@
 package com.holybuckets.orecluster;
 
-import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
-import net.minecraft.core.Vec3i;
-import org.apache.commons.lang3.tuple.Pair;
-
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.*;
+
+import net.minecraft.core.Vec3i;
+import net.minecraft.world.level.chunk.ChunkAccess;
+
+import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
+import com.holybuckets.foundation.HolyBucketsUtility.*;
 
 public class OreClusterCalculator {
 
-    public HashMap<String, Pair<String, Vec3i>> existingClusters;
+    public ConcurrentHashMap<String, HashMap<String, Vec3i>> existingClusters;
 
 
     /**
@@ -67,11 +70,15 @@ public class OreClusterCalculator {
      *
      */
 
-    public void calculateClusterLocations(List<String> chunks)
+     //Constructor
+    public OreClusterCalculator( ConcurrentHashMap<String, HashMap<String, Vec3i>> existingClusters ) {
+        this.existingClusters = existingClusters;
+    }
+
+    public HashMap<String, HashMap<String, Vec3i>> calculateClusterLocations(List<ChunkAccess> chunks)
     {
         final RealTimeConfig C = OreClusterManager.config;
         final int MAX_CLUSTERS = RealTimeConfig.CHUNK_NORMALIZATION_TOTAL;
-        final int BATCH_SIZE = RealTimeConfig.CLUSTER_BATCH_TOTAL;
 
         // Initialize random number generator with world seed and sub-seed
         Random rng = new Random( RealTimeConfig.CLUSTER_SEED );
@@ -96,11 +103,88 @@ public class OreClusterCalculator {
             clusterCounts.put(oreType, numClusters);
         }
 
-        // Initialize a 2D array to store cluster positions
-        List<Pair<String, Vec3i>> clusterPositions = new ArrayList<>();
+        /** Add all clusters, distributing one cluster type at a time
+        *
+         *  Summarize the below implementation
+         *  - Create a hashmap to store the cluster positions
+         *  - Create a hashmap to store the unused chunks by ore type - we want it to be O(1) to see which chunks have no clusters
+         *
+         *  - Iterate through the oreClusterTypes setting one cluster at a time 1 Diamond, 1 Gold, 1 Iron... etc
+         *  - For each oreType, get a random chunk from the unusedChunksByOreType
+         *  - Remove all chunks within minSpacing of this chunk (e.g. we want no other iron clusters to spawn within 3 chunks of this one)
+         *  - Add the cluster to the chunk, positions or cluster within chunk defined later
+         *
+         */
+
+        // Maps <ChunkId, <OreType, Vec3i>>
+        HashMap<String, HashMap<String, Vec3i>> clusterPositions = new HashMap<>();
+        HashMap<String, LinkedHashSet<Integer>> unusedChunksByOreType = new HashMap<>();
+        HashMap<String, Integer> chunkIdToChunkReferenceIndex = new HashMap<>();
+
+        for (String oreType : oreClusterTypes)
+        {
+            LinkedHashSet<Integer> arr = new LinkedHashSet<>();
+            for (int i = 0; i < chunks.size(); i++) {
+                arr.add(i);
+                chunkIdToChunkReferenceIndex.put(ChunkUtil.getId(chunks.get(i)), i);
+            }
+            unusedChunksByOreType.put(oreType, arr );
+        }
+
+        //Add all clusters, distributing one cluster type at a time
+        List<String> oreClusterTypesCopy = new ArrayList<>(oreClusterTypes);
+        while( oreClusterTypesCopy.size() > 0 )
+        {
+            for (String oreType : oreClusterTypes)
+            {
+                //Decrease cluster count
+                clusterCounts.put(oreType, clusterCounts.get(oreType) - 1);
+
+                if (clusterCounts.get(oreType) == -1)
+                {
+                    oreClusterTypesCopy.remove(oreType);
+                    continue;
+                }
+                else
+                {
+                   LinkedHashSet<Integer> unusedChunks = unusedChunksByOreType.get(oreType);
+
+                     if( unusedChunks.size() == 0 ) {
+                         continue;
+                     }
+
+                    //Get a random remaining chunk
+                    int chunkIdReferenceIndex = rng.nextInt(unusedChunks.size());
+                    Integer chunkIndex = unusedChunks.stream().skip(chunkIdReferenceIndex).findFirst().get();
+                    int minSpacing = C.oreConfigs.get(oreType).minChunksBetweenOreClusters;
+
+                    //Remove all chunks within minSpacing of this chunk
+                    int j = -1*minSpacing;
+                    while (j < C.oreConfigs.get(oreType).minChunksBetweenOreClusters) {
+                        unusedChunks.remove(chunkIndex + j);
+                        j++;
+                    }
+
+                    //Add the cluster to the chunk, positions or cluster within chunk defined later
+                    ChunkAccess chunk = chunks.stream().skip(chunkIndex).findFirst().get();
+                    HashMap<String, Vec3i> cluster = clusterPositions.get(ChunkUtil.getId(chunk));
+                    if( cluster != null )
+                    {
+                        cluster.put( oreType, null );
+                    }
+                    else
+                    {
+                        cluster = new HashMap<>();
+                        cluster.put( oreType, null );
+                        clusterPositions.put( ChunkUtil.getId(chunk), cluster );
+                    }
+
+                }
+            }
+        }
+        //END WHILE
 
 
-
-
+        return clusterPositions;
     }
 }
