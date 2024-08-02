@@ -87,8 +87,8 @@ public class AllConfigs {
 		LoggerBase.logInfo("**** WORLD LOAD EVENT ****");
 		WORLD_SEED = server.overworld().getSeed();
 		WORLD_SPAWN = server.overworld().getSharedSpawnPos();
-		LoggerBase.logInfo("World Seed: " + WORLD_SEED);
-		LoggerBase.logInfo("World Spawn: " + WORLD_SPAWN);
+		//LoggerBase.logInfo("World Seed: " + WORLD_SEED);
+		//LoggerBase.logInfo("World Spawn: " + WORLD_SPAWN);
 	}
 
 	@SubscribeEvent

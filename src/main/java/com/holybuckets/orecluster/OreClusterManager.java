@@ -1,9 +1,12 @@
 package com.holybuckets.orecluster;
 
+import com.holybuckets.foundation.HolyBucketsUtility.*;
 import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.orecluster.config.AllConfigs;
 import com.mojang.blaze3d.vertex.VertexSorting;
 import net.minecraft.core.Vec3i;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.chunk.ChunkAccess;
 
 //Java Imports
@@ -11,6 +14,7 @@ import net.minecraft.world.level.levelgen.blending.Blender;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -46,6 +50,7 @@ public class OreClusterManager {
     /** Varialbes **/
     public static  RealTimeConfig config;
     public static ConcurrentHashMap<String, HashMap<String, Vec3i>> existingClusters = new ConcurrentHashMap<>();
+    public static final OreClusterCalculator oreClusterCalculator = new OreClusterCalculator(existingClusters);
     public static String lastDeterminedClusterChunkId = "";
 
     /** Constructor **/
@@ -72,11 +77,92 @@ public class OreClusterManager {
 
     /**
      * Batch process that determines the location of clusters in the next n chunks
+     * Chunk cluster determinations are made spirally from the 'start' chunk, up, right, down, left
      * @param n
      */
-    public static void determineClusterLocations(int n) {
+    public static void determineClusterLocations(int batchSize, ChunkAccess start)
+    {
+        //Create a hashset to store chunk ids
+        //ids are of form x,z
+        HashSet<String> chunkIds = new HashSet<>();
+
+        //use a for loop to spiral out from 0,0
+        ChunkPos currentPos = new ChunkPos(start.getPos().x, start.getPos().z);
+        ChunkPos dir = new ChunkPos(0, 1);
+        for( int i = 0; i < config.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL; i++ )
+        {
+            //Add the chunk id to the hashset
+            chunkIds.add( pos.x + "," + pos.z );
+            dir = determineSpiralDirection(currentPos, chunkIds);
+        }
 
     }
+        private static final int[] UP = new int[] {0, 1};
+        private static final int[] RIGHT = new int[] {1, 0};
+        private static final int[] DOWN = new int[] {0, -1};
+        private static final int[] LEFT = new int[] {-1, 0};
+        private static final int[][] DIRECTIONS = new int[][] {UP, RIGHT, DOWN, LEFT};
+
+        private static ChunkPos determineSpiralDirection(ChunkPos pos, HashSet<String> newChunks)
+        {
+            //Determine number of sides not in newChunks
+            int newSides = 0;
+            HashSet<int[]> existingSides = new HashSet<>();
+            for( int[] dir : DIRECTIONS )
+            {
+                ChunkPos nextPos = ChunkUtil.posAdd(pos, dir);
+                if( !newChunks.contains( ChunkUtil.getId( nextPos ) ) )
+                    newSides++;
+                else
+                    existingSides.add( dir );
+
+            }
+
+            //If all sides are new, return the first direction
+            ChunkPos nullPos = new ChunkPos(0, 0);
+
+            if (newSides == 3)
+            {
+                if(existingSides.contains(DOWN))
+                {
+                    return ChunkUtil.posAdd(nullPos, RIGHT);
+                }
+                else if(existingSides.contains(LEFT))
+                {
+                    return ChunkUtil.posAdd(nullPos, DOWN);
+                }
+                else if(existingSides.contains(UP))
+                {
+                    return ChunkUtil.posAdd(nullPos, LEFT);
+                }
+                else if(existingSides.contains(RIGHT))
+                {
+                    return ChunkUtil.posAdd(nullPos, UP);
+                }
+            }
+            else if (newSides == 2)
+            {
+                if(existingSides.contains(DOWN) && existingSides.contains(LEFT))
+                {
+                    return ChunkUtil.posAdd(nullPos, RIGHT);
+                }
+                else if(existingSides.contains(UP) && existingSides.contains(LEFT))
+                {
+                    return ChunkUtil.posAdd(nullPos, DOWN);
+                }
+                else if(existingSides.contains(UP) && existingSides.contains(RIGHT))
+                {
+                    return ChunkUtil.posAdd(nullPos, LEFT);
+                }
+                else if(existingSides.contains(DOWN) && existingSides.contains(RIGHT))
+                {
+                    return ChunkUtil.posAdd(nullPos, UP);
+                }
+            }
+
+            //First chunk only
+            return new ChunkPos(0, 1);
+        }
 
     /**
      * Determines how to handle the newly loaded chunk upon loading

@@ -1,6 +1,7 @@
 package com.holybuckets.foundation;
 
 
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
 
 /**
@@ -12,7 +13,7 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 public class HolyBucketsUtility {
 
 
-    public static class Chunk {
+    public static class ChunkUtil {
 
         public static String getId(ChunkAccess chunk) {
             return chunk.getPos().x + "," + chunk.getPos().z;
@@ -21,6 +22,28 @@ public class HolyBucketsUtility {
         public static String getId(int x, int z) {
             return x + "," + z;
         }
+        
+        public static String getId( ChunkPos pos ) {
+            return pos.x + "," + pos.z;
+        }
+
+        /** Check if chunk is within [-x, x] and [-z, z] **/
+        public static boolean checkInBounds(ChunkAccess chunk, int x, int z) {
+            return chunk.getPos().x >= -x && chunk.getPos().x <= x && chunk.getPos().z >= -z && chunk.getPos().z <= z;
+        }
+
+        public static ChunkPos posAdd(ChunkPos p, int x, int z) {
+            return new ChunkPos(p.x + x, p.z + z);
+        }
+
+        public static ChunkPos posAdd(ChunkPos p1, ChunkPos p2) {
+            return new ChunkPos(p1.x + p2.x, p1.z + p2.z);
+        }
+
+        public static ChunkPos posAdd(ChunkPos p1,  int[] dir ) {
+            return new ChunkPos(p1.x + dir[0], p1.z + dir[1]);
+        }
+
 
         public static String readNBT(ChunkAccess chunk, String property) {
             return "";
