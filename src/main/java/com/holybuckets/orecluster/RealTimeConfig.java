@@ -3,7 +3,12 @@ package com.holybuckets.orecluster;
 //MC Imports
 
 //Forge Imports
+import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.orecluster.config.COreClusters;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.Vec3i;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraftforge.fml.common.Mod;
 
 //Java Imports
@@ -25,19 +30,22 @@ import com.holybuckets.orecluster.config.AllConfigs;
 @Mod.EventBusSubscriber(modid = OreClustersAndRegenMain.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class RealTimeConfig
 {
+    /**
+     *  Base User configured data: defaultConfig and oreConfigs for particular ores
+     */
 
-        OreClusterConfigModel defaultConfig = null;
-        Map<String, OreClusterConfigModel> oreConfigs = null;
+    OreClusterConfigModel defaultConfig = null;
+    Map<String, OreClusterConfigModel> oreConfigs = null;
 
-        /** We will batch checks for which chunks have clusters by the next CHUNK_NORMALIZATION_TOTAL chunks at a time
-         thus the spawnrate is normalized to 256 chunks */
-        public static final Integer CHUNK_NORMALIZATION_TOTAL = COreClusters.DEF_ORE_CLUSTER_SPAWNRATE_AREA;
-        public static final Function<Integer, Double> CHUNK_DISTRIBUTION_STDV_FUNC = (mean ) -> {
-            if( mean < 8 )
-                return mean / 2.0;
-             else
-                return mean / (Math.log(mean) * 3);
-            };
+    /** We will batch checks for which chunks have clusters by the next CHUNK_NORMALIZATION_TOTAL chunks at a time
+     thus the spawnrate is normalized to 256 chunks */
+    public static final Integer CHUNK_NORMALIZATION_TOTAL = COreClusters.DEF_ORE_CLUSTER_SPAWNRATE_AREA;
+    public static final Function<Integer, Double> CHUNK_DISTRIBUTION_STDV_FUNC = (mean ) -> {
+        if( mean < 8 )
+            return mean / 2.0;
+         else
+            return mean / (Math.log(mean) * 3);
+        };
 
     /** AS the player explores the world, we will batch new cluster spawns in
      * sizes of 1024. Each chunk will determine the clusters it owns extenting spirally from worldspawn.
@@ -50,10 +58,16 @@ public class RealTimeConfig
     public static final Integer ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL = 1024;
     public static final Integer ORE_CLUSTER_DTRM_RADIUS_STRATEGY_CHANGE = 256;
 
+    /** World Data **/
+    public static Minecraft mc = Minecraft.getInstance();
+    public static LevelAccessor LEVEL;
+    public static Long WORLD_SEED;
+    public static Vec3i WORLD_SPAWN;
 
 
-        //Using minecraft world seed as default
-        public static Long CLUSTER_SEED = null;
+
+    //Using minecraft world seed as default
+    public static Long CLUSTER_SEED = null;
 
         //Constructor initializes the defaultConfigs and oreConfigs from forge properties
         public RealTimeConfig()
@@ -85,10 +99,27 @@ public class RealTimeConfig
             if( defaultConfig.subSeed != null ) {
                 CLUSTER_SEED = defaultConfig.subSeed;
             } else {
-                CLUSTER_SEED = AllConfigs.WORLD_SEED;
+                CLUSTER_SEED = WORLD_SEED;
             }
 
 
         }
 
+
+        /**
+        * REAL TIME SERVER CONFIG FROM EVENTS
+        *
+         */
+
+        public static void initWorldConfigs( LevelAccessor level )
+        {
+            // Capture the world seed
+            LoggerBase.logInfo("**** WORLD LOAD EVENT ****");
+            LEVEL = level;
+            MinecraftServer server = level.getServer();
+            WORLD_SEED = server.overworld().getSeed();
+            WORLD_SPAWN = server.overworld().getSharedSpawnPos();
+            //LoggerBase.logInfo("World Seed: " + WORLD_SEED);
+            //LoggerBase.logInfo("World Spawn: " + WORLD_SPAWN);
+        }
 }

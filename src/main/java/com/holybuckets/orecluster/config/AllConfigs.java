@@ -32,11 +32,6 @@ import com.holybuckets.orecluster.RealTimeConfig;
 @EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD, modid = OreClustersAndRegenMain.MODID)
 public class AllConfigs {
 
-	/** World Data **/
-	public static Minecraft mc = Minecraft.getInstance();
-	public static Long WORLD_SEED;
-	public static Vec3i WORLD_SPAWN;
-
 	/** Configuration Data **/
 
 	private static final Map<ModConfig.Type, ConfigBase> CONFIGS = new EnumMap<>(ModConfig.Type.class);
@@ -81,15 +76,7 @@ public class AllConfigs {
 			context.registerConfig(pair.getKey(), pair.getValue().specification);
 	}
 
-	public static void initWorldConfigs( MinecraftServer server )
-	{
-		// Capture the world seed
-		LoggerBase.logInfo("**** WORLD LOAD EVENT ****");
-		WORLD_SEED = server.overworld().getSeed();
-		WORLD_SPAWN = server.overworld().getSharedSpawnPos();
-		//LoggerBase.logInfo("World Seed: " + WORLD_SEED);
-		//LoggerBase.logInfo("World Spawn: " + WORLD_SPAWN);
-	}
+
 
 	@SubscribeEvent
 	public static void onLoad(ModConfigEvent.Loading event) {
@@ -99,8 +86,8 @@ public class AllConfigs {
 				config.onLoad();
 
 		OreClusterManager.config = new RealTimeConfig();
-		System.out.println("RealTimeConfig initialized current JSON property: ");
-		System.out.println(AllConfigs.server().cOreClusters.oreClusters.get());
+		LoggerBase.logInfo("RealTimeConfig initialized current JSON property: ");
+		LoggerBase.logInfo(AllConfigs.server().cOreClusters.oreClusters.get().toString());
 	}
 
 	@SubscribeEvent
