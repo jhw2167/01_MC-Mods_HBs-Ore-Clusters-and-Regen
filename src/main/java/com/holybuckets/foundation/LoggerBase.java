@@ -8,8 +8,10 @@ import org.slf4j.Logger;
 
 public class LoggerBase {
 
+
     public static final Logger LOGGER = LogUtils.getLogger();
     public static final String PREFIX = "[" + OreClustersAndRegenMain.NAME + "]";
+    public static final Boolean DEBUG = true;
 
     /*
      *  1. We want to have static methods for logging info, warnings, and errors to server console.
@@ -32,13 +34,17 @@ public class LoggerBase {
         LOGGER.info(buildBaseConsoleMessage(PREFIX, message));
     }
 
-
     public static void logWarning(String string) {
         LOGGER.warn(buildBaseConsoleMessage(PREFIX, string));
     }
 
     public static void logError(String string) {
         LOGGER.error(buildBaseConsoleMessage(PREFIX, string));
+    }
+
+    public static void logDebug(String string) {
+        if( DEBUG )
+            LOGGER.info( buildBaseConsoleMessage(PREFIX, string));
     }
 
 

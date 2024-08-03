@@ -2,21 +2,18 @@ package com.holybuckets.orecluster;
 
 import com.holybuckets.foundation.HolyBucketsUtility.*;
 import com.holybuckets.foundation.LoggerBase;
-import com.holybuckets.orecluster.config.AllConfigs;
-import com.mojang.blaze3d.vertex.VertexSorting;
 import net.minecraft.core.Vec3i;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkStatus;
 
 //Java Imports
-import net.minecraft.world.level.levelgen.blending.Blender;
-import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.Collectors;
 
 /**
  * Class: OreClusterManager
@@ -48,10 +45,16 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OreClusterManager {
 
     /** Varialbes **/
-    public static  RealTimeConfig config;
-    public static ConcurrentHashMap<String, HashMap<String, Vec3i>> existingClusters = new ConcurrentHashMap<>();
+    public static RealTimeConfig config;
+    public static final Random RANDOM = new Random( RealTimeConfig.CLUSTER_SEED );
+
+    public static final ConcurrentHashMap<String, HashMap<String, Vec3i>> existingClusters = new ConcurrentHashMap<>();
     public static final OreClusterCalculator oreClusterCalculator = new OreClusterCalculator(existingClusters);
-    public static String lastDeterminedClusterChunkId = "";
+    public static final ConcurrentLinkedQueue<String> chunksPendingClusterGen = new ConcurrentLinkedQueue<>();
+
+    public static final HashSet<String> exploredChunks = new HashSet<>();
+    public static final ChunkGenerationOrderHandler mainSpiral = new ChunkGenerationOrderHandler(null);
+
 
     /** Constructor **/
     public OreClusterManager() {
@@ -64,105 +67,120 @@ public class OreClusterManager {
         //1. Starting at worldspawn, read chunk NBT data of all existing chunks to determine if they own a cluster
         //2. If the chunk owns a cluster, add it to the existingClusters map
 
-        Vec3i worldSpawn = AllConfigs.WORLD_SPAWN;
+        Vec3i worldSpawn = RealTimeConfig.WORLD_SPAWN;
 
     }
 
     /**
      * Handle newly loaded chunk
+     *
+     *  1. If this chunkId exists in existingClusters, check regen
+     *  2. If the chunkId exists in exploredChunks, ignore
+     *  3. If the chunkId does not exist in exploredChunks, queue a batch
+     *
      */
-    public static void handleClustersForChunk( ChunkAccess c ) {
-        //If else series
+    public static void handleClustersForChunk( ChunkAccess c )
+    {
+        String chunkId = ChunkUtil.getId(c);
+        if( existingClusters.containsKey(chunkId) )
+        {
+            LoggerBase.logDebug("Chunk " + chunkId + " contains a cluster");
+            //Check regen
+        }
+        else if( exploredChunks.contains(chunkId) )
+        {
+            LoggerBase.logDebug("Chunk " + chunkId + " has already been explored");
+        }
+        else
+        {
+            LoggerBase.logDebug("Chunk " + chunkId + " has not been explored");
+            handlePrepareNewChunksForClusters(config.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL, c);
+        }
+
+    }
+
+    /**
+     * Batch process that determines the location of clusters in the next n chunks
+     * @param batchSize
+     * @param start
+     */
+
+    private static void handlePrepareNewChunksForClusters(int batchSize, ChunkAccess start)
+    {
+        //1. Determine the location of clusters in the next n chunks
+        HashSet<String> chunkIds = getBatchedChunkList(batchSize, start);
+        LoggerBase.logDebug("Queued " + chunkIds.size() + " chunks for cluster determination");
+
+        //2. Produce array of chunkAccess objects from chunkIds
+        List<ChunkAccess> chunks = chunkIds.stream().map( (id) -> getChunkAccess(id) )
+        .collect(Collectors.toList());
+
+        //3. Determine the clusters locations
+        HashMap<String, HashMap<String, Vec3i>> clusters;
+        clusters = oreClusterCalculator.calculateClusterLocations(chunks, RANDOM);
+
+        //4. Add any loaded cluster to queue to generate ores now, stream the HashMap
+        clusters.entrySet().stream().forEach( (entry) -> {
+            String chunkId = entry.getKey();
+            if( getChunkAccess(chunkId).getStatus().equals(ChunkStatus.FULL) )  //ASSUMING THIS IS VALID
+                chunksPendingClusterGen.add(chunkId);
+            existingClusters.put(chunkId, entry.getValue());
+        });
+
     }
 
     /**
      * Batch process that determines the location of clusters in the next n chunks
      * Chunk cluster determinations are made spirally from the 'start' chunk, up, right, down, left
-     * @param n
      */
-    public static void determineClusterLocations(int batchSize, ChunkAccess start)
+    private static HashSet<String> getBatchedChunkList(int batchSize, ChunkAccess start)
     {
         //Create a hashset to store chunk ids
         //ids are of form x,z
         HashSet<String> chunkIds = new HashSet<>();
+        ChunkGenerationOrderHandler spiralHandler = mainSpiral;
+        if( exploredChunks.size() < Math.pow(config.ORE_CLUSTER_DTRM_RADIUS_STRATEGY_CHANGE, 2) ) {
+            spiralHandler = new ChunkGenerationOrderHandler(start.getPos());
+        }
 
-        //use a for loop to spiral out from 0,0
-        ChunkPos currentPos = new ChunkPos(start.getPos().x, start.getPos().z);
-        ChunkPos dir = new ChunkPos(0, 1);
-        for( int i = 0; i < config.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL; i++ )
+        //use a for loop to spiral out from center of new batch
+        for( int i = 0; i < batchSize; i++ )
         {
-            //Add the chunk id to the hashset
-            chunkIds.add( pos.x + "," + pos.z );
-            dir = determineSpiralDirection(currentPos, chunkIds);
+            ChunkPos next = spiralHandler.getNextSpiralChunk();
+            if (exploredChunks.contains(ChunkUtil.getId(next)))
+                continue;
+            chunkIds.add(ChunkUtil.getId(next));
+            exploredChunks.add(ChunkUtil.getId(next));
+        }
+
+        return chunkIds;
+    }
+
+
+    /**
+     * Handles creation of each type of ore cluster within each chunk
+     */
+
+    private static void handleClusterGeneration()
+    {
+        while( !chunksPendingClusterGen.isEmpty() )
+        {
+            String chunkId = chunksPendingClusterGen.poll();
+            ChunkAccess chunk = getChunkAccess(chunkId);
+            if( chunk == null )
+                continue;
+            LoggerBase.logDebug("Generating clusters for chunk: " + chunkId);
+            HashMap<String, Vec3i> clusters = existingClusters.get(chunkId);
+            clusters.entrySet().stream().forEach( (entry) -> {
+                String oreType = entry.getKey();
+                //Set source of cluster
+                //Generate cluster
+            });
         }
 
     }
-        private static final int[] UP = new int[] {0, 1};
-        private static final int[] RIGHT = new int[] {1, 0};
-        private static final int[] DOWN = new int[] {0, -1};
-        private static final int[] LEFT = new int[] {-1, 0};
-        private static final int[][] DIRECTIONS = new int[][] {UP, RIGHT, DOWN, LEFT};
 
-        private static ChunkPos determineSpiralDirection(ChunkPos pos, HashSet<String> newChunks)
-        {
-            //Determine number of sides not in newChunks
-            int newSides = 0;
-            HashSet<int[]> existingSides = new HashSet<>();
-            for( int[] dir : DIRECTIONS )
-            {
-                ChunkPos nextPos = ChunkUtil.posAdd(pos, dir);
-                if( !newChunks.contains( ChunkUtil.getId( nextPos ) ) )
-                    newSides++;
-                else
-                    existingSides.add( dir );
 
-            }
-
-            //If all sides are new, return the first direction
-            ChunkPos nullPos = new ChunkPos(0, 0);
-
-            if (newSides == 3)
-            {
-                if(existingSides.contains(DOWN))
-                {
-                    return ChunkUtil.posAdd(nullPos, RIGHT);
-                }
-                else if(existingSides.contains(LEFT))
-                {
-                    return ChunkUtil.posAdd(nullPos, DOWN);
-                }
-                else if(existingSides.contains(UP))
-                {
-                    return ChunkUtil.posAdd(nullPos, LEFT);
-                }
-                else if(existingSides.contains(RIGHT))
-                {
-                    return ChunkUtil.posAdd(nullPos, UP);
-                }
-            }
-            else if (newSides == 2)
-            {
-                if(existingSides.contains(DOWN) && existingSides.contains(LEFT))
-                {
-                    return ChunkUtil.posAdd(nullPos, RIGHT);
-                }
-                else if(existingSides.contains(UP) && existingSides.contains(LEFT))
-                {
-                    return ChunkUtil.posAdd(nullPos, DOWN);
-                }
-                else if(existingSides.contains(UP) && existingSides.contains(RIGHT))
-                {
-                    return ChunkUtil.posAdd(nullPos, LEFT);
-                }
-                else if(existingSides.contains(DOWN) && existingSides.contains(RIGHT))
-                {
-                    return ChunkUtil.posAdd(nullPos, UP);
-                }
-            }
-
-            //First chunk only
-            return new ChunkPos(0, 1);
-        }
 
     /**
      * Determines how to handle the newly loaded chunk upon loading
@@ -170,7 +188,7 @@ public class OreClusterManager {
      */
     public static void onChunkLoad(ChunkAccess chunk)
     {
-        LoggerBase.logInfo("Chunk loaded: " + chunk.getPos());
+        LoggerBase.logDebug("Chunk loaded: " + chunk.getPos());
         handleClustersForChunk( chunk );
     }
 
@@ -179,4 +197,70 @@ public class OreClusterManager {
     public static void onChunkUnload(ChunkAccess chunk) {
 
     }
+
+    /**
+     *              UTILITY SECTION
+     */
+
+    public static final ServerLevel overworld = RealTimeConfig.LEVEL.getServer().overworld();
+    private static ChunkAccess getChunkAccess(String id) {
+        return overworld.getChunk(ChunkUtil.getPos(id).x, ChunkUtil.getPos(id).z);
+    }
+
+    private static class ChunkGenerationOrderHandler
+    {
+
+        public static final int[] UP = new int[] {0, 1};
+        public static final int[] RIGHT = new int[] {1, 0};
+        public static final int[] DOWN = new int[] {0, -1};
+        public static final int[] LEFT = new int[] {-1, 0};
+        public static final int[][] DIRECTIONS = new int[][] {UP, RIGHT, DOWN, LEFT};
+
+        public ChunkPos currentPos;
+        public HashSet<ChunkPos> sequence;
+        public int count;
+        public int dirCount;
+        public int[] dir;
+
+        public ChunkGenerationOrderHandler(ChunkPos start)
+        {
+        if( start == null)
+            this.currentPos = new ChunkPos(0, 0);
+        else
+            this.currentPos = start;
+            sequence = new HashSet<>();
+            count = 0;
+        }
+
+        public ChunkPos getNextSpiralChunk()
+        {
+            if( count == 0 ) {
+                count++;
+                return currentPos;
+            }
+            else {
+                currentPos = ChunkUtil.posAdd(currentPos, dir);
+                sequence.add(currentPos);
+                dirCount++;
+                if( dirCount == count)
+                {
+                    dir = getNextDirection();
+                    dirCount = 0;
+                    if( dir == DOWN )
+                        count++;
+                }
+
+                return currentPos;
+            }
+        }
+
+        public int[] getNextDirection()
+        {
+            int index = Arrays.stream(DIRECTIONS).toList().indexOf(dir);
+            return DIRECTIONS[(index + 1) % DIRECTIONS.length];
+        }
+
+    }
+
+
 }

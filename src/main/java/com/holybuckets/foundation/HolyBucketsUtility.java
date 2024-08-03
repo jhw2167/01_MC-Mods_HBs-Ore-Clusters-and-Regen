@@ -22,9 +22,14 @@ public class HolyBucketsUtility {
         public static String getId(int x, int z) {
             return x + "," + z;
         }
-        
+
         public static String getId( ChunkPos pos ) {
             return pos.x + "," + pos.z;
+        }
+
+        public static ChunkPos getPos(String id) {
+            String[] parts = id.split(",");
+            return new ChunkPos(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
         }
 
         /** Check if chunk is within [-x, x] and [-z, z] **/

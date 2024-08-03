@@ -20,8 +20,8 @@ public class OreClusterEventHandler {
     //Subscribe to chunk load event
     @SubscribeEvent
     public static void onChunkLoad(final ChunkEvent.Load event) {
-        if( AllConfigs.WORLD_SEED == null )
-            AllConfigs.initWorldConfigs( event.getLevel().getServer() );
+        if( RealTimeConfig.WORLD_SEED == null )
+            RealTimeConfig.initWorldConfigs( event.getLevel() );
 
         OreClusterManager.onChunkLoad( event.getChunk() );
     }

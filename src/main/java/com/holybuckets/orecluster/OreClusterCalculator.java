@@ -75,13 +75,10 @@ public class OreClusterCalculator {
         this.existingClusters = existingClusters;
     }
 
-    public HashMap<String, HashMap<String, Vec3i>> calculateClusterLocations(List<ChunkAccess> chunks)
+    public HashMap<String, HashMap<String, Vec3i>> calculateClusterLocations(List<ChunkAccess> chunks, Random rng)
     {
         final RealTimeConfig C = OreClusterManager.config;
         final int MAX_CLUSTERS = RealTimeConfig.CHUNK_NORMALIZATION_TOTAL;
-
-        // Initialize random number generator with world seed and sub-seed
-        Random rng = new Random( RealTimeConfig.CLUSTER_SEED );
 
         // Get list of all ore cluster types
         Map<String, OreClusterConfigModel> clusters = C.oreConfigs;
