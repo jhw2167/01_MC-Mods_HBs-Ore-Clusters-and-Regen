@@ -48,11 +48,14 @@ public class OreClusterManager {
     public static RealTimeConfig config;
     public static final Random RANDOM = new Random( RealTimeConfig.CLUSTER_SEED );
 
+    //<chunkId, <oreType, Vec3i>>
     public static final ConcurrentHashMap<String, HashMap<String, Vec3i>> existingClusters = new ConcurrentHashMap<>();
+    //<oreType, <chunkId>>
+    public static final ConcurrentHashMap<String, HashSet<String>> existingClustersByType = new ConcurrentHashMap<>();
     public static final OreClusterCalculator oreClusterCalculator = new OreClusterCalculator(existingClusters);
     public static final ConcurrentLinkedQueue<String> chunksPendingClusterGen = new ConcurrentLinkedQueue<>();
 
-    public static final HashSet<String> exploredChunks = new HashSet<>();
+    public static final LinkedHashSet<String> exploredChunks = new LinkedHashSet<>();
     public static final ChunkGenerationOrderHandler mainSpiral = new ChunkGenerationOrderHandler(null);
 
 
@@ -122,9 +125,17 @@ public class OreClusterManager {
         //4. Add any loaded cluster to queue to generate ores now, stream the HashMap
         clusters.entrySet().stream().forEach( (entry) -> {
             String chunkId = entry.getKey();
-            if( getChunkAccess(chunkId).getStatus().equals(ChunkStatus.FULL) )  //ASSUMING THIS IS VALID
+            //Assuming this is valid way to check for loaded chunks
+            if( getChunkAccess(chunkId).getStatus().equals(ChunkStatus.FULL) )
                 chunksPendingClusterGen.add(chunkId);
+
             existingClusters.put(chunkId, entry.getValue());
+
+            LinkedHashSet<String> oreTypesInThisCluster = entry.getValue().keySet().stream().collect(Collectors.toCollection(LinkedHashSet::new));
+            existingClustersByType.forEach( (type, set) -> {
+                if( oreTypesInThisCluster.contains(type) )
+                    set.add(chunkId);
+            });
         });
 
     }
@@ -205,6 +216,34 @@ public class OreClusterManager {
     public static final ServerLevel overworld = RealTimeConfig.LEVEL.getServer().overworld();
     private static ChunkAccess getChunkAccess(String id) {
         return overworld.getChunk(ChunkUtil.getPos(id).x, ChunkUtil.getPos(id).z);
+    }
+
+    /**
+     * If the main spiral is still being explored (within 256x256 chunks of worldspawn)
+     * then we return all explored chunks, otherwise we generate a new spiral with the requested area
+     * at the requested chunk
+     * @param start
+     * @param spiralArea
+     * @return
+     */
+    public static LinkedHashSet<String> getRecentChunkIds( ChunkPos start, int spiralArea )
+    {
+        if( exploredChunks.size() < Math.pow(config.ORE_CLUSTER_DTRM_RADIUS_STRATEGY_CHANGE, 2) ) {
+            return exploredChunks;
+        }
+        else
+        {
+            //Get the last chunkId processed
+            LinkedHashSet<String> chunkIds = new LinkedHashSet<>();
+            ChunkGenerationOrderHandler spiralHandler = new ChunkGenerationOrderHandler( start );
+            for( int i = 0; i < spiralArea; i++ )
+            {
+                ChunkPos next = spiralHandler.getNextSpiralChunk();
+                chunkIds.add(ChunkUtil.getId(next));
+            }
+            return chunkIds;
+        }
+
     }
 
     private static class ChunkGenerationOrderHandler

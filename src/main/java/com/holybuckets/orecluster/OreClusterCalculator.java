@@ -2,12 +2,17 @@ package com.holybuckets.orecluster;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.*;
+import java.util.stream.Collectors;
 
+import com.holybuckets.foundation.LoggerBase;
 import net.minecraft.core.Vec3i;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
 
 import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
 import com.holybuckets.foundation.HolyBucketsUtility.*;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.logging.Log;
 
 public class OreClusterCalculator {
 
@@ -78,14 +83,10 @@ public class OreClusterCalculator {
     public HashMap<String, HashMap<String, Vec3i>> calculateClusterLocations(List<ChunkAccess> chunks, Random rng)
     {
         final RealTimeConfig C = OreClusterManager.config;
-        final int MAX_CLUSTERS = RealTimeConfig.CHUNK_NORMALIZATION_TOTAL;
 
         // Get list of all ore cluster types
-        Map<String, OreClusterConfigModel> clusters = C.oreConfigs;
-        List<String> oreClusterTypes = new ArrayList<>(clusters.keySet());
-
-        //Randomize the order of the oreClusterTypes
-        Collections.shuffle(oreClusterTypes, rng);
+        Map<String, OreClusterConfigModel> clusterConfigs = C.oreConfigs;
+        List<String> oreClusterTypes = new ArrayList<>(clusterConfigs.keySet());
 
         HashMap<String, Integer> clusterCounts = new HashMap<>();
 
@@ -93,7 +94,7 @@ public class OreClusterCalculator {
         // Use a normal distribution to determine the number of clusters for each type
         for (String oreType : oreClusterTypes)
         {
-            int normalizedSpawnRate = clusters.get(oreType).oreClusterSpawnRate;
+            int normalizedSpawnRate = clusterConfigs.get(oreType).oreClusterSpawnRate;
             double sigma = RealTimeConfig.CHUNK_DISTRIBUTION_STDV_FUNC.apply(normalizedSpawnRate);
             int numClusters = (int) Math.round(rng.nextGaussian() * sigma + normalizedSpawnRate);
 
@@ -103,85 +104,251 @@ public class OreClusterCalculator {
         /** Add all clusters, distributing one cluster type at a time
         *
          *  Summarize the below implementation
-         *  - Create a hashmap to store the cluster positions
-         *  - Create a hashmap to store the unused chunks by ore type - we want it to be O(1) to see which chunks have no clusters
+         *  1. Get list of ids for recently (previously) loaded chunks, we need to check which have clusters so we don't place new ones too close!
+         *  2. Build 2D Array of chunk positions that serves as a map identifying where current and previous clusters are
+         *  3. Determine distribution of clusters as aggregate group over all chunks
+         *      - e.g. 47 clusters over 256 chunks ~ 256/47 = 5.4 chunks per each cluster
+         *      - Gaussian distribute the clusters between prevClusterPosition + ~N(5.4, minSpacing/3)
          *
-         *  - Iterate through the oreClusterTypes setting one cluster at a time 1 Diamond, 1 Gold, 1 Iron... etc
-         *  - For each oreType, get a random chunk from the unusedChunksByOreType
-         *  - Remove all chunks within minSpacing of this chunk (e.g. we want no other iron clusters to spawn within 3 chunks of this one)
-         *  - Add the cluster to the chunk, positions or cluster within chunk defined later
-         *
+         *   4. Using the Map of aggregate clusters, pick chunks for each cluster type
          */
 
-        // Maps <ChunkId, <OreType, Vec3i>>
-        HashMap<String, HashMap<String, Vec3i>> clusterPositions = new HashMap<>();
-        HashMap<String, LinkedHashSet<Integer>> unusedChunksByOreType = new HashMap<>();
-        HashMap<String, Integer> chunkIdToChunkReferenceIndex = new HashMap<>();
+         //1. Get recently loaded chunks
+         String startChunk = ChunkUtil.getId( chunks.get(0) );
+         int minSpacing = C.defaultConfig.minChunksBetweenOreClusters;
 
-        for (String oreType : oreClusterTypes)
-        {
-            LinkedHashSet<Integer> arr = new LinkedHashSet<>();
-            for (int i = 0; i < chunks.size(); i++) {
-                arr.add(i);
-                chunkIdToChunkReferenceIndex.put(ChunkUtil.getId(chunks.get(i)), i);
-            }
-            unusedChunksByOreType.put(oreType, arr );
-        }
+        /** If the spacing is large, there will be fewer cluster chunks, so we can check all against
+        *   all existing clusters instead of calculating the area around each chunk
+        *   If the spacing is small, we will have many cluster chunks, better to check the radius
+         */
+         final int MIN_SPACING_VALIDATOR_CUTOFF_RADIUS = Math.min( existingClusters.size(), (int) Math.pow(minSpacing, 2) );
+         LinkedHashSet<String> chunksInRadiusOfStart = getChunkIdsInRadius(startChunk,
+          Math.min( minSpacing, MIN_SPACING_VALIDATOR_CUTOFF_RADIUS ));
+         String closestToCenter = chunksInRadiusOfStart.stream().min(Comparator.comparingInt( c ->
+             Math.round( ChunkUtil.chunkDist( c, "0,0" ) )
+         )).get();
 
-        //Add all clusters, distributing one cluster type at a time
-        List<String> oreClusterTypesCopy = new ArrayList<>(oreClusterTypes);
-        while( oreClusterTypesCopy.size() > 0 )
+         //determine area needed for spiral generation of recent chunks
+         int batchDimensions = (int) Math.ceil( Math.sqrt( chunks.size() ) );
+         int spiralRadius = batchDimensions + MIN_SPACING_VALIDATOR_CUTOFF_RADIUS;
+         int spiralArea = (int) Math.pow( spiralRadius, 2 );
+         LinkedHashSet<String> recentlyLoadedChunks =
+            OreClusterManager.getRecentChunkIds( chunks.get(0).getPos(), spiralArea );
+
+         //2. Build 2d Array of chunk positions Row<Column>
+        int minX = recentlyLoadedChunks.stream().mapToInt( c -> ChunkUtil.getPos(c).x ).min().getAsInt();
+        int minZ = recentlyLoadedChunks.stream().mapToInt( c -> ChunkUtil.getPos(c).z ).min().getAsInt();
+        int maxX = recentlyLoadedChunks.stream().mapToInt( c -> ChunkUtil.getPos(c).x ).max().getAsInt();
+        int maxZ = recentlyLoadedChunks.stream().mapToInt( c -> ChunkUtil.getPos(c).z ).max().getAsInt();
+
+
+        //3. Determine distribution of clusters as aggregate group over all chunks
+        float totalClusters = clusterCounts.values().stream().mapToInt( i -> i ).sum();
+        float chunksPerCluster = chunks.size() / totalClusters;
+        float stdDev = Math.max( (chunksPerCluster - minSpacing) / 3, 0);
+
+        List<String> chunksToBePopulated = new LinkedList<>();  //may contain duplicates
+        LinkedHashSet<String> localExistingClusters = existingClusters.keySet().stream().
+            collect(Collectors.toCollection(LinkedHashSet::new));
+
+        //Filter existing clusters by only clusters within radius of minX, minZ, maxX, maxZ
+        localExistingClusters.removeIf( c ->
+            ChunkUtil.getPos(c).x < minX ||
+            ChunkUtil.getPos(c).x > maxX ||
+            ChunkUtil.getPos(c).z < minZ ||
+            ChunkUtil.getPos(c).z > maxZ );
+
+        int chunkIndex = 0;
+        while( chunkIndex < chunks.size() )
         {
-            for (String oreType : oreClusterTypes)
+            chunkIndex = (int) Math.round(rng.nextGaussian() * stdDev + chunksPerCluster) + chunkIndex;
+            boolean openSpaceForCluster = false;
+            while ( !openSpaceForCluster && chunkIndex < chunks.size() )
             {
-                //Decrease cluster count
-                clusterCounts.put(oreType, clusterCounts.get(oreType) - 1);
-
-                if (clusterCounts.get(oreType) == -1)
+                openSpaceForCluster = true;
+                /**
+                 * If the radius within we are placing clusters is reasonably small, we can
+                 * check each space within the radius to see if it is occupied by a cluster
+                 *  ELSE
+                 * The radius is too large and we will check all against all existing clusters instead
+                 */
+                if( minSpacing < MIN_SPACING_VALIDATOR_CUTOFF_RADIUS )
                 {
-                    oreClusterTypesCopy.remove(oreType);
-                    continue;
+                    String chunkId = ChunkUtil.getId(chunks.get(chunkIndex++));
+                    //Now we found a chunk where we randomly want to place a cluster, check 2D array to check validity
+                    int x = ChunkUtil.getPos(chunkId).x - minX;
+                    int z = ChunkUtil.getPos(chunkId).z - minZ;
+                    LinkedHashSet<String> nearbyChunks = getChunkIdsInRadius(chunkId, minSpacing);
+                    for( String nearbyChunk : nearbyChunks ) {
+                        if( localExistingClusters.contains(nearbyChunk) ) {
+                            openSpaceForCluster = false;
+                            break;
+                        }
+                    }
                 }
                 else
                 {
-                   LinkedHashSet<Integer> unusedChunks = unusedChunksByOreType.get(oreType);
-
-                     if( unusedChunks.size() == 0 ) {
-                         continue;
-                     }
-
-                    //Get a random remaining chunk
-                    int chunkIdReferenceIndex = rng.nextInt(unusedChunks.size());
-                    Integer chunkIndex = unusedChunks.stream().skip(chunkIdReferenceIndex).findFirst().get();
-                    int minSpacing = C.oreConfigs.get(oreType).minChunksBetweenOreClusters;
-
-                    //Remove all chunks within minSpacing of this chunk
-                    int j = -1*minSpacing;
-                    while (j < C.oreConfigs.get(oreType).minChunksBetweenOreClusters) {
-                        unusedChunks.remove(chunkIndex + j);
-                        j++;
-                    }
-
-                    //Add the cluster to the chunk, positions or cluster within chunk defined later
-                    ChunkAccess chunk = chunks.stream().skip(chunkIndex).findFirst().get();
-                    HashMap<String, Vec3i> cluster = clusterPositions.get(ChunkUtil.getId(chunk));
-                    if( cluster != null )
-                    {
-                        cluster.put( oreType, null );
-                    }
-                    else
-                    {
-                        cluster = new HashMap<>();
-                        cluster.put( oreType, null );
-                        clusterPositions.put( ChunkUtil.getId(chunk), cluster );
+                    String chunkId = ChunkUtil.getId(chunks.get(chunkIndex++));
+                    if( localExistingClusters.stream().anyMatch( c ->
+                        ChunkUtil.chunkDist( c, chunkId ) < minSpacing
+                    )) {
+                        openSpaceForCluster = false;
                     }
 
                 }
+
             }
+            //FOUND A VALID CHUNK, PLACE A CLUSTER
+            if( chunkIndex < chunks.size() )
+            {
+                String chunkId = ChunkUtil.getId(chunks.get(chunkIndex));
+                chunksToBePopulated.add(chunkId);
+                localExistingClusters.add(chunkId);
+            }
+
         }
-        //END WHILE
+        //END cluster placing algorithm
+        LoggerBase.logDebug("Cluster Placement Algorithm Complete");
+        LoggerBase.logDebug(chunksToBePopulated.toString());
+
+
+        //4. Using the Map of aggregate clusters, pick chunks for each cluster type
+
+        // Maps <ChunkId, <OreType, Vec3i>>
+        HashMap<String, HashMap<String, Vec3i>> clusterPositions = new HashMap<>();
+
+        //Order OreCluster types by spawnRate ascending
+        oreClusterTypes.sort(Comparator.comparingInt( o -> clusterConfigs.get(o).oreClusterSpawnRate ));
+        LinkedHashSet<String> selectedChunks = new LinkedHashSet<>();
+
+        for( String oreType : oreClusterTypes )
+        {
+            OreClusterConfigModel config = clusterConfigs.get(oreType);
+            HashSet<String> allChunksWithClusterType = OreClusterManager.existingClustersByType.get(oreType);
+            allChunksWithClusterType.removeIf( c -> !localExistingClusters.contains(c) );
+            final int MIN_SPACING_SPECIFIC_CLUSTER_VALIDATOR_CUTOFF_RADIUS = Math.min( allChunksWithClusterType.size(),
+                (int) Math.pow(config.minChunksBetweenOreClusters, 2) );
+
+            int totalSpecificClusters = clusterCounts.get(oreType);
+            int clustersPlaced = 0;
+            int specificMinSpacing = config.minChunksBetweenOreClusters;
+
+            //removes all chunks that were selected by previous ores, removes item from hashset so duplicates are left
+            Iterator<String> it = chunksToBePopulated.iterator();
+            while( it.hasNext() ) {
+                String chunkId = it.next();
+                if( selectedChunks.remove(chunkId) ) {
+                    it.remove();
+                }
+            }
+            LinkedList<String> chunksToBePopulatedSpecificCopy = new LinkedList<>(chunksToBePopulated);
+            float incrementByBuckets = chunksToBePopulatedSpecificCopy.size() / totalSpecificClusters;
+            boolean validCluster = false;
+            int nextIndex=0;
+            int subIndex = 0;    //properly tracks next chunksId to be used
+            int nextIndexBalancer = 0;  //balances the jump of the next index considering how many cluster conflicts we encountered
+            int failedChunksCount = 0;
+
+           while( clustersPlaced < totalSpecificClusters )
+           {
+               clustersPlaced++;
+               float gaussianIncrementFactor = (float) rng.nextGaussian(incrementByBuckets, incrementByBuckets/6);
+               nextIndex = (int) (clustersPlaced*gaussianIncrementFactor + nextIndexBalancer );
+               nextIndex = Math.max(subIndex+1, nextIndex);
+               failedChunksCount = 0;
+
+               while( !validCluster && !chunksToBePopulatedSpecificCopy.isEmpty() )
+               {
+                   validCluster = true;
+                   String candidateChunk = null;
+                   while( subIndex < nextIndex ) {
+                          candidateChunk = chunksToBePopulatedSpecificCopy.removeFirst();
+                          subIndex++;
+                   }
+
+                   if( specificMinSpacing < MIN_SPACING_SPECIFIC_CLUSTER_VALIDATOR_CUTOFF_RADIUS )
+                    {
+                        LinkedHashSet<String> nearbyChunks = getChunkIdsInRadius(candidateChunk, specificMinSpacing);
+                        for( String nearbyChunk : nearbyChunks )
+                        {
+                            if( allChunksWithClusterType.contains(nearbyChunk) )
+                            {
+                                validCluster = false;
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        final String id = candidateChunk;
+                        if( allChunksWithClusterType.stream().anyMatch( c ->
+                            ChunkUtil.chunkDist( c, id ) < specificMinSpacing))
+                        {
+                            validCluster = false;
+                        }
+                    }
+
+                    if( !validCluster ) {
+                        failedChunksCount++;
+                        nextIndex++;
+                    }
+
+               }
+               //END WHILE FIND VALID CHUNK FOR GIVEN CLUSTER
+               nextIndexBalancer += failedChunksCount;
+               if( failedChunksCount == 0)
+                    nextIndexBalancer = 0; //Cluster was valid on first attempt, reset balancer
+
+                //PLACE THE CLUSTER
+                if( validCluster )
+                {
+                    String chunkId = chunksToBePopulated.get(nextIndex);
+                    selectedChunks.add(chunkId);
+                    if( clusterPositions.containsKey(chunkId) ) {
+                        clusterPositions.get(chunkId).put(oreType, null);
+                    }
+                    else
+                    {
+                        HashMap<String, Vec3i> clusterMap = new HashMap<>();
+                        clusterMap.put( chunksToBePopulated.get(nextIndex), null );
+                        clusterPositions.put(oreType, clusterMap);
+                    }
+                }
+
+           }
+            //END WHILE PLACE ALL CLUSTERS OF THIS TYPE
+
+
+
+
+        }
+        //END FOR EACH ORE TYPE
 
 
         return clusterPositions;
     }
+
+
+    /**
+     * Get a list of chunk ids within a given radius of a chunk - radius of 0 is itself
+      * @param chunkId
+     * @param radius
+     * @return
+     */
+    private LinkedHashSet<String> getChunkIdsInRadius( String chunkId, int radius )
+    {
+        LinkedHashSet<String> chunks = new LinkedHashSet<>();
+        ChunkPos center = ChunkUtil.getPos(chunkId);
+        for( int x = center.x - radius; x <= center.x + radius; x++ )
+        {
+            for( int z = center.z - radius; z <= center.z + radius; z++ )
+            {
+                chunks.add( ChunkUtil.getId(x, z) );
+            }
+        }
+        return chunks;
+    }
+
 }
+//END CLASS
+

@@ -37,6 +37,19 @@ public class HolyBucketsUtility {
             return chunk.getPos().x >= -x && chunk.getPos().x <= x && chunk.getPos().z >= -z && chunk.getPos().z <= z;
         }
 
+        public static int chunkDistSquared(ChunkPos p1, ChunkPos p2) {
+            return (p1.x - p2.x) * (p1.x - p2.x) + (p1.z - p2.z) * (p1.z - p2.z);
+        }
+
+        public static float chunkDist(ChunkPos p1, ChunkPos p2) {
+            return (float) Math.sqrt(chunkDistSquared(p1, p2));
+        }
+
+        //override with string Id args
+        public static float chunkDist(String id1, String id2) {
+            return chunkDist(getPos(id1), getPos(id2));
+        }
+
         public static ChunkPos posAdd(ChunkPos p, int x, int z) {
             return new ChunkPos(p.x + x, p.z + z);
         }
