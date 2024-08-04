@@ -2,7 +2,9 @@ package com.holybuckets.orecluster;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.orecluster.config.AllConfigs;
+import com.holybuckets.orecluster.core.OreClusterManager;
 import com.mojang.logging.LogUtils;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -59,6 +61,7 @@ public class OreClustersAndRegenMain
 
     public OreClustersAndRegenMain() {
         initMod();
+        LoggerBase.logInit( this.getClass().getName() );
     }
 
     public static void initMod() {
@@ -120,6 +123,7 @@ public class OreClustersAndRegenMain
         // FIXME: this is not thread-safe
         Mods.CURIOS.executeIfInstalled(() -> () -> Curios.init(modEventBus, forgeEventBus));
          */
+
     }
 
     /*

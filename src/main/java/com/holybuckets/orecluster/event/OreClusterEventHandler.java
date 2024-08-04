@@ -1,20 +1,25 @@
-package com.holybuckets.orecluster;
+package com.holybuckets.orecluster.event;
 
 import com.holybuckets.foundation.LoggerBase;
-import com.holybuckets.orecluster.config.AllConfigs;
-import com.mojang.logging.LogUtils;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.telemetry.events.WorldLoadEvent;
-import net.minecraft.server.level.ServerLevel;
+import com.holybuckets.orecluster.core.OreClusterManager;
+import com.holybuckets.orecluster.OreClustersAndRegenMain;
+import com.holybuckets.orecluster.RealTimeConfig;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
-import java.util.logging.Level;
-
 
 @EventBusSubscriber(bus = EventBusSubscriber.Bus.FORGE, modid = OreClustersAndRegenMain.MODID)
 public class OreClusterEventHandler {
+
+
+    @SubscribeEvent
+    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        // Handle the event
+        RealTimeConfig.PLAYER_LOADED = true;
+        LoggerBase.logDebug("Player Logged In");
+    }
 
 
     //Subscribe to chunk load event

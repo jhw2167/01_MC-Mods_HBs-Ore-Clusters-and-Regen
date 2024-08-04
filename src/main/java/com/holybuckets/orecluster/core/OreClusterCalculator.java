@@ -1,18 +1,18 @@
-package com.holybuckets.orecluster;
+package com.holybuckets.orecluster.core;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import com.holybuckets.foundation.LoggerBase;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
 
 import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
 import com.holybuckets.foundation.HolyBucketsUtility.*;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.logging.Log;
+import com.holybuckets.foundation.LoggerBase;
+import com.holybuckets.orecluster.RealTimeConfig;
+import com.holybuckets.orecluster.RealTimeConfig;
 
 public class OreClusterCalculator {
 
@@ -85,10 +85,12 @@ public class OreClusterCalculator {
         final RealTimeConfig C = OreClusterManager.config;
 
         // Get list of all ore cluster types
-        Map<String, OreClusterConfigModel> clusterConfigs = C.oreConfigs;
+        Map<String, OreClusterConfigModel> clusterConfigs = C.getOreConfigs();
         List<String> oreClusterTypes = new ArrayList<>(clusterConfigs.keySet());
 
         HashMap<String, Integer> clusterCounts = new HashMap<>();
+        LoggerBase.logDebug("1. Obtained cluster configs for ores: ");
+        LoggerBase.logDebug(clusterConfigs.toString());
 
         //Determine the expected total for each cluster type for this MAX_CLUSTERS batch
         // Use a normal distribution to determine the number of clusters for each type
@@ -100,6 +102,8 @@ public class OreClusterCalculator {
 
             clusterCounts.put(oreType, numClusters);
         }
+        LoggerBase.logDebug("2. Determined cluster counts for each ore type: ");
+        LoggerBase.logDebug(clusterCounts.toString());
 
         /** Add all clusters, distributing one cluster type at a time
         *
@@ -115,7 +119,7 @@ public class OreClusterCalculator {
 
          //1. Get recently loaded chunks
          String startChunk = ChunkUtil.getId( chunks.get(0) );
-         int minSpacing = C.defaultConfig.minChunksBetweenOreClusters;
+         int minSpacing = C.getDefaultConfig().minChunksBetweenOreClusters;
 
         /** If the spacing is large, there will be fewer cluster chunks, so we can check all against
         *   all existing clusters instead of calculating the area around each chunk
