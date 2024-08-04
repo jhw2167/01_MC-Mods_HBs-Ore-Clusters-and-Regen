@@ -42,8 +42,8 @@ public class COreClusters extends ConfigBase {
     public final ConfigFloat defaultOreClusterDensity = f(DEF_ORE_CLUSTER_DENSITY, 0, 1, "defaultOreClusterDensity", Comments.DEF_ORE_CLUSTER_DENSITY);
     public final ConfigString defaultOreClusterShape = s(DEF_ORE_CLUSTER_SHAPE, "defaultOreClusterShape", Comments.DEF_ORE_CLUSTER_SHAPE);
     public final ConfigInt oreClusterMaxYLevelSpawn = i(ORE_CLUSTER_MAX_Y_LEVEL_SPAWN, -64, 1024, "oreClusterMaxYLevelSpawn", Comments.ORE_CLUSTER_MAX_Y_LEVEL_SPAWN);
-    public final ConfigInt minChunksBetweenOreClusters = i(MIN_CHUNKS_BETWEEN_ORE_CLUSTERS, 0, DEF_ORE_CLUSTER_SPAWNRATE_AREA, "minChunksBetweenOreClusters", Comments.MIN_CHUNKS_BETWEEN_ORE_CLUSTERS);
-    public final ConfigInt maxChunksBetweenOreClusters = i(MAX_CHUNKS_BETWEEN_ORE_CLUSTERS, 1, DEF_ORE_CLUSTER_SPAWNRATE_AREA, "maxChunksBetweenOreClusters", Comments.MAX_CHUNKS_BETWEEN_ORE_CLUSTERS);
+    public final ConfigInt minChunksBetweenOreClusters = i(MIN_CHUNKS_BETWEEN_ORE_CLUSTERS, 0, 16, "minChunksBetweenOreClusters", Comments.MIN_CHUNKS_BETWEEN_ORE_CLUSTERS);
+    public final ConfigInt maxChunksBetweenOreClusters = i(MAX_CHUNKS_BETWEEN_ORE_CLUSTERS, 1, 16, "maxChunksBetweenOreClusters", Comments.MAX_CHUNKS_BETWEEN_ORE_CLUSTERS);
     public final ConfigFloat defaultOreVeinModifier = f(DEF_ORE_VEIN_MODIFIER, 0, 1, "defaultOreVeinModifier", Comments.DEF_ORE_VEIN_MODIFIER);
     public final ConfigString defaultOreClusterNonReplaceableBlocks = s(ORE_CLUSTER_NONREPLACEABLE_BLOCKS, "defaultOreClusterReplaceableBlocks", Comments.ORE_CLUSTER_NONREPLACEABLE_BLOCKS);
     public final ConfigString defaultOreClusterReplaceableEmptyBlocks = s(ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS, "defaultOreClusterReplaceableEmptyBlock", Comments.ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS);

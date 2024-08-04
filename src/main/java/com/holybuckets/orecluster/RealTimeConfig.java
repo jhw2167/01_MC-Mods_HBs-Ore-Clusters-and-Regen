@@ -95,6 +95,32 @@ public class RealTimeConfig
                 oreConfigs.put(cluster.oreClusterType, cluster);
             }
 
+            //Mathematically validate the defaultConfig minSpacingBetweenClusters
+            // is acceptable considering the provided spawnrate of each specific ore cluster
+            int totalSpawnRatePerAreaSquared = 0; //256 chunks squared -> 16x16
+            for( OreClusterConfigModel oreConfig : oreConfigs.values() ) {
+                totalSpawnRatePerAreaSquared += oreConfig.oreClusterSpawnRate;
+            }
+            int reservedBlocksSquaredPerCluster = (int) Math.pow(defaultConfig.minChunksBetweenOreClusters, 2);
+            int maxClustersPerAreaSquared = CHUNK_NORMALIZATION_TOTAL / reservedBlocksSquaredPerCluster;
+            if( totalSpawnRatePerAreaSquared > maxClustersPerAreaSquared )
+            {
+                int newMinChunks = (int) Math.sqrt( CHUNK_NORMALIZATION_TOTAL / totalSpawnRatePerAreaSquared );
+                StringBuilder warn = new StringBuilder();
+                warn.append("The net ore cluster spawn rate exceeds the expected maximum number of clusters in a ");
+                warn.append(CHUNK_NORMALIZATION_TOTAL);
+                warn.append(" square chunk area: ");
+                warn.append(maxClustersPerAreaSquared);
+                warn.append(" square chunks alloted by ");
+                warn.append(defaultConfig.minChunksBetweenOreClusters);
+                warn.append(" chunks between clusters. While ");
+                warn.append(totalSpawnRatePerAreaSquared);
+                warn.append(" clusters are would be observed on average. minClustersBetweenChunks reduced to ");
+                defaultConfig.minChunksBetweenOreClusters = (int) Math.sqrt( newMinChunks ) - 1;
+                warn.append(defaultConfig.minChunksBetweenOreClusters);
+
+            }
+
 
             if( defaultConfig.subSeed != null ) {
                 CLUSTER_SEED = defaultConfig.subSeed;
