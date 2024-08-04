@@ -47,6 +47,10 @@ public class LoggerBase {
             LOGGER.info( buildBaseConsoleMessage(PREFIX, string));
     }
 
+    public static void logInit(String string) {
+        logDebug("--------" + string.toUpperCase() + " INITIALIZED --------");
+    }
+
 
     //Client side logging
     public static void logClientInfo(String message) {

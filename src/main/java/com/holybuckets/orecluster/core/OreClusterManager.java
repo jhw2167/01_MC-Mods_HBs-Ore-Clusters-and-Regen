@@ -1,7 +1,8 @@
-package com.holybuckets.orecluster;
+package com.holybuckets.orecluster.core;
 
 import com.holybuckets.foundation.HolyBucketsUtility.*;
 import com.holybuckets.foundation.LoggerBase;
+import com.holybuckets.orecluster.RealTimeConfig;
 import net.minecraft.core.Vec3i;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
@@ -46,7 +47,7 @@ public class OreClusterManager {
 
     /** Varialbes **/
     public static RealTimeConfig config;
-    public static final Random RANDOM = new Random( RealTimeConfig.CLUSTER_SEED );
+    public static Random RANDOM;
 
     //<chunkId, <oreType, Vec3i>>
     public static final ConcurrentHashMap<String, HashMap<String, Vec3i>> existingClusters = new ConcurrentHashMap<>();
@@ -61,7 +62,8 @@ public class OreClusterManager {
 
     /** Constructor **/
     public OreClusterManager() {
-        init();
+        super();
+        LoggerBase.logInit( this.getClass().getName() );
     }
 
     /** Behavior **/
@@ -71,6 +73,8 @@ public class OreClusterManager {
         //2. If the chunk owns a cluster, add it to the existingClusters map
 
         Vec3i worldSpawn = RealTimeConfig.WORLD_SPAWN;
+        RANDOM = new Random( RealTimeConfig.CLUSTER_SEED );
+        overworld = RealTimeConfig.LEVEL.getServer().overworld();
 
     }
 
@@ -117,10 +121,15 @@ public class OreClusterManager {
         //2. Produce array of chunkAccess objects from chunkIds
         List<ChunkAccess> chunks = chunkIds.stream().map( (id) -> getChunkAccess(id) )
         .collect(Collectors.toList());
+        LoggerBase.logDebug("Produced " + chunks.size() + " chunkAccess objects: ");
+        LoggerBase.logDebug("Chunks: \n" + chunks);
 
         //3. Determine the clusters locations
         HashMap<String, HashMap<String, Vec3i>> clusters;
         clusters = oreClusterCalculator.calculateClusterLocations(chunks, RANDOM);
+
+        LoggerBase.logDebug("Determined " + clusters.size() + " clusters in " + chunkIds.size() + " chunks");
+        LoggerBase.logDebug("Clusters: " + clusters);
 
         //4. Add any loaded cluster to queue to generate ores now, stream the HashMap
         clusters.entrySet().stream().forEach( (entry) -> {
@@ -133,9 +142,18 @@ public class OreClusterManager {
 
             LinkedHashSet<String> oreTypesInThisCluster = entry.getValue().keySet().stream().collect(Collectors.toCollection(LinkedHashSet::new));
             existingClustersByType.forEach( (type, set) -> {
-                if( oreTypesInThisCluster.contains(type) )
+                if( oreTypesInThisCluster.remove(type) )
                     set.add(chunkId);
             });
+
+            //Fort each ore type in this cluster, if it has not been removed then it did not exist in exitingClusters
+            //by ore type and needs to be added along with a new hashset
+            oreTypesInThisCluster.forEach( (type) -> {
+                HashSet<String> set = new HashSet<>();
+                set.add(chunkId);
+                existingClustersByType.put(type, set);
+            });
+
         });
 
     }
@@ -200,7 +218,8 @@ public class OreClusterManager {
     public static void onChunkLoad(ChunkAccess chunk)
     {
         LoggerBase.logDebug("Chunk loaded: " + chunk.getPos());
-        handleClustersForChunk( chunk );
+        if( RealTimeConfig.PLAYER_LOADED )
+            handleClustersForChunk( chunk );
     }
 
 
@@ -213,7 +232,7 @@ public class OreClusterManager {
      *              UTILITY SECTION
      */
 
-    public static final ServerLevel overworld = RealTimeConfig.LEVEL.getServer().overworld();
+    public static ServerLevel overworld;//init in init
     private static ChunkAccess getChunkAccess(String id) {
         return overworld.getChunk(ChunkUtil.getPos(id).x, ChunkUtil.getPos(id).z);
     }
@@ -275,6 +294,7 @@ public class OreClusterManager {
         {
             if( count == 0 ) {
                 count++;
+                dir = UP;
                 return currentPos;
             }
             else {
@@ -293,7 +313,7 @@ public class OreClusterManager {
             }
         }
 
-        public int[] getNextDirection()
+        private int[] getNextDirection()
         {
             int index = Arrays.stream(DIRECTIONS).toList().indexOf(dir);
             return DIRECTIONS[(index + 1) % DIRECTIONS.length];

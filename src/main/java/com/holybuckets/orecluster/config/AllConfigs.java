@@ -7,11 +7,7 @@ import java.util.function.Supplier;
 
 //MineCraft Imports
 import com.holybuckets.orecluster.OreClustersAndRegenMain;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.telemetry.events.WorldLoadEvent;
-import net.minecraft.core.Vec3i;
 
-import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -24,8 +20,7 @@ import net.minecraftforge.fml.event.config.ModConfigEvent;
 
 import com.holybuckets.foundation.ConfigBase;
 import com.holybuckets.foundation.LoggerBase;
-import com.holybuckets.orecluster.OreClusterManager;
-import com.holybuckets.orecluster.OreClustersAndRegenMain;
+import com.holybuckets.orecluster.core.OreClusterManager;
 import com.holybuckets.orecluster.RealTimeConfig;
 
 
@@ -88,6 +83,8 @@ public class AllConfigs {
 		OreClusterManager.config = new RealTimeConfig();
 		LoggerBase.logInfo("RealTimeConfig initialized current JSON property: ");
 		LoggerBase.logInfo(AllConfigs.server().cOreClusters.oreClusters.get().toString());
+
+		LoggerBase.logInit( "AllConfigs-onLoad" );
 	}
 
 	@SubscribeEvent
@@ -98,6 +95,8 @@ public class AllConfigs {
 				config.onReload();
 
 		OreClusterManager.config = new RealTimeConfig();
+
+		LoggerBase.logInit( "AllConfigs-onReLoad" );
 	}
 
 	@SubscribeEvent
