@@ -55,8 +55,8 @@ public class RealTimeConfig
      * this method becomes inefficient and we will load chunks spirally considering this
      * new chunk as the center.
      */
-    public static final Integer ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL = 1024;
-    public static final Integer ORE_CLUSTER_DTRM_RADIUS_STRATEGY_CHANGE = 256;
+    public static final Integer ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL = 256; //chunks per batch
+    public static final Integer ORE_CLUSTER_DTRM_RADIUS_STRATEGY_CHANGE = 256;  //square chunks
 
     /** World Data **/
     public static Minecraft mc = Minecraft.getInstance();

@@ -1,4 +1,97 @@
 Requirements
 ---
 
+1. Add Config
+---
+
+- Add configBase class to serve as base for different kinds of configs
+- Add sample configs
+- Let aider simplify sample configs 
+
+
+2. Aider Work
+---
+
+- Added CServer, Client and CCommon files
+- Added COreClusters and sample configuration
+- Added AllConfigs class to read in configs from all sources
+
+- Removed all create variables from config classes
+- Added configString and configList types to  ConfigBases array
+
+3. Get Configs to Work and Minecraft to compile again
+---
+
+- Ensured AllConfigs was being registered in Main function
+- Fixed issue where Config was subscribing to config load without loading any data and causing crashes
+
+4. Get Arbitrary array configs to work
+---
+
+- 
+
+5.
+---
+
+- Added defaultConfig and oreConfigs to RealTimeConfig class
+- Initialized real time properties in configModel class
+- Added subseed for configuration
+- Added list of default valid ore cluster blocks
+- Added validation for config values upon deserialization
+- Addded ConfigModelBase and Moved validation core functionality there
+
+6.
+---
+
+- Tested adding custom toml file succesfully
+- For Default configs, these cannot be set until the user starts the world
+- fine tuned property names and validation issues, added min and max to ConfigBase class
+
+
+7.
+---
+  - build OreClusterManager Class and determine its role
+  - test OreClusterManager for determining cluster location and parameters
+  - build OreClusterChunkEditor for handling real time edits to chunks
+  - 
+
+8. Add OreClusterCalculator to calculate Chunk positions and values
+---
+
+ - Added handling for world seed, subscribing to server start event
+ - Ore cluster chunks will be normally distributed according to their spawn rate
+and their Standard deviation is determined by {mean / (log2(mean) * 2)}
+ - RealTimeConfig keeps track of WORLD_SPAWN
+ - NOTE validate STD_DIST formula for error values
+ - Added HolyBucketsUtility class for static utility methods like chunk distances and ids
+ - NOTE validate min/max chunk dist formulas on startup
+
+
+9. Simple commit
+---
+
+	- Cleaned up validation functions
+
+n.
+---
+
+	- Realized that OreClusterManger needs to be an instance class in order to support multiple worlds, will address later
+	- Added thread support
+
+
+TEST CASES
+---
+
+	OreClusterManager
+	---
+	
+	#New Chunks
+	1. New Chunks successfully adedd to queue
+	2. Brand new Chunks trigger batch process
+	3. Old chunks are skipped
+
+	#Threadpool
+	1. onNewlyLoadedChunks successfully runs in background to pickup new chunks
+	2. onNewlyLoadedChunks is shutdown successfully when the class is shutdown
+
 
