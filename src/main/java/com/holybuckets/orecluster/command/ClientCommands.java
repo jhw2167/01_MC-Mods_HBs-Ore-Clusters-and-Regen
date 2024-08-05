@@ -14,7 +14,7 @@ import net.minecraft.network.chat.Component;
 
 public class ClientCommands {
 
-    private static final String PREFIX = "hbCmd";
+    private static final String PREFIX = "hbMods";
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
     {
@@ -29,11 +29,19 @@ public class ClientCommands {
                 .executes(context -> execute(context, ""))
             .then(Commands.argument("arg4", StringArgumentType.string())
                 .executes(context -> execute(context, "")))))))
-                .executes(context -> execute(context, "")));
-
+            .executes(context -> execute(context, "")));
 
     }
 
+
+    /**
+     * Personal command execution boilerplate. There will only be one command for my mods
+     * /HBCmd <command> <arg1> <arg2> <arg3> <arg4> which takes up to 4 possible arguments
+     * @param context
+     * @param defaultArg
+     * @return
+     * @throws CommandSyntaxException
+     */
     private static final int totalArgs = 4;
     private static int execute(CommandContext<CommandSourceStack> context, String defaultArg ) throws CommandSyntaxException
     {
@@ -41,8 +49,12 @@ public class ClientCommands {
         String[] args = new String[totalArgs];
         for( int i = 0; i < totalArgs; i++ )
         {
-            args[i] = StringArgumentType.getString(context, "arg" + (i+1));
-            args[i] = (args[i]) == null ? defaultArg : args[i];
+            try {
+                args[i] = StringArgumentType.getString(context, "arg" + (i+1));
+            }
+            catch (IllegalArgumentException e) {
+                args[i] = defaultArg;
+            }
             cmd += " " + args[i];
         }
 

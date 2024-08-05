@@ -14,6 +14,8 @@ import net.minecraft.world.level.chunk.ChunkStatus;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 /**
@@ -49,6 +51,7 @@ public class OreClusterManager {
     public static RealTimeConfig config;
     public static Random RANDOM;
 
+    public static final ConcurrentLinkedQueue<String> newlyLoadedChunks = new ConcurrentLinkedQueue<>();
     //<chunkId, <oreType, Vec3i>>
     public static final ConcurrentHashMap<String, HashMap<String, Vec3i>> existingClusters = new ConcurrentHashMap<>();
     //<oreType, <chunkId>>
@@ -59,6 +62,12 @@ public class OreClusterManager {
     public static final LinkedHashSet<String> exploredChunks = new LinkedHashSet<>();
     public static final ChunkGenerationOrderHandler mainSpiral = new ChunkGenerationOrderHandler(null);
 
+    //Threads
+    private static boolean MANAGER_RUNNING = true;
+    private static final ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    //private static final Semaphore semaphore = new Semaphore(5); // Adjust the number as needed
+
+
 
     /** Constructor **/
     public OreClusterManager() {
@@ -67,7 +76,8 @@ public class OreClusterManager {
     }
 
     /** Behavior **/
-    public static void init() {
+    public static void init()
+    {
 
         //1. Starting at worldspawn, read chunk NBT data of all existing chunks to determine if they own a cluster
         //2. If the chunk owns a cluster, add it to the existingClusters map
@@ -76,6 +86,52 @@ public class OreClusterManager {
         RANDOM = new Random( RealTimeConfig.CLUSTER_SEED );
         overworld = RealTimeConfig.LEVEL.getServer().overworld();
 
+        //onNewlyAddedChunk(); should be a constantly running background thread
+        threadPool.execute( OreClusterManager::onNewlyAddedChunk );
+
+    }
+
+    public static void shutdown()
+    {
+
+        threadPool.shutdown();
+    }
+
+    /**
+     * Determines how to handle the newly loaded chunk upon loading
+     * @param chunk
+     */
+    public static void onChunkLoad(ChunkAccess chunk)
+    {
+        //LoggerBase.logDebug("Chunk loaded: " + chunk.getPos());
+        newlyLoadedChunks.add(ChunkUtil.getId(chunk));
+
+    }
+
+    /**
+     * Newly loaded chunks are polled in a queue awaiting batch handling
+     *  If the chunk has already been processed it is skippped
+     */
+    public static void onNewlyAddedChunk()
+    {
+        while( MANAGER_RUNNING )
+        {
+            while( !newlyLoadedChunks.isEmpty() )
+            {
+                if( RealTimeConfig.PLAYER_LOADED )
+                {
+                    String chunkId = newlyLoadedChunks.poll();
+                    if( !exploredChunks.contains(chunkId) )
+                        handleClustersForChunk(chunkId);
+                }
+            }
+            try {
+                Thread.currentThread().sleep(1);
+            } catch (InterruptedException e) {
+                LoggerBase.logError(" onNewlyAddedChunk thread interrupted " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -86,9 +142,8 @@ public class OreClusterManager {
      *  3. If the chunkId does not exist in exploredChunks, queue a batch
      *
      */
-    public static void handleClustersForChunk( ChunkAccess c )
+    public static void handleClustersForChunk( String chunkId )
     {
-        String chunkId = ChunkUtil.getId(c);
         if( existingClusters.containsKey(chunkId) )
         {
             LoggerBase.logDebug("Chunk " + chunkId + " contains a cluster");
@@ -101,7 +156,10 @@ public class OreClusterManager {
         else
         {
             LoggerBase.logDebug("Chunk " + chunkId + " has not been explored");
-            handlePrepareNewChunksForClusters(config.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL, c);
+            while( !exploredChunks.contains(chunkId) ) {
+                handlePrepareNewChunksForClusters(config.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL, chunkId);
+            }
+
         }
 
     }
@@ -109,15 +167,18 @@ public class OreClusterManager {
     /**
      * Batch process that determines the location of clusters in the next n chunks
      * @param batchSize
-     * @param start
+     * @param chunkId
      */
 
-    private static void handlePrepareNewChunksForClusters(int batchSize, ChunkAccess start)
+    private static void handlePrepareNewChunksForClusters(int batchSize, String chunkId)
     {
         //1. Determine the location of clusters in the next n chunks
+        ChunkAccess start = getChunkAccess(chunkId);
         HashSet<String> chunkIds = getBatchedChunkList(batchSize, start);
         LoggerBase.logDebug("Queued " + chunkIds.size() + " chunks for cluster determination");
 
+        if( LoggerBase.DEBUG )
+            return;
         //2. Produce array of chunkAccess objects from chunkIds
         List<ChunkAccess> chunks = chunkIds.stream().map( (id) -> getChunkAccess(id) )
         .collect(Collectors.toList());
@@ -133,28 +194,31 @@ public class OreClusterManager {
 
         //4. Add any loaded cluster to queue to generate ores now, stream the HashMap
         clusters.entrySet().stream().forEach( (entry) -> {
-            String chunkId = entry.getKey();
+            String id = entry.getKey();
             //Assuming this is valid way to check for loaded chunks
-            if( getChunkAccess(chunkId).getStatus().equals(ChunkStatus.FULL) )
-                chunksPendingClusterGen.add(chunkId);
+            if( getChunkAccess(id).getStatus().equals(ChunkStatus.FULL) )
+                chunksPendingClusterGen.add(id);
 
-            existingClusters.put(chunkId, entry.getValue());
+            existingClusters.put(id, entry.getValue());
 
             LinkedHashSet<String> oreTypesInThisCluster = entry.getValue().keySet().stream().collect(Collectors.toCollection(LinkedHashSet::new));
             existingClustersByType.forEach( (type, set) -> {
                 if( oreTypesInThisCluster.remove(type) )
-                    set.add(chunkId);
+                    set.add(id);
             });
 
             //Fort each ore type in this cluster, if it has not been removed then it did not exist in exitingClusters
             //by ore type and needs to be added along with a new hashset
             oreTypesInThisCluster.forEach( (type) -> {
                 HashSet<String> set = new HashSet<>();
-                set.add(chunkId);
+                set.add(id);
                 existingClustersByType.put(type, set);
             });
 
         });
+
+        //5. Add all chunkIds to exploredChunks
+        exploredChunks.addAll(chunkIds);
 
     }
 
@@ -167,19 +231,16 @@ public class OreClusterManager {
         //Create a hashset to store chunk ids
         //ids are of form x,z
         HashSet<String> chunkIds = new HashSet<>();
-        ChunkGenerationOrderHandler spiralHandler = mainSpiral;
-        if( exploredChunks.size() < Math.pow(config.ORE_CLUSTER_DTRM_RADIUS_STRATEGY_CHANGE, 2) ) {
-            spiralHandler = new ChunkGenerationOrderHandler(start.getPos());
+        ChunkGenerationOrderHandler chunkIdGeneratorHandler = mainSpiral;
+        if( exploredChunks.size() > Math.pow(config.ORE_CLUSTER_DTRM_RADIUS_STRATEGY_CHANGE, 2) ) {
+            chunkIdGeneratorHandler = new ChunkGenerationOrderHandler(start.getPos());
         }
 
         //use a for loop to spiral out from center of new batch
         for( int i = 0; i < batchSize; i++ )
         {
-            ChunkPos next = spiralHandler.getNextSpiralChunk();
-            if (exploredChunks.contains(ChunkUtil.getId(next)))
-                continue;
+            ChunkPos next = chunkIdGeneratorHandler.getNextSpiralChunk();
             chunkIds.add(ChunkUtil.getId(next));
-            exploredChunks.add(ChunkUtil.getId(next));
         }
 
         return chunkIds;
@@ -209,18 +270,6 @@ public class OreClusterManager {
 
     }
 
-
-
-    /**
-     * Determines how to handle the newly loaded chunk upon loading
-     * @param chunk
-     */
-    public static void onChunkLoad(ChunkAccess chunk)
-    {
-        LoggerBase.logDebug("Chunk loaded: " + chunk.getPos());
-        if( RealTimeConfig.PLAYER_LOADED )
-            handleClustersForChunk( chunk );
-    }
 
 
 
