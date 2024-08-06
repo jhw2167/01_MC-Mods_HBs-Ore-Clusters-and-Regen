@@ -14,8 +14,8 @@ public class COreClusters extends ConfigBase {
     public static String SUB_SEED = "";
     public static Integer DEF_ORE_CLUSTER_SPAWNRATE_AREA = 256;
     public static final String DEF_VALID_ORE_CLUSTER_ORE_BLOCKS = "minecraft:iron_ore,minecraft:diamond_ore,minecraft:gold_ore,minecraft:coal_ore";
-    public static final int DEF_ORE_CLUSTER_SPAWN_RATE = 50;
-    public static final String DEF_ORE_CLUSTER_VOLUME = "32x32x32";
+    public static final int DEF_ORE_CLUSTER_SPAWN_RATE = 16;
+    public static final String DEF_ORE_CLUSTER_VOLUME = "16x16x16";
     public static final float DEF_ORE_CLUSTER_DENSITY = 0.80f;
     public static final String DEF_ORE_CLUSTER_SHAPE = "any";
     public static final int ORE_CLUSTER_MAX_Y_LEVEL_SPAWN = 256;
@@ -31,8 +31,8 @@ public class COreClusters extends ConfigBase {
      "minecraft:dragon_egg,minecraft:nether_star";
 
      //Ranges
-     public static final String MIN_ORE_CLUSTER_VOLUME = "1x1x1";
-     public static final String MAX_ORE_CLUSTER_VOLUME = "96x96x96";
+     public static final String MIN_ORE_CLUSTER_VOLUME = "0x0x0";
+     public static final String MAX_ORE_CLUSTER_VOLUME = "64x64x64";
      public static final HashSet<String> ORE_CLUSTER_VALID_SHAPES = new HashSet<>(Arrays.asList("bowl", "anvil", "shale", "any"));
 
     public final ConfigString subSeed = s(SUB_SEED, "subSeed", Comments.DEF_SUB_SEED);
@@ -45,7 +45,7 @@ public class COreClusters extends ConfigBase {
     public final ConfigInt minChunksBetweenOreClusters = i(MIN_CHUNKS_BETWEEN_ORE_CLUSTERS, 0, 16, "minChunksBetweenOreClusters", Comments.MIN_CHUNKS_BETWEEN_ORE_CLUSTERS);
     public final ConfigInt maxChunksBetweenOreClusters = i(MAX_CHUNKS_BETWEEN_ORE_CLUSTERS, 1, 16, "maxChunksBetweenOreClusters", Comments.MAX_CHUNKS_BETWEEN_ORE_CLUSTERS);
     public final ConfigFloat defaultOreVeinModifier = f(DEF_ORE_VEIN_MODIFIER, 0, 1, "defaultOreVeinModifier", Comments.DEF_ORE_VEIN_MODIFIER);
-    public final ConfigString defaultOreClusterNonReplaceableBlocks = s(ORE_CLUSTER_NONREPLACEABLE_BLOCKS, "defaultOreClusterReplaceableBlocks", Comments.ORE_CLUSTER_NONREPLACEABLE_BLOCKS);
+    public final ConfigString defaultOreClusterNonReplaceableBlocks = s(ORE_CLUSTER_NONREPLACEABLE_BLOCKS, "defaultOreClusterNonReplaceableBlocks", Comments.ORE_CLUSTER_NONREPLACEABLE_BLOCKS);
     public final ConfigString defaultOreClusterReplaceableEmptyBlocks = s(ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS, "defaultOreClusterReplaceableEmptyBlock", Comments.ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS);
     public final ConfigBool regenerateOreClusters = b(REGENERATE_ORE_CLUSTERS, "regenerateOreClusters", Comments.REGENERATE_ORE_CLUSTERS);
     public final ConfigString regenerateOreClusterPeriodLengths = s(REGENERATE_ORE_CLUSTER_PERIOD_LENGTHS, "regenerateOreClusterPeriodLengths", Comments.REGENERATE_ORE_CLUSTER_PERIOD_LENGTHS);
@@ -74,7 +74,7 @@ public class COreClusters extends ConfigBase {
          " as the number of expected ore clusters per " + DEF_ORE_CLUSTER_SPAWNRATE_AREA + " chunks";
         public static final String DEF_ORE_CLUSTER_VOLUME = "Specifies the default dimensions of a cluster. <X>x<Y>x<Z>. " +
          "The true cluster will always be smaller than this box because it will choose a shape that roughly fits inside it," +
-          " max 96x96x96 else it will revert to the default 32x32x32";
+          " max 64x64x64 else it will revert to the default 16x16x16";
         public static final String DEF_ORE_CLUSTER_DENSITY = "Determines the density of ore within a cluster. To reduce density" +
          " ore blocks within the cluster will be replaced with blocks from 'ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS' below";
         public static final String DEF_ORE_CLUSTER_SHAPE = "Defines the shape of the ore cluster. Options are 'bowl', 'anvil', 'shale' or 'any'. " +

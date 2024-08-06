@@ -56,16 +56,19 @@ public class OreClusterManager {
     public static final ConcurrentHashMap<String, HashMap<String, Vec3i>> existingClusters = new ConcurrentHashMap<>();
     //<oreType, <chunkId>>
     public static final ConcurrentHashMap<String, HashSet<String>> existingClustersByType = new ConcurrentHashMap<>();
-    public static final OreClusterCalculator oreClusterCalculator = new OreClusterCalculator(existingClusters);
     public static final ConcurrentLinkedQueue<String> chunksPendingClusterGen = new ConcurrentLinkedQueue<>();
 
     public static final LinkedHashSet<String> exploredChunks = new LinkedHashSet<>();
     public static final ChunkGenerationOrderHandler mainSpiral = new ChunkGenerationOrderHandler(null);
 
+    public static OreClusterCalculator oreClusterCalculator;
+
     //Threads
     private static boolean MANAGER_RUNNING = true;
     private static final ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     //private static final Semaphore semaphore = new Semaphore(5); // Adjust the number as needed
+
+
 
 
 
@@ -83,9 +86,16 @@ public class OreClusterManager {
         //2. If the chunk owns a cluster, add it to the existingClusters map
 
         Vec3i worldSpawn = RealTimeConfig.WORLD_SPAWN;
+        if( RealTimeConfig.CLUSTER_SEED == null)
+            RealTimeConfig.CLUSTER_SEED = RealTimeConfig.WORLD_SEED;
         RANDOM = new Random( RealTimeConfig.CLUSTER_SEED );
-        overworld = RealTimeConfig.LEVEL.getServer().overworld();
 
+        overworld = RealTimeConfig.LEVEL.getServer().overworld();
+        oreClusterCalculator = new OreClusterCalculator(config, exploredChunks, existingClusters);
+
+        config.getOreConfigs().forEach( (oreType, oreConfig) -> {
+                existingClustersByType.put(oreType, new HashSet<>());
+        });
         //onNewlyAddedChunk(); should be a constantly running background thread
         threadPool.execute( OreClusterManager::onNewlyAddedChunk );
 
@@ -123,10 +133,19 @@ public class OreClusterManager {
                     String chunkId = newlyLoadedChunks.poll();
                     if( !exploredChunks.contains(chunkId) )
                         handleClustersForChunk(chunkId);
+                    LoggerBase.logDebug("Chunk " + chunkId + " processed. Queue size: " + newlyLoadedChunks.size());
                 }
+
+                try {
+                    Thread.currentThread().sleep(1000);
+                } catch (InterruptedException e) {
+                    LoggerBase.logError(" onNewlyAddedChunk thread interrupted " + e.getMessage());
+                    e.printStackTrace();
+                }
+
             }
             try {
-                Thread.currentThread().sleep(1);
+                Thread.currentThread().sleep(1000);
             } catch (InterruptedException e) {
                 LoggerBase.logError(" onNewlyAddedChunk thread interrupted " + e.getMessage());
                 e.printStackTrace();
@@ -177,13 +196,12 @@ public class OreClusterManager {
         HashSet<String> chunkIds = getBatchedChunkList(batchSize, start);
         LoggerBase.logDebug("Queued " + chunkIds.size() + " chunks for cluster determination");
 
-        if( LoggerBase.DEBUG )
-            return;
         //2. Produce array of chunkAccess objects from chunkIds
         List<ChunkAccess> chunks = chunkIds.stream().map( (id) -> getChunkAccess(id) )
         .collect(Collectors.toList());
         LoggerBase.logDebug("Produced " + chunks.size() + " chunkAccess objects: ");
         LoggerBase.logDebug("Chunks: \n" + chunks);
+
 
         //3. Determine the clusters locations
         HashMap<String, HashMap<String, Vec3i>> clusters;
@@ -191,6 +209,7 @@ public class OreClusterManager {
 
         LoggerBase.logDebug("Determined " + clusters.size() + " clusters in " + chunkIds.size() + " chunks");
         LoggerBase.logDebug("Clusters: " + clusters);
+
 
         //4. Add any loaded cluster to queue to generate ores now, stream the HashMap
         clusters.entrySet().stream().forEach( (entry) -> {
@@ -314,8 +333,8 @@ public class OreClusterManager {
 
     }
 
-    private static class ChunkGenerationOrderHandler
-    {
+
+    public static class ChunkGenerationOrderHandler {
 
         public static final int[] UP = new int[] {0, 1};
         public static final int[] RIGHT = new int[] {1, 0};
@@ -329,46 +348,40 @@ public class OreClusterManager {
         public int dirCount;
         public int[] dir;
 
-        public ChunkGenerationOrderHandler(ChunkPos start)
-        {
-        if( start == null)
-            this.currentPos = new ChunkPos(0, 0);
-        else
-            this.currentPos = start;
+        public ChunkGenerationOrderHandler(ChunkPos start) {
+            if (start == null) {
+                this.currentPos = new ChunkPos(0, 0);
+            } else {
+                this.currentPos = start;
+            }
             sequence = new HashSet<>();
-            count = 0;
+            count = 1;
+            dirCount = 0;
+            dir = UP;
         }
 
-        public ChunkPos getNextSpiralChunk()
-        {
-            if( count == 0 ) {
-                count++;
-                dir = UP;
-                return currentPos;
-            }
-            else {
-                currentPos = ChunkUtil.posAdd(currentPos, dir);
-                sequence.add(currentPos);
-                dirCount++;
-                if( dirCount == count)
-                {
-                    dir = getNextDirection();
-                    dirCount = 0;
-                    if( dir == DOWN )
-                        count++;
+        public ChunkPos getNextSpiralChunk() {
+            if (dirCount == count) {
+                dir = getNextDirection();
+                dirCount = 0;
+                if (dir == LEFT || dir == RIGHT) {
+                    count++;
                 }
-
-                return currentPos;
             }
+
+            currentPos = ChunkUtil.posAdd(currentPos, dir);
+            sequence.add(currentPos);
+            dirCount++;
+
+            return currentPos;
         }
 
-        private int[] getNextDirection()
-        {
-            int index = Arrays.stream(DIRECTIONS).toList().indexOf(dir);
+        private int[] getNextDirection() {
+            int index = Arrays.asList(DIRECTIONS).indexOf(dir);
             return DIRECTIONS[(index + 1) % DIRECTIONS.length];
         }
-
     }
+
 
 
 }
