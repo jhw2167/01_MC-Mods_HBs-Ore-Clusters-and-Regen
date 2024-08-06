@@ -252,12 +252,17 @@ public class OreClusterConfigModel extends ConfigModelBase {
         if( validConfig )
         {
             //Validate there is enough cluster space to meet expected chunks per cluster
-            double chunkAreaReservedPerCluster = Math.pow( 2*minChunksBetweenOreClusters + 1, 2) / 2;
-            double expectedChunksPerCluster = (COreClusters.DEF_ORE_CLUSTER_SPAWNRATE_AREA / oreClusterSpawnRate);
+            double mandatoryReservedAreaPerCluster = Math.pow( 2*minChunksBetweenOreClusters + 1, 2);
+            double expectedAreaPerCluster = (COreClusters.DEF_ORE_CLUSTER_SPAWNRATE_AREA / oreClusterSpawnRate);
 
-            if (chunkAreaReservedPerCluster < expectedChunksPerCluster)
+            /** If the expected area reserved per cluster (given an even distribution),
+             *  is less than the mandatory area given the spacing, our spawnrate is
+             *  too high to meet the spacing requirements on average;
+             *  we will reduce the spawnrate to meet the expected area
+             */
+            if ( expectedAreaPerCluster < mandatoryReservedAreaPerCluster  )
             {
-                this.oreClusterSpawnRate = (int) (COreClusters.DEF_ORE_CLUSTER_SPAWN_RATE / chunkAreaReservedPerCluster);
+                this.oreClusterSpawnRate = (int) (COreClusters.DEF_ORE_CLUSTER_SPAWN_RATE / mandatoryReservedAreaPerCluster);
                 logPropertyWarning(minChunksLogicError, this.oreClusterType,
                 "scaling down oreClusterSpawnrate to ", this.oreClusterSpawnRate.toString());
             }

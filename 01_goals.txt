@@ -72,11 +72,19 @@ and their Standard deviation is determined by {mean / (log2(mean) * 2)}
 
 	- Cleaned up validation functions
 
-n.
+13.
 ---
 
 	- Realized that OreClusterManger needs to be an instance class in order to support multiple worlds, will address later
-	- Added thread support
+	- Added thread support to OreClusterManager
+	- Need to resolve difficult issue with overlapping ore areas
+
+14.
+---
+
+	- Address "getBatchedChunkList" not producing correct amount of chunkIds
+	- 
+
 
 
 TEST CASES

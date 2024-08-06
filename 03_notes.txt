@@ -1,2 +1,4 @@
 Notes, Bugs, Freehand edits
 ---
+
+notepad "C:\Users\jack\source\repos\Java\Minecraft\00_mod-dev\01_MC-Mods_HBs-Ore-Clusters-and-Regen\run\logs\debug.log"

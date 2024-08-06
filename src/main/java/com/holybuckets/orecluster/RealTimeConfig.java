@@ -100,7 +100,7 @@ public class RealTimeConfig
             validateClusterSpacingAndMinBlocks();
 
 
-            if( defaultConfig.subSeed != null ) {
+            if( !defaultConfig.subSeed.equals(0L) ) {
                 CLUSTER_SEED = defaultConfig.subSeed;
             } else {
                 CLUSTER_SEED = WORLD_SEED;
@@ -120,12 +120,10 @@ public class RealTimeConfig
             // Capture the world seed
             LoggerBase.logInfo("**** WORLD LOAD EVENT ****");
             LEVEL = level;
-            if( level != null)
-            {
-                MinecraftServer server = level.getServer();
-                WORLD_SEED = server.overworld().getSeed();
-                WORLD_SPAWN = server.overworld().getSharedSpawnPos();
-            }
+            MinecraftServer server = level.getServer();
+            WORLD_SEED = server.overworld().getSeed();
+            WORLD_SPAWN = server.overworld().getSharedSpawnPos();
+
             OreClustersAndRegenMain.oreClusterManager.init();
 
             //LoggerBase.logInfo("World Seed: " + WORLD_SEED);
