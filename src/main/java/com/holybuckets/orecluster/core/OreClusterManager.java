@@ -136,13 +136,6 @@ public class OreClusterManager {
                     LoggerBase.logDebug("Chunk " + chunkId + " processed. Queue size: " + newlyLoadedChunks.size());
                 }
 
-                try {
-                    Thread.currentThread().sleep(1000);
-                } catch (InterruptedException e) {
-                    LoggerBase.logError(" onNewlyAddedChunk thread interrupted " + e.getMessage());
-                    e.printStackTrace();
-                }
-
             }
             try {
                 Thread.currentThread().sleep(1000);

@@ -328,12 +328,14 @@ public class OreClusterCalculator {
          }
          catch (Exception e)
          {
-         StringBuilder sb = new StringBuilder();
-         clusterCounts.entrySet().forEach( ore -> sb.append(ore.getKey() + ": " + ore.getValue() + ",\n"));
-             LoggerBase.logWarning("Unable to place all ore clusters: " + e.getMessage() + "Remaining Counts: " + sb.toString());
+            StringBuilder sb = new StringBuilder();
+            clusterCounts.entrySet().forEach( ore -> sb.append(ore.getKey() + ": " + ore.getValue() + ", "));
+            LoggerBase.logWarning("Unable to place all ore clusters: " + e.getMessage() + "Remaining Counts: " + sb.toString());
              e.printStackTrace();
          }
 
+        //6. Remove all clusters at chunks that were populated in previous batches
+        clusterPositions.keySet().removeAll( exploredChunks );
 
         return clusterPositions;
     }
