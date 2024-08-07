@@ -38,6 +38,7 @@ public class OreClusterCalculator {
 
     public HashMap<String, HashMap<String, Vec3i>> calculateClusterLocations(List<ChunkAccess> chunks, Random rng)
     {
+        long startTime = System.nanoTime();
 
         // Get list of all ore cluster types
         Map<String, OreClusterConfigModel> clusterConfigs = C.getOreConfigs();
@@ -59,6 +60,9 @@ public class OreClusterCalculator {
         }
         LoggerBase.logDebug("2. Determined cluster counts for each ore type: ");
         //LoggerBase.logDebug(clusterCounts.toString());
+
+        long step1Time = System.nanoTime();
+        LoggerBase.logDebug("Step 1 (Get configs and determine cluster counts) took " + (step1Time - startTime) + " ns");
 
         /** Add all clusters, distributing one cluster type at a time
         *
@@ -112,6 +116,9 @@ public class OreClusterCalculator {
                      ChunkUtil.getPos(c).z < minZ ||
                      ChunkUtil.getPos(c).z > maxZ );
          }
+
+        long step2Time = System.nanoTime();
+        LoggerBase.logDebug("Step 2 (Get recently loaded chunks and determine local existing clusters) took " + (step2Time - step1Time) + " ns");
 
         //3. Determine distribution of clusters as aggregate group over all chunks
         float totalClusters = clusterCounts.values().stream().mapToInt( i -> i ).sum();
@@ -187,6 +194,8 @@ public class OreClusterCalculator {
         LoggerBase.logDebug("3. Cluster Placement Algorithm Complete");
         //LoggerBase.logDebug(chunksToBePopulated.toString());
 
+        long step3Time = System.nanoTime();
+        LoggerBase.logDebug("Step 3 (Determine distribution of clusters) took " + (step3Time - step2Time) + " ns");
 
         //4. Using the Map of aggregate clusters, pick chunks for each cluster type
 
@@ -311,7 +320,7 @@ public class OreClusterCalculator {
                      {
                          selectedChunks.add(candidateChunkId);
                          allChunksWithClusterType.add(candidateChunkId);
-                         if (clusterPositions.containsKey(candidateChunkId))
+                         if (clusterPositions.containsKey(candidateChunkI))
                          {
                              clusterPositions.get(candidateChunkId).put(oreType, null);
                          }
@@ -338,8 +347,14 @@ public class OreClusterCalculator {
              e.printStackTrace();
          }
 
+        long step4Time = System.nanoTime();
+        LoggerBase.logDebug("Step 4 (Pick chunks for each cluster type) took " + (step4Time - step3Time) + " ns");
+
         //6. Remove all clusters at chunks that were populated in previous batches
         clusterPositions.keySet().removeAll( exploredChunks );
+
+        long endTime = System.nanoTime();
+        LoggerBase.logDebug("Total time for calculateClusterLocations: " + (endTime - startTime) + " ns");
 
         return clusterPositions;
     }
