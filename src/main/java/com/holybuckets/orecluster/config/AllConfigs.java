@@ -73,28 +73,22 @@ public class AllConfigs {
 
 
 
-	@SubscribeEvent
+	//@SubscribeEvent
 	public static void onLoad(ModConfigEvent.Loading event) {
 		for (ConfigBase config : CONFIGS.values())
 			if (config.specification == event.getConfig()
 				.getSpec())
 				config.onLoad();
 
-		OreClusterManager.config = new RealTimeConfig();
-		LoggerBase.logInfo("RealTimeConfig initialized current JSON property: ");
-		LoggerBase.logInfo(AllConfigs.server().cOreClusters.oreClusters.get().toString());
-
 		LoggerBase.logInit( "AllConfigs-onLoad" );
 	}
 
-	@SubscribeEvent
+	//@SubscribeEvent
 	public static void onReload(ModConfigEvent.Reloading event) {
 		for (ConfigBase config : CONFIGS.values())
 			if (config.specification == event.getConfig()
 				.getSpec())
 				config.onReload();
-
-		OreClusterManager.config = new RealTimeConfig();
 
 		LoggerBase.logInit( "AllConfigs-onReLoad" );
 	}

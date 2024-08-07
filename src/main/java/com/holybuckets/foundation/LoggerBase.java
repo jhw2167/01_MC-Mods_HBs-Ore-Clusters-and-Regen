@@ -11,7 +11,7 @@ public class LoggerBase {
 
     public static final Logger LOGGER = LogUtils.getLogger();
     public static final String PREFIX = "[" + OreClustersAndRegenMain.NAME + "]";
-    public static final Boolean DEBUG = true;
+    public static final Boolean DEBUG = false;
 
     /*
      *  1. We want to have static methods for logging info, warnings, and errors to server console.
