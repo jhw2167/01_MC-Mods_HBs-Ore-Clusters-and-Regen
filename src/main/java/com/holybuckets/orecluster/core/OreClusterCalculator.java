@@ -16,20 +16,24 @@ import com.holybuckets.orecluster.RealTimeConfig;
 
 public class OreClusterCalculator {
 
+    private OreClusterManager manager;
     private RealTimeConfig C;
     private LinkedHashSet exploredChunks;
     private ConcurrentHashMap<String, HashMap<String, Vec3i>> existingClusters;
+    private ConcurrentHashMap<String, HashSet<String>> existingClustersByType;
+
 
 
      //Constructor
-    public OreClusterCalculator( final RealTimeConfig c,
-        final LinkedHashSet exploredChunks,
-        final ConcurrentHashMap<String, HashMap<String, Vec3i>> existingClusters )
+    public OreClusterCalculator( final OreClusterManager manager)
     {
 
-        this.C = c;
-        this.exploredChunks = exploredChunks;
-        this.existingClusters = existingClusters;
+        this.manager = manager;
+        this.C = manager.getConfig();
+        this.exploredChunks = manager.getExploredChunks();
+        this.existingClusters = manager.getExistingClusters();
+        this.existingClustersByType = manager.getExistingClustersByType();
+
     }
 
     public HashMap<String, HashMap<String, Vec3i>> calculateClusterLocations(List<ChunkAccess> chunks, Random rng)
@@ -89,7 +93,7 @@ public class OreClusterCalculator {
          int spiralRadius = batchDimensions + MIN_SPACING_VALIDATOR_CUTOFF_RADIUS;
          int spiralArea = (int) Math.pow( spiralRadius, 2 );
          LinkedHashSet<String> recentlyLoadedChunks =
-            OreClusterManager.getRecentChunkIds( chunks.get(0).getPos(), spiralArea );
+            manager.getRecentChunkIds( chunks.get(0).getPos(), spiralArea );
         LinkedHashSet<String> localExistingClusters = existingClusters.keySet().stream().
             collect(Collectors.toCollection(LinkedHashSet::new));
 
@@ -215,7 +219,7 @@ public class OreClusterCalculator {
 
              for (String oreType : oreClusterTypes) {
                  OreClusterConfigModel config = clusterConfigs.get(oreType);
-                 HashSet<String> allChunksWithClusterType = OreClusterManager.existingClustersByType.get(oreType);
+                 HashSet<String> allChunksWithClusterType = existingClustersByType.get(oreType);
                  //allChunksWithClusterType.removeIf( c -> !localExistingClusters.contains(c) );
                  final int MIN_SPACING_SPECIFIC_CLUSTER_VALIDATOR_CUTOFF_RADIUS = Math.min(allChunksWithClusterType.size(),
                      (int) Math.pow(config.minChunksBetweenOreClusters, 2));

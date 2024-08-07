@@ -2,3 +2,44 @@ Notes, Bugs, Freehand edits
 ---
 
 notepad "C:\Users\jack\source\repos\Java\Minecraft\00_mod-dev\01_MC-Mods_HBs-Ore-Clusters-and-Regen\run\logs\debug.log"
+
+
+
+Class Structure
+--- 
+															B. All Configs
+															/
+														A. OreClusterEventHandler
+														/
+
+										0. Main Class (OreClusterRegenMain)
+
+										/			\
+												RealTimeConfig
+									1. OreClusterManager			
+
+									/
+
+								2. OreClusterCalculator	
+
+
+
+-----
+A. OreClusterEventHandler makes static references to OreClusterRegenMain
+
+0. OreClustersAndRegenMain is the main entry class to the mod. It holds static references to and initializes the major working "Core" classes of the mod
+1. 
+
+
+
+Game Settings loading:
+---
+
+1. EventBusSubscriber.Bus.Mod events onLoad
+2. Subscribe event onLoad()
+3. Server, Client, Common Configs loaded
+4. foundation.AllConfigs loaded
+5. Main.onLoad
+6. RealTimeConfig loaded
+7. OreClusterMangerConfigs loaded
+8.

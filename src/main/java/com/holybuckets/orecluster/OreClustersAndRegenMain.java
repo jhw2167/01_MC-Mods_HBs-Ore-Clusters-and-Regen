@@ -8,10 +8,12 @@ import com.holybuckets.orecluster.core.OreClusterManager;
 import com.mojang.logging.LogUtils;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 
@@ -37,7 +39,7 @@ public class OreClustersAndRegenMain
     /** Use the {@link Random} of a local {@link Level} or {@link Entity} or create one */
     @Deprecated
     public static final Random RANDOM = new Random();
-    public static OreClusterManager oreClusterManager = new OreClusterManager();
+    public static OreClusterManager oreClusterManager;
 
     /**
      * <b>Other mods should not use this field!</b> If you are an addon developer, create your own instance of
@@ -125,6 +127,32 @@ public class OreClustersAndRegenMain
          */
 
     }
+
+    public static void onLoad(ModConfigEvent.Loading event) {
+        LoggerBase.logInit( "Main-onLoad" );
+    }
+
+    public static void onReload(ModConfigEvent.Reloading event) {
+        LoggerBase.logInit( "Main-onReLoad" );
+    }
+
+    public static void onLoadWorld(LevelAccessor world)
+    {
+        LoggerBase.logDebug("**** WORLD LOAD EVENT ****");
+        realTimeConfig = new RealTimeConfig( world );
+        oreClusterManager = new OreClusterManager( realTimeConfig );
+    }
+
+    public static void onUnloadWorld(LevelAccessor world)
+    {
+        // Capture the world seed
+        LoggerBase.logDebug("**** WORLD UNLOAD EVENT ****");
+        realTimeConfig = null;
+        oreClusterManager.shutdown();
+        oreClusterManager = null;
+    }
+
+
 
     /*
     public static void init(final FMLCommonSetupEvent event) {

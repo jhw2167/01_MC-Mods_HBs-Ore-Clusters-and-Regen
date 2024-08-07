@@ -1,23 +1,46 @@
 package com.holybuckets.orecluster.event;
 
 import com.holybuckets.foundation.LoggerBase;
-import com.holybuckets.orecluster.core.OreClusterManager;
+import com.holybuckets.orecluster.config.AllConfigs;
 import com.holybuckets.orecluster.OreClustersAndRegenMain;
 import com.holybuckets.orecluster.RealTimeConfig;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.ChunkEvent;
+import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
 
 
 @EventBusSubscriber(bus = EventBusSubscriber.Bus.FORGE, modid = OreClustersAndRegenMain.MODID)
-public class OreClusterEventHandler {
+public class OreClusterForgeEventHandler {
 
 
     @SubscribeEvent
+    public static void onLoadWorld(LevelEvent.Load event)
+    {
+        LevelAccessor world = event.getLevel();
+        if( world.isClientSide() )
+        {
+
+        }
+        else
+        {
+            OreClustersAndRegenMain.onLoadWorld( world );
+        }
+
+    }
+
+    @SubscribeEvent
+    public static void onUnloadWorld(LevelEvent.Unload event) {
+        LevelAccessor world = event.getLevel();
+        OreClustersAndRegenMain.onUnloadWorld( world );
+    }
+
+    @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        // Handle the event
-        RealTimeConfig.PLAYER_LOADED = true;
+        OreClustersAndRegenMain.realTimeConfig.PLAYER_LOADED = true;
         LoggerBase.logDebug("Player Logged In");
     }
 
@@ -25,10 +48,8 @@ public class OreClusterEventHandler {
     //Subscribe to chunk load event
     @SubscribeEvent
     public static void onChunkLoad(final ChunkEvent.Load event) {
-        if( RealTimeConfig.WORLD_SEED == null )
-            RealTimeConfig.initWorldConfigs( event.getLevel() );
-
-        OreClusterManager.onChunkLoad( event.getChunk() );
+        if( OreClustersAndRegenMain.oreClusterManager != null )
+            OreClustersAndRegenMain.oreClusterManager.onChunkLoad( event.getChunk() );
     }
 
 
