@@ -45,7 +45,7 @@ public class OreClusterCalculator {
 
         HashMap<String, Integer> clusterCounts = new HashMap<>();
         LoggerBase.logDebug("1. Obtained cluster configs for ores: ");
-        LoggerBase.logDebug(clusterConfigs.toString());
+        //LoggerBase.logDebug(clusterConfigs.toString());
 
         //Determine the expected total for each cluster type for this MAX_CLUSTERS batch
         // Use a normal distribution to determine the number of clusters for each type
@@ -58,7 +58,7 @@ public class OreClusterCalculator {
             clusterCounts.put(oreType, numClusters);
         }
         LoggerBase.logDebug("2. Determined cluster counts for each ore type: ");
-        LoggerBase.logDebug(clusterCounts.toString());
+        //LoggerBase.logDebug(clusterCounts.toString());
 
         /** Add all clusters, distributing one cluster type at a time
         *
@@ -184,8 +184,8 @@ public class OreClusterCalculator {
 
         }
         //END cluster placing algorithm
-        LoggerBase.logDebug("Cluster Placement Algorithm Complete");
-        LoggerBase.logDebug(chunksToBePopulated.toString());
+        LoggerBase.logDebug("3. Cluster Placement Algorithm Complete");
+        //LoggerBase.logDebug(chunksToBePopulated.toString());
 
 
         //4. Using the Map of aggregate clusters, pick chunks for each cluster type
@@ -223,15 +223,15 @@ public class OreClusterCalculator {
                  //allChunksWithClusterType.removeIf( c -> !localExistingClusters.contains(c) );
                  final int MIN_SPACING_SPECIFIC_CLUSTER_VALIDATOR_CUTOFF_RADIUS = Math.min(allChunksWithClusterType.size(),
                      (int) Math.pow(config.minChunksBetweenOreClusters, 2));
-                 LoggerBase.logDebug("Validating clusters for ore type: " + oreType);
-                 LoggerBase.logDebug("Existing clusters for this ore type: " + allChunksWithClusterType.size());
-                 LoggerBase.logDebug("Min spacing for this ore type: " + MIN_SPACING_SPECIFIC_CLUSTER_VALIDATOR_CUTOFF_RADIUS);
+                 //LoggerBase.logDebug("Validating clusters for ore type: " + oreType);
+                 //LoggerBase.logDebug("Existing clusters for this ore type: " + allChunksWithClusterType.size());
+                 //LoggerBase.logDebug("Min spacing for this ore type: " + MIN_SPACING_SPECIFIC_CLUSTER_VALIDATOR_CUTOFF_RADIUS);
 
 
                  int totalSpecificClusters = clusterCounts.get(oreType);
                  if( totalSpecificClusters == 0 )
                      continue;
-                 LoggerBase.logDebug("Total clusters for this ore type: " + totalSpecificClusters);
+                 //LoggerBase.logDebug("Total clusters for this ore type: " + totalSpecificClusters);
 
                  int clustersPlaced = 0;
                  int specificMinSpacing = config.minChunksBetweenOreClusters;
