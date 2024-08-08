@@ -57,7 +57,7 @@ public class RealTimeConfig
      * new chunk as the center.
      */
     public static final Integer ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL = 256; //chunks per batch
-    public static final Integer ORE_CLUSTER_DTRM_RADIUS_STRATEGY_CHANGE = 16;  //square chunks
+    public static final Integer ORE_CLUSTER_DTRM_RADIUS_STRATEGY_CHANGE = 256;  //square chunks
 
     /** World Data **/
     //public static Minecraft mc = Minecraft.getInstance();

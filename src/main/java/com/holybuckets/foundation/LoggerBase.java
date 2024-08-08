@@ -11,7 +11,7 @@ public class LoggerBase {
 
     public static final Logger LOGGER = LogUtils.getLogger();
     public static final String PREFIX = "[" + OreClustersAndRegenMain.NAME + "]";
-    public static final Boolean DEBUG = false;
+    public static final Boolean DEBUG = OreClustersAndRegenMain.DEBUG;
 
     /*
      *  1. We want to have static methods for logging info, warnings, and errors to server console.
@@ -60,6 +60,15 @@ public class LoggerBase {
 
     public static void logClientDisplay(String message) {
         String msg = buildClientDisplayMessage("", message);
+    }
+
+    /**
+     * Returns time in milliseconds
+     * @param t1
+     * @param t2
+     */
+    public static float getTime(long t1, long t2 ) {
+        return (t2 - t1) / 1000_000L;
     }
 
 }

@@ -47,10 +47,46 @@ public class OreClusterForgeEventHandler {
 
     //Subscribe to chunk load event
     @SubscribeEvent
-    public static void onChunkLoad(final ChunkEvent.Load event) {
-        if( OreClustersAndRegenMain.oreClusterManager != null )
-            OreClustersAndRegenMain.oreClusterManager.onChunkLoad( event.getChunk() );
+    public static void onChunkLoad(final ChunkEvent.Load event)
+    {
+        LevelAccessor world = OreClustersAndRegenMain.realTimeConfig.LEVEL;
+        if( world !=null && world.isClientSide() )
+        {
+            //Client side
+        }
+        else
+        {
+            //Server side
+
+            if( OreClustersAndRegenMain.oreClusterManager != null )
+            {
+                OreClustersAndRegenMain.oreClusterManager.onChunkLoad( event );
+            }
+
+        }
+
     }
+
+    @SubscribeEvent
+    public static void onChunkUnLoad(final ChunkEvent.Unload event)
+    {
+        LevelAccessor world = OreClustersAndRegenMain.realTimeConfig.LEVEL;
+        if( world !=null && world.isClientSide() )
+        {
+            //Client side
+        }
+        else
+        {
+            //Server side
+
+            if( OreClustersAndRegenMain.oreClusterManager != null )
+            {
+                OreClustersAndRegenMain.oreClusterManager.onChunkUnload( event );
+            }
+
+        }
+    }
+
 
 
     /*

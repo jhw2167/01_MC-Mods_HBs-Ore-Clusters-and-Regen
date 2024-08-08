@@ -35,6 +35,7 @@ public class OreClustersAndRegenMain
             .create();
 
     public static RealTimeConfig realTimeConfig = null;
+    public static final Boolean DEBUG = true;
 
     /** Use the {@link Random} of a local {@link Level} or {@link Entity} or create one */
     @Deprecated
@@ -147,8 +148,8 @@ public class OreClustersAndRegenMain
     {
         // Capture the world seed
         LoggerBase.logDebug("**** WORLD UNLOAD EVENT ****");
-        realTimeConfig = null;
         oreClusterManager.shutdown();
+        realTimeConfig = null;
         oreClusterManager = null;
     }
 
