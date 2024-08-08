@@ -43,3 +43,12 @@ Game Settings loading:
 6. RealTimeConfig loaded
 7. OreClusterMangerConfigs loaded
 8.
+
+Performance
+---
+
+1. getChunkAccess(String chunkId)
+- getting a chunk is extremely expensive ~ms x 10^s
+- use sparingly
+
+2. 

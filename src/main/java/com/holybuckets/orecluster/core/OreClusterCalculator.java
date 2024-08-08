@@ -36,7 +36,7 @@ public class OreClusterCalculator {
 
     }
 
-    public HashMap<String, HashMap<String, Vec3i>> calculateClusterLocations(List<ChunkAccess> chunks, Random rng)
+    public HashMap<String, HashMap<String, Vec3i>> calculateClusterLocations(List<String> chunks, Random rng)
     {
         long startTime = System.nanoTime();
 
@@ -62,7 +62,8 @@ public class OreClusterCalculator {
         //LoggerBase.logDebug(clusterCounts.toString());
 
         long step1Time = System.nanoTime();
-        LoggerBase.logDebug("Step 1 (Get configs and determine cluster counts) took " + (step1Time - startTime) + " ns");
+        LoggerBase.logDebug("Step 1 (Get configs and determine cluster counts) took " +
+            LoggerBase.getTime(startTime, step1Time) + " ms");
 
         /** Add all clusters, distributing one cluster type at a time
         *
@@ -77,7 +78,7 @@ public class OreClusterCalculator {
          */
 
          //1. Get recently loaded chunks
-         String startChunk = ChunkUtil.getId( chunks.get(0) );
+         String startChunk =  chunks.get(0);
          int minSpacing = C.getDefaultConfig().minChunksBetweenOreClusters;
 
         /** If the spacing is large, there will be fewer cluster chunks, so we can check all against
@@ -97,7 +98,7 @@ public class OreClusterCalculator {
          int spiralRadius = batchDimensions + MIN_SPACING_VALIDATOR_CUTOFF_RADIUS;
          int spiralArea = (int) Math.pow( spiralRadius, 2 );
          LinkedHashSet<String> recentlyLoadedChunks =
-            manager.getRecentChunkIds( chunks.get(0).getPos(), spiralArea );
+            manager.getRecentChunkIds( ChunkUtil.getPos( chunks.get(0)), spiralArea );
         LinkedHashSet<String> localExistingClusters = existingClusters.keySet().stream().
             collect(Collectors.toCollection(LinkedHashSet::new));
 
@@ -118,7 +119,8 @@ public class OreClusterCalculator {
          }
 
         long step2Time = System.nanoTime();
-        LoggerBase.logDebug("Step 2 (Get recently loaded chunks and determine local existing clusters) took " + (step2Time - step1Time) + " ns");
+        LoggerBase.logDebug("Step 2 (Get recently loaded chunks and determine local existing clusters) took "
+            + LoggerBase.getTime(step1Time, step2Time) + " ms");
 
         //3. Determine distribution of clusters as aggregate group over all chunks
         float totalClusters = clusterCounts.values().stream().mapToInt( i -> i ).sum();
@@ -147,7 +149,7 @@ public class OreClusterCalculator {
                  * these clusters, once assigned a particular ore type, will be discarded later
                  */
 
-                String chunkId = ChunkUtil.getId(chunks.get(chunkIndex++));
+                String chunkId = chunks.get(chunkIndex++);
                 if( exploredChunks.contains(chunkId) )
                     continue;
 
@@ -184,7 +186,7 @@ public class OreClusterCalculator {
             //FOUND A VALID CHUNK, PLACE A CLUSTER
             if( chunkIndex < chunks.size() )
             {
-                String chunkId = ChunkUtil.getId(chunks.get(chunkIndex));
+                String chunkId = chunks.get(chunkIndex);
                 chunksToBePopulated.add(chunkId);
                 localExistingClusters.add(chunkId);
             }
@@ -195,7 +197,8 @@ public class OreClusterCalculator {
         //LoggerBase.logDebug(chunksToBePopulated.toString());
 
         long step3Time = System.nanoTime();
-        LoggerBase.logDebug("Step 3 (Determine distribution of clusters) took " + (step3Time - step2Time) + " ns");
+        LoggerBase.logDebug("Step 3 (Determine distribution of clusters) took "
+            + LoggerBase.getTime(step2Time, step3Time) + " ms");
 
         //4. Using the Map of aggregate clusters, pick chunks for each cluster type
 
@@ -203,7 +206,7 @@ public class OreClusterCalculator {
         HashMap<String, HashMap<String, Vec3i>> clusterPositions = new HashMap<>();
 
         //Order OreCluster types by spawnRate ascending
-        oreClusterTypes.sort(Comparator.comparingInt( o -> clusterConfigs.get(o).oreClusterSpawnRate ));
+        oreClusterTypes.sort(Comparator.comparingInt( o -> -1*clusterConfigs.get(o).oreClusterSpawnRate ));
         LinkedHashSet<String> selectedChunks = new LinkedHashSet<>();
 
         /**
@@ -226,9 +229,10 @@ public class OreClusterCalculator {
          try {
 
 
-             for (String oreType : oreClusterTypes) {
+             for (String oreType : oreClusterTypes)
+             {
                  OreClusterConfigModel config = clusterConfigs.get(oreType);
-                 HashSet<String> allChunksWithClusterType = existingClustersByType.get(oreType);
+                 HashSet<String> allChunksWithClusterType = existingClustersByType.get(oreType).stream().collect(Collectors.toCollection(HashSet::new));
                  //allChunksWithClusterType.removeIf( c -> !localExistingClusters.contains(c) );
                  final int MIN_SPACING_SPECIFIC_CLUSTER_VALIDATOR_CUTOFF_RADIUS = Math.min(allChunksWithClusterType.size(),
                      (int) Math.pow(config.minChunksBetweenOreClusters, 2));
@@ -254,37 +258,21 @@ public class OreClusterCalculator {
                      }
                  }
                  LinkedList<String> chunksToBePopulatedSpecificCopy = new LinkedList<>(chunksToBePopulated);
-                 float incrementByBuckets = chunksToBePopulatedSpecificCopy.size() / totalSpecificClusters;
+                 Collections.shuffle(chunksToBePopulatedSpecificCopy, rng);
                  boolean validCluster = false;
-                 int nextIndex = 0;
-                 int subIndex = 0;    //properly tracks next chunksId to be used
-                 int nextIndexBalancer = 0;  //balances the jump of the next index considering how many cluster conflicts we encountered
-                 int failedChunksCount = 0;
 
-                 while (clustersPlaced < totalSpecificClusters) {
+                 while (clustersPlaced < totalSpecificClusters)
+                 {
                      clustersPlaced++;
-                     float gaussianIncrementFactor = (float) rng.nextGaussian(incrementByBuckets, incrementByBuckets / 6);
-                     nextIndex = (int) (clustersPlaced * gaussianIncrementFactor + nextIndexBalancer);
-                     nextIndex = Math.max(subIndex + 1, nextIndex);
-                     failedChunksCount = 0;
                      String candidateChunkId = null;
                      validCluster = false;
 
                      while (!validCluster && !chunksToBePopulatedSpecificCopy.isEmpty())
                      {
+                         candidateChunkId = chunksToBePopulatedSpecificCopy.removeFirst();
 
-                         while (subIndex < nextIndex && !chunksToBePopulatedSpecificCopy.isEmpty()) {
-                             candidateChunkId = chunksToBePopulatedSpecificCopy.removeFirst();
-                             subIndex++;
-                         }
-
-                         if( chunksToBePopulatedSpecificCopy.isEmpty() )
+                         if (exploredChunks.contains(candidateChunkId))
                              break;
-
-
-                         if (exploredChunks.contains(candidateChunkId)) {
-                             continue;
-                         }
 
                          //Check if the chunk is within the radius of a chunk with the same cluster type
                          validCluster = true;
@@ -304,23 +292,15 @@ public class OreClusterCalculator {
                              }
                          }
 
-                         if (!validCluster) {
-                             failedChunksCount++;
-                             nextIndex++;
-                         }
-
                      }
                      //END WHILE FIND VALID CHUNK FOR GIVEN CLUSTER
-                     nextIndexBalancer += failedChunksCount;
-                     if (failedChunksCount == 0)
-                         nextIndexBalancer = 0; //Cluster was valid on first attempt, reset balancer
 
                      //PLACE THE CLUSTER
                      if (validCluster && candidateChunkId != null)
                      {
                          selectedChunks.add(candidateChunkId);
                          allChunksWithClusterType.add(candidateChunkId);
-                         if (clusterPositions.containsKey(candidateChunkI))
+                         if (clusterPositions.containsKey(candidateChunkId))
                          {
                              clusterPositions.get(candidateChunkId).put(oreType, null);
                          }
@@ -348,13 +328,23 @@ public class OreClusterCalculator {
          }
 
         long step4Time = System.nanoTime();
-        LoggerBase.logDebug("Step 4 (Pick chunks for each cluster type) took " + (step4Time - step3Time) + " ns");
+        LoggerBase.logDebug("Step 4 (Pick chunks for each cluster type) took "
+             + LoggerBase.getTime(step3Time, step4Time) + " ms");
 
         //6. Remove all clusters at chunks that were populated in previous batches
-        clusterPositions.keySet().removeAll( exploredChunks );
+        Iterator<String> clusterPos =  clusterPositions.keySet().iterator();
+        while( clusterPos.hasNext() ) {
+            String chunkId = clusterPos.next();
+            if( exploredChunks.contains(chunkId) )
+                clusterPos.remove();
+        }
+        long step5Time = System.nanoTime();
+        LoggerBase.logDebug("Step 5 (Remove all clusters at chunks that were populated in previous batches) took "
+         + LoggerBase.getTime(step4Time, step5Time) + " ms");
+
 
         long endTime = System.nanoTime();
-        LoggerBase.logDebug("Total time for calculateClusterLocations: " + (endTime - startTime) + " ns");
+        //LoggerBase.logDebug("Total time for calculateClusterLocations: " + LoggerBase.getTime(startTime, endTime) + " ms");
 
         return clusterPositions;
     }
@@ -374,7 +364,7 @@ public class OreClusterCalculator {
         {
             for( int z = center.z - radius; z <= center.z + radius; z++ )
             {
-                chunks.add( ChunkUtil.getId(x, z) );
+                chunks.add(ChunkUtil.getId(x, z));
             }
         }
         return chunks;
