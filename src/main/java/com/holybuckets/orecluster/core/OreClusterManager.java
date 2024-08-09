@@ -3,17 +3,17 @@ package com.holybuckets.orecluster.core;
 import com.holybuckets.foundation.HolyBucketsUtility.*;
 import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.orecluster.RealTimeConfig;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraftforge.event.level.ChunkEvent;
+import org.apache.commons.lang3.tuple.Pair;
 
 //Java Imports
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Class: OreClusterManager
@@ -23,22 +23,32 @@ import java.util.concurrent.locks.ReentrantLock;
  *  - Determines the type of cluster that will appear
  *  - All variables and methods are static
  *
- *  - Variables
- *  ConcurrentHashMap called existingClusters that maps Chunk Id to Pair<String, Vector3> where the String is the type of cluster and the Vector3 is the location of the cluster
- *  Float maxDistance which maintains the current maximum distance between the worldSpawn and the furthest cluster
- *  String lastDeterminedClusterChunkId which maintains the last chunk id that was processed in the batch process
- *  ConcurrentQueue that holds Chunk ids of all newly loaded chunks to produce generate for
- *  Static RealTimeConfig config object that holds the default and custom cluster configurations
+ *  #Variables - list all variables and a brief description
+ *  config - (private) RealTimeConfig object contains statically defined and configurable variables
+ *  randSeqClusterPositionGen - (private) Random object for generating cluster positions
  *
- *  - Behavior:
- *  - Constructor: Initializes variables to empty formats
- *  - init: Reads  chunk NBT data of all existing chunks and loads them into the existingClusters map if the chunk owns a cluster
- *  - determineClusterLocations: Batch process that takes an integer n and processes either n chunks or all chunks until maxDistance of the worldSpawn
- *      1. The next chunk up processes in a spiral pattern from the lastDeterminedClusterChunkId
- *      2. OreClusterCalculator.calculateClusterLocations() determines which chunk ids will have clusters, processing CHUNK_NORMALIZATION_TOTAL chunks at a time
- *  - onChunkLoad (or the appropriate name): subscribe to the chunk load event and add the chunk id to the queue
- *      1. Check distance between worldSpawn and the chunk
- *      2. If the distance is greater than maxDistance, call determineClusterLocations
+ *  newlyLoadedChunks - (private) LinkedBlockingQueue of chunkIds that have been loaded and not yet processed
+ *  chunksPendingDeterminations - (private) LinkedBlockingQueue of chunkIds that are pending cluster determination
+ *  chunksPendingGeneration - (private) LinkedBlockingQueue of chunkIds that are pending cluster generation
+ *
+ *  existingClusters - (private) ConcurrentHashMap of <chunkId, <oreType, Vec3i>> containing all existing clusters
+ *      in the world, each String chunkId maps to a HashMap of each chunk's cluster type(s) and origin
+ *  existingClustersByType - (private) ConcurrentHashMap of <oreType, <chunkId>> containing all existing clusters
+ *      allows to check quickly if any newly generated chunk has a nearby cluster of its type
+ *  chunksPendingClusterGen - (private) ConcurrentLinkedQueue of chunkIds that are pending cluster generation in the main gamethread
+ *
+ *  exploredChunks - (private) LinkedHashSet of chunkIds that have been explored
+ *  mainSpiral - (private) ChunkGenerationOrderHandler object that generates a spiral of chunkIds
+ *
+ *  oreClusterCalculator - (private) Handles calculations for cluster determination and generation
+ *  managerRunning - (private) boolean flag for toggling internal threads on and off
+ *
+ *  threadPoolLoadedChunks - (private) ExecutorService for handling newly loaded chunks, 1 thread
+ *  threadPoolClusterDetermination - (private) ExecutorService for handling cluster determinations, 1 thread
+ *  threadPoolClusterGeneration - (private) ExecutorService for handling cluster generation, 3 threads
+ *
+ *  #Methods - list all methods and a brief description
+ *
  **/
 
 
@@ -51,11 +61,14 @@ public class OreClusterManager {
 
 
     private final LinkedBlockingQueue<String> newlyLoadedChunks;
+    private final LinkedBlockingQueue<String> chunksPendingDeterminations;
+    private final LinkedBlockingQueue<String> chunksPendingGeneration;
+    private final ConcurrentHashMap<String, List<Pair<String, Vec3i>>> chunksPendingManifestation;
+
     //<chunkId, <oreType, Vec3i>>
     private final ConcurrentHashMap<String, HashMap<String, Vec3i>> existingClusters;
-    //<oreType, <chunkId>>
+    //<oreType, <chunkIds>>
     private final ConcurrentHashMap<String, HashSet<String>> existingClustersByType;
-    private final ConcurrentLinkedQueue<String> chunksPendingClusterGen;
 
     private final LinkedHashSet<String> exploredChunks;
     private final ChunkGenerationOrderHandler mainSpiral;
@@ -64,7 +77,9 @@ public class OreClusterManager {
 
     //Threads
     private boolean managerRunning = true;
+    private final ExecutorService threadPoolLoadedChunks;
     private final ExecutorService threadPoolClusterDetermination;
+    private final ExecutorService threadPoolClusterGeneration;
 
 
     /** Constructor **/
@@ -75,13 +90,21 @@ public class OreClusterManager {
         this.existingClusters = new ConcurrentHashMap<>();
         this.existingClustersByType = new ConcurrentHashMap<>();
         this.exploredChunks = new LinkedHashSet<>();
+        this.chunksPendingDeterminations = new LinkedBlockingQueue<>();
+        this.chunksPendingGeneration = new LinkedBlockingQueue<>();
         this.newlyLoadedChunks = new LinkedBlockingQueue<>();
-        this.chunksPendingClusterGen = new ConcurrentLinkedQueue<>();
+        this.chunksPendingManifestation = new ConcurrentHashMap<>();
 
         this.mainSpiral = new ChunkGenerationOrderHandler(null);
         //Thread pool needs to have one thread max, use Synchronous queue and discard policy
-        this.threadPoolClusterDetermination = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
-            new SynchronousQueue<>(), new ThreadPoolExecutor.DiscardPolicy());
+        this.threadPoolLoadedChunks = new ThreadPoolExecutor(1, 1, 1L,
+         TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.DiscardPolicy());
+        //Thread pool
+        this.threadPoolClusterDetermination = new ThreadPoolExecutor(1, 1,
+         30L, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.DiscardPolicy());
+        //Thread pool with unlimited buffer, 3 threads max
+        this.threadPoolClusterGeneration = Executors.newFixedThreadPool(3);
+
         init();
         LoggerBase.logInit(this.getClass().getName());
     }
@@ -103,11 +126,6 @@ public class OreClusterManager {
         return exploredChunks;
     }
 
-    public ConcurrentLinkedQueue<String> getChunksPendingClusterGen() {
-        return chunksPendingClusterGen;
-    }
-
-
 
 
 
@@ -123,22 +141,19 @@ public class OreClusterManager {
 
         config.getOreConfigs().forEach((oreType, oreConfig) ->
             existingClustersByType.put(oreType, new HashSet<>()));
-        
-        //threadPool.execute(this::onNewlyAddedChunk);
+
     }
 
     /**
      * Determines how to handle the newly loaded chunk upon loading
      * @param chunkEvent chunk from the onChunkLoad event
      */
-    public void onChunkLoad(ChunkEvent.Load chunkEvent) {
+    public void onChunkLoad(ChunkEvent.Load chunkEvent)
+    {
         String chunkId = ChunkUtil.getId(chunkEvent.getChunk());
-        if( !exploredChunks.contains(chunkId)  )
-        {
-            newlyLoadedChunks.add(chunkId);
-            threadPoolClusterDetermination.submit(this::onNewlyAddedChunk);
-            LoggerBase.logInfo("Chunk " + chunkId + " added to queue size " + newlyLoadedChunks.size());
-        }
+        newlyLoadedChunks.add(chunkId);
+        threadPoolLoadedChunks.submit(this::onNewlyAddedChunk);
+        LoggerBase.logInfo("Chunk " + chunkId + " added to queue size " + newlyLoadedChunks.size());
 
     }
 
@@ -154,15 +169,14 @@ public class OreClusterManager {
             while( !newlyLoadedChunks.isEmpty() )
             {
                 String chunkId = newlyLoadedChunks.poll(1, TimeUnit.SECONDS);
-                if (!exploredChunks.contains(chunkId))
-                {
-                    long start = System.nanoTime();
-                    handleClustersForChunk(chunkId);
-                    long end = System.nanoTime();
-                    LoggerBase.logDebug("Chunk " + chunkId + " processed. Queue size: " + newlyLoadedChunks.size());
-                    LoggerBase.logDebug("Full process for Chunk " + chunkId + "  took " +
-                        LoggerBase.getTime(start, end) + " ms");
-                }
+                long start = System.nanoTime();
+                handleClustersForChunk(chunkId);
+                long end = System.nanoTime();
+                LoggerBase.logDebug("Chunk " + chunkId + " processed. Queue size: " + newlyLoadedChunks.size());
+                //LoggerBase.logDebug("Full process for Chunk " + chunkId + "  took " + LoggerBase.getTime(start, end) + " ms");
+
+                //Remove duplicates
+                newlyLoadedChunks.remove(chunkId);
 
             }
 
@@ -194,12 +208,61 @@ public class OreClusterManager {
             LoggerBase.logDebug("Chunk " + chunkId + " has not been explored");
             //LoggerBase.logInfo("Chunk " + chunkId + " has not been explored");
 
-            while (!exploredChunks.contains(chunkId))
-            {
-                handlePrepareNewChunksForClusters(RealTimeConfig.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL, chunkId);
-            }
+            chunksPendingDeterminations.add(chunkId);
+            this.threadPoolClusterDetermination.submit(this::workerThreadDetermineClusters);
         }
     }
+
+    private void workerThreadDetermineClusters()
+    {
+        Throwable thrown = null;
+        try
+        {
+            while( managerRunning )
+            {
+                String chunkId = chunksPendingDeterminations.poll();
+                if( chunkId == null )
+                    break;
+
+                while (!exploredChunks.contains(chunkId)) {
+                    handlePrepareNewChunksForClusters(RealTimeConfig.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL, chunkId);
+                }
+            }
+
+        }
+        catch (Exception e) {
+            thrown = e;
+        }
+        finally {
+            LoggerBase.threadExited(this, thrown);
+        }
+    }
+
+    private  void workerThreadGenerateClusters()
+    {
+        Throwable thrown = null;
+        try
+        {
+            while( managerRunning )
+            {
+                String chunkId = chunksPendingGeneration.poll();
+                if( chunkId == null )
+                    break;
+
+                ChunkAccess chunk = getChunkAccess(chunkId);
+                handleClusterGeneration( chunk );
+
+            }
+
+        }
+        catch (Exception e) {
+            thrown = e;
+        }
+        finally {
+            LoggerBase.threadExited(this, thrown);
+        }
+    }
+
 
     /**
      * Batch process that determines the location of clusters in the next n chunks
@@ -276,18 +339,35 @@ public class OreClusterManager {
     /**
      * Handles creation of each type of ore cluster within each chunk
      */
-    private void handleClusterGeneration() {
-        while (!chunksPendingClusterGen.isEmpty()) {
-            String chunkId = chunksPendingClusterGen.poll();
-            ChunkAccess chunk = getChunkAccess(chunkId);
+    private void handleClusterGeneration(ChunkAccess chunk)
+    {
+        String chunkId = ChunkUtil.getId(chunk);
+        LoggerBase.logDebug("Generating clusters for chunk: " + chunkId);
 
-            LoggerBase.logDebug("Generating clusters for chunk: " + chunkId);
-            HashMap<String, Vec3i> clusters = existingClusters.get(chunkId);
-            clusters.forEach((oreType, position) -> {
-                //Set source of cluster
-                //Generate cluster
-            });
-        }
+        chunk.getBlockEntity(new BlockPos(0, 0, 0));
+
+        HashMap<String, Vec3i> clusters = existingClusters.get(chunkId);
+        List<Pair<String, Vec3i>> cluster = chunksPendingManifestation.getOrDefault(chunkId, new LinkedList<>());
+        clusters.forEach((oreType, position) -> {
+            position = oreClusterCalculator.determineSourcePosition(oreType, chunk);
+            cluster.addAll( oreClusterCalculator.generateCluster(oreType, position, chunk) );
+        });
+
+        chunksPendingManifestation.put(chunkId, cluster);
+
+    }
+
+    private void mainThreadGenerateClusters( ChunkAccess chunk )
+    {
+        //1. Get clusters for chunk
+        String chunkId = ChunkUtil.getId(chunk);
+
+
+        //2. Generate clusters in world
+
+        //3. Write data to chunk NBT data
+
+        //4. Release hold on resource
     }
 
     public void onChunkUnload(ChunkEvent.Unload chunk) {
@@ -329,7 +409,7 @@ public class OreClusterManager {
 
     public void shutdown() {
         managerRunning = false;
-        threadPoolClusterDetermination.shutdown();
+        threadPoolLoadedChunks.shutdown();
     }
     
 
