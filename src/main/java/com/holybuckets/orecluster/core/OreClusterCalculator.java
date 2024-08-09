@@ -13,6 +13,8 @@ import com.holybuckets.foundation.HolyBucketsUtility.*;
 import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.orecluster.RealTimeConfig;
 import com.holybuckets.orecluster.RealTimeConfig;
+import org.antlr.v4.runtime.misc.Triple;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class OreClusterCalculator {
 
@@ -45,7 +47,7 @@ public class OreClusterCalculator {
         List<String> oreClusterTypes = new ArrayList<>(clusterConfigs.keySet());
 
         HashMap<String, Integer> clusterCounts = new HashMap<>();
-        LoggerBase.logDebug("1. Obtained cluster configs for ores: ");
+        //LoggerBase.logDebug("1. Obtained cluster configs for ores: ");
         //LoggerBase.logDebug(clusterConfigs.toString());
 
         //Determine the expected total for each cluster type for this MAX_CLUSTERS batch
@@ -58,12 +60,11 @@ public class OreClusterCalculator {
 
             clusterCounts.put(oreType, numClusters);
         }
-        LoggerBase.logDebug("2. Determined cluster counts for each ore type: ");
+        //LoggerBase.logDebug("2. Determined cluster counts for each ore type: ");
         //LoggerBase.logDebug(clusterCounts.toString());
 
         long step1Time = System.nanoTime();
-        LoggerBase.logDebug("Step 1 (Get configs and determine cluster counts) took " +
-            LoggerBase.getTime(startTime, step1Time) + " ms");
+        //LoggerBase.logDebug("Step 1 (Get configs and determine cluster counts) took " + LoggerBase.getTime(startTime, step1Time) + " ms");
 
         /** Add all clusters, distributing one cluster type at a time
         *
@@ -119,8 +120,7 @@ public class OreClusterCalculator {
          }
 
         long step2Time = System.nanoTime();
-        LoggerBase.logDebug("Step 2 (Get recently loaded chunks and determine local existing clusters) took "
-            + LoggerBase.getTime(step1Time, step2Time) + " ms");
+        //LoggerBase.logDebug("Step 2 (Get recently loaded chunks and determine local existing clusters) took " + LoggerBase.getTime(step1Time, step2Time) + " ms");
 
         //3. Determine distribution of clusters as aggregate group over all chunks
         float totalClusters = clusterCounts.values().stream().mapToInt( i -> i ).sum();
@@ -193,12 +193,11 @@ public class OreClusterCalculator {
 
         }
         //END cluster placing algorithm
-        LoggerBase.logDebug("3. Cluster Placement Algorithm Complete");
+        //LoggerBase.logDebug("3. Cluster Placement Algorithm Complete");
         //LoggerBase.logDebug(chunksToBePopulated.toString());
 
         long step3Time = System.nanoTime();
-        LoggerBase.logDebug("Step 3 (Determine distribution of clusters) took "
-            + LoggerBase.getTime(step2Time, step3Time) + " ms");
+        //LoggerBase.logDebug("Step 3 (Determine distribution of clusters) took " + LoggerBase.getTime(step2Time, step3Time) + " ms");
 
         //4. Using the Map of aggregate clusters, pick chunks for each cluster type
 
@@ -328,8 +327,7 @@ public class OreClusterCalculator {
          }
 
         long step4Time = System.nanoTime();
-        LoggerBase.logDebug("Step 4 (Pick chunks for each cluster type) took "
-             + LoggerBase.getTime(step3Time, step4Time) + " ms");
+        //LoggerBase.logDebug("Step 4 (Pick chunks for each cluster type) took " + LoggerBase.getTime(step3Time, step4Time) + " ms");
 
         //6. Remove all clusters at chunks that were populated in previous batches
         Iterator<String> clusterPos =  clusterPositions.keySet().iterator();
@@ -339,8 +337,7 @@ public class OreClusterCalculator {
                 clusterPos.remove();
         }
         long step5Time = System.nanoTime();
-        LoggerBase.logDebug("Step 5 (Remove all clusters at chunks that were populated in previous batches) took "
-         + LoggerBase.getTime(step4Time, step5Time) + " ms");
+        //LoggerBase.logDebug("Step 5 (Remove all clusters at chunks that were populated in previous batches) took " + LoggerBase.getTime(step4Time, step5Time) + " ms");
 
 
         long endTime = System.nanoTime();
@@ -370,6 +367,34 @@ public class OreClusterCalculator {
         return chunks;
     }
 
+    /**
+     * Determine the source position of a cluster
+     * @param position
+     * @param chunk
+     * @return
+     */
+    public Vec3i determineSourcePosition(String oreType, ChunkAccess chunk) {
+        return null;
+    }
+
+    public List<Pair<String, Vec3i>> generateCluster(String oreType, Vec3i sourcePosition, ChunkAccess chunk )
+    {
+        //1. Get the cluster config
+        OreClusterConfigModel config = C.getOreConfigs().get(oreType);
+
+        //2. Determine the cluster size and shape
+        Triple<Integer, Integer, Integer> volume = config.oreClusterVolume;
+        String shape = config.oreClusterShape;
+
+        //3. Generate the cluster
+
+
+        //4. Reduce cluster density
+
+
+        return null;
+
+    }
 }
 //END CLASS
 

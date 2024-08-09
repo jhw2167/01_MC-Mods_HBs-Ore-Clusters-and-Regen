@@ -2,6 +2,7 @@ package com.holybuckets.foundation;
 
 import com.holybuckets.orecluster.OreClustersAndRegenMain;
 import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
+import com.holybuckets.orecluster.core.OreClusterManager;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import org.slf4j.Logger;
@@ -71,4 +72,12 @@ public class LoggerBase {
         return (t2 - t1) / 1000_000L;
     }
 
+    public static void threadExited(Object threadContainer, Throwable thrown) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Thread " + Thread.currentThread().getStackTrace() + " exited ");
+        if( thrown == null )
+            logDebug( sb + " gracefully");
+        else
+            logError( sb + " with exception: " + thrown.getMessage());
+    }
 }

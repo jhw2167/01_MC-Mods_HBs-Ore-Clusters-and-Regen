@@ -31,6 +31,67 @@ A. OreClusterEventHandler makes static references to OreClusterRegenMain
 1. 
 
 
+Class Analysis
+---
+
+	OreClusterManager
+	---
+	- Primary Working Class of the mod
+	- Intercepts chunks "onLoad" event and keeps loaded chunks in queues
+	- Batches of 256 chunks are queued for "Determination" where the spread of clusters across 256 chunks is determined
+	- Chunks assigned clusters are queued for "Generation" where the shape and size of the cluster is generated
+	- Loaded chunks are queued for "Cleaning" to replace specified ores with "replaceable blocks" to reduce ore vein frequency
+
+	#Variables
+	---
+	
+	 *  config - (private) RealTimeConfig object contains statically defined and configurable variables
+	 *  randSeqClusterPositionGen - (private) Random object for generating cluster positions
+ 
+	 *  newlyLoadedChunks - (private) LinkedBlockingQueue of chunkIds that have been loaded
+	 *  chunksPendingDeterminations - (private) LinkedBlockingQueue of chunkIds that are pending cluster determination
+	 *  chunksPendingGeneration - (private) LinkedBlockingQueue of chunkIds that are pending cluster generation
+
+	 *  existingClusters - (private) ConcurrentHashMap of <chunkId, <oreType, Vec3i>> containing all existing clusters
+	 *      in the world, each String chunkId maps to a HashMap of each chunk's cluster type(s) and origin
+	 *  existingClustersByType - (private) ConcurrentHashMap of <oreType, <chunkId>> containing all existing clusters
+	 *      allows to check quickly if any newly generated chunk has a nearby cluster of its type
+	 *  chunksPendingClusterGen - (private) ConcurrentLinkedQueue of chunkIds that are pending cluster generation in the main gamethread
+
+	 *  exploredChunks - (private) LinkedHashSet of chunkIds that have been explored
+	 *  mainSpiral - (private) ChunkGenerationOrderHandler object that generates a spiral of chunkIds
+
+	 *  oreClusterCalculator - (private) Handles calculations for cluster determination and generation
+	 *  managerRunning - (private) boolean flag for toggling internal threads on and off
+
+	 *  threadPoolLoadedChunks - (private) ExecutorService for handling newly loaded chunks, 1 thread
+	 *  threadPoolClusterDetermination - (private) ExecutorService for handling cluster determinations, 1 thread
+	 *  threadPoolClusterGeneration - (private) ExecutorService for handling cluster generation, 3 threads
+
+
+
+	NBT data Writer
+	---
+	
+	#ToWrite
+	- ChunkId
+	- IsExplored
+	- ClusterList: { {Minecraft:Gold:{x,y,z}}, ...
+	- RegenDay - 0, chunk has not been written to yet, 1+ last day this chunk had generated succesfully on it
+
+	RegenDay 0, 				- Chunk may have been explored in memory, but has not been written to yet
+	RegenDay != 0, 				- chunk has been fully explored
+	RegenDay !=0 && ClusterList == null	- Chunk explored, no clusters determined
+	RegenDay !=0 && ClusterList == Populated- Chunk explored, clusters determined, not generated
+	RegenDay !=0 && ClusterList == Full 	- Chunk explored, clusters determined and generated, check for regen
+	
+	
+
+	#Formally
+	- Byte 6969
+	- StartCode
+	- Integer RegenDay
+	- ClusterList: 16B x 255 = 4096B
 
 Game Settings loading:
 ---
