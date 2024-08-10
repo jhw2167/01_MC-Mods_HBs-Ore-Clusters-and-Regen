@@ -109,7 +109,29 @@ Performance
 ---
 
 1. getChunkAccess(String chunkId)
-- getting a chunk is extremely expensive ~ms x 10^s
+- getting a chunk is extremely expensive ~ms x 10^2
 - use sparingly
 
 2. 
+
+
+Threading
+---
+
+1. Created new MangedChunk object to store relevant cluster chunk data
+	- Editing ManagedChunk will be synchronized to avoid race conditions
+	- Reading from ManagedChunk will NOT be synchronized, race conditons are possible
+	- We assume 1. ManagedChunk wil only progress forward in progress and 2. Any "failed" conditions will be retried
+	so any misreads would only indicate the same operation trying again
+2. Several concurrent queues for each chunk status in the process
+3. Threads:
+	- One handler thread, single thread, Synchronous queue, discard policy
+	- One determine thread, single thread, unbound queue
+	- 3 Cluster generation threads, unbound queue, 30s TTL
+	- One Manifest thread - ideally we only want to make block changes in the main thead, 
+	but we may need to load chunks to write data out in the background, loading chunks one at a time
+
+4. Main thread:
+	- Writes out block changes in a chunk that we have determined
+
+5. 
