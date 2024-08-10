@@ -3,17 +3,19 @@ package com.holybuckets.orecluster.core;
 import com.holybuckets.foundation.HolyBucketsUtility.*;
 import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.orecluster.RealTimeConfig;
-import net.minecraft.core.BlockPos;
+import com.holybuckets.orecluster.model.ManagedChunk;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraftforge.event.level.ChunkEvent;
 import org.apache.commons.lang3.tuple.Pair;
+import oshi.annotation.concurrent.ThreadSafe;
 
 //Java Imports
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 
 /**
  * Class: OreClusterManager
@@ -60,17 +62,18 @@ public class OreClusterManager {
     //private Random randSeqClusterShapeGen;
 
 
-    private final LinkedBlockingQueue<String> newlyLoadedChunks;
+    private final LinkedBlockingQueue<String> chunksPendingHandling;
     private final LinkedBlockingQueue<String> chunksPendingDeterminations;
     private final LinkedBlockingQueue<String> chunksPendingGeneration;
-    private final ConcurrentHashMap<String, List<Pair<String, Vec3i>>> chunksPendingManifestation;
+    private final ConcurrentHashMap<String, ManagedChunk> chunksPendingManifestation;
 
     //<chunkId, <oreType, Vec3i>>
-    private final ConcurrentHashMap<String, HashMap<String, Vec3i>> existingClusters;
+
+    private final ConcurrentHashMap<String, ManagedChunk> determinedChunks;
+    private final ConcurrentHashMap<String, ManagedChunk> loadedChunks;
     //<oreType, <chunkIds>>
     private final ConcurrentHashMap<String, HashSet<String>> existingClustersByType;
 
-    private final LinkedHashSet<String> exploredChunks;
     private final ChunkGenerationOrderHandler mainSpiral;
 
     private OreClusterCalculator oreClusterCalculator;
@@ -87,12 +90,13 @@ public class OreClusterManager {
     {
         this.config = config;
 
-        this.existingClusters = new ConcurrentHashMap<>();
+        this.determinedChunks = new ConcurrentHashMap<>();
         this.existingClustersByType = new ConcurrentHashMap<>();
-        this.exploredChunks = new LinkedHashSet<>();
+        this.loadedChunks = new ConcurrentHashMap<>();
+
         this.chunksPendingDeterminations = new LinkedBlockingQueue<>();
         this.chunksPendingGeneration = new LinkedBlockingQueue<>();
-        this.newlyLoadedChunks = new LinkedBlockingQueue<>();
+        this.chunksPendingHandling = new LinkedBlockingQueue<>();
         this.chunksPendingManifestation = new ConcurrentHashMap<>();
 
         this.mainSpiral = new ChunkGenerationOrderHandler(null);
@@ -114,17 +118,14 @@ public class OreClusterManager {
         return config;
     }
 
-    public ConcurrentHashMap<String, HashMap<String, Vec3i>> getExistingClusters() {
-        return existingClusters;
+    public ConcurrentHashMap<String, ManagedChunk> getDeterminedChunks() {
+        return determinedChunks;
     }
 
     public ConcurrentHashMap<String, HashSet<String>> getExistingClustersByType() {
         return existingClustersByType;
     }
 
-    public LinkedHashSet<String> getExploredChunks() {
-        return exploredChunks;
-    }
 
 
 
@@ -151,9 +152,19 @@ public class OreClusterManager {
     public void onChunkLoad(ChunkEvent.Load chunkEvent)
     {
         String chunkId = ChunkUtil.getId(chunkEvent.getChunk());
-        newlyLoadedChunks.add(chunkId);
+        ChunkAccess chunk = chunkEvent.getChunk();
+
+        loadedChunks.put(chunkId, new ManagedChunk(chunk));
+        chunksPendingHandling.add(chunkId);
         threadPoolLoadedChunks.submit(this::onNewlyAddedChunk);
-        LoggerBase.logInfo("Chunk " + chunkId + " added to queue size " + newlyLoadedChunks.size());
+        LoggerBase.logInfo("Chunk " + chunkId + " added to queue size " + chunksPendingHandling.size());
+
+    }
+
+    public void onChunkUnload(ChunkEvent.Unload chunk) {
+        // Implementation for chunk unload
+        String chunkId = ChunkUtil.getId(chunk.getChunk());
+        editManagedChunk(chunkId, c -> c.setChunk(null));
 
     }
 
@@ -166,17 +177,17 @@ public class OreClusterManager {
 
         try
         {
-            while( !newlyLoadedChunks.isEmpty() )
+            while( !chunksPendingHandling.isEmpty() )
             {
-                String chunkId = newlyLoadedChunks.poll(1, TimeUnit.SECONDS);
+                String chunkId = chunksPendingHandling.poll(1, TimeUnit.SECONDS);
                 long start = System.nanoTime();
                 handleClustersForChunk(chunkId);
                 long end = System.nanoTime();
-                LoggerBase.logDebug("Chunk " + chunkId + " processed. Queue size: " + newlyLoadedChunks.size());
+                LoggerBase.logDebug("Chunk " + chunkId + " processed. Queue size: " + chunksPendingHandling.size());
                 //LoggerBase.logDebug("Full process for Chunk " + chunkId + "  took " + LoggerBase.getTime(start, end) + " ms");
 
                 //Remove duplicates
-                newlyLoadedChunks.remove(chunkId);
+                chunksPendingHandling.remove(chunkId);
 
             }
 
@@ -199,10 +210,10 @@ public class OreClusterManager {
      */
     private void handleClustersForChunk(String chunkId)
     {
-        if (existingClusters.containsKey(chunkId)) {
+        if (determinedChunks.containsKey(chunkId)) {
             LoggerBase.logDebug("Chunk " + chunkId + " contains a cluster");
             //Check regen
-        } else if (exploredChunks.contains(chunkId)) {
+        } else if (determinedChunks.contains(chunkId)) {
             LoggerBase.logDebug("Chunk " + chunkId + " has already been explored");
         } else {
             LoggerBase.logDebug("Chunk " + chunkId + " has not been explored");
@@ -224,8 +235,8 @@ public class OreClusterManager {
                 if( chunkId == null )
                     break;
 
-                while (!exploredChunks.contains(chunkId)) {
-                    handlePrepareNewChunksForClusters(RealTimeConfig.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL, chunkId);
+                while (!determinedChunks.contains(chunkId)) {
+                    handleClusterDetermination(RealTimeConfig.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL, chunkId);
                 }
             }
 
@@ -249,8 +260,7 @@ public class OreClusterManager {
                 if( chunkId == null )
                     break;
 
-                ChunkAccess chunk = getChunkAccess(chunkId);
-                handleClusterGeneration( chunk );
+                Optional<ManagedChunk> chunk = editManagedChunk(chunkId, this::handleClusterGeneration);
 
             }
 
@@ -269,7 +279,7 @@ public class OreClusterManager {
      * @param batchSize
      * @param chunkId
      */
-    private void handlePrepareNewChunksForClusters(int batchSize, String chunkId)
+    private void handleClusterDetermination(int batchSize, String chunkId)
     {
         long startTime = System.nanoTime();
         ChunkAccess start = getChunkAccess(chunkId);
@@ -279,42 +289,99 @@ public class OreClusterManager {
 
         //LoggerBase.logDebug("handlePrepareNewCluster #1  " + LoggerBase.getTime(startTime, step1Time) + " ms");
 
-        //List<ChunkAccess> chunkIds = chunkIds.stream().map(this::getChunkAccess)
-                //.collect(Collectors.toList());
-        LoggerBase.logDebug("Produced " + chunkIds.size() + " chunkAccess objects: ");
-        long step2Time = System.nanoTime();
-        //LoggerBase.logDebug("handlePrepareNewCluster #2  " + LoggerBase.getTime(step1Time, step2Time) + " ms");
-
 
         HashMap<String, HashMap<String, Vec3i>> clusters;
         clusters = oreClusterCalculator.calculateClusterLocations(chunkIds.stream().toList() , randSeqClusterPositionGen);
-        long step3Time = System.nanoTime();
+        long step2Time = System.nanoTime();
         LoggerBase.logDebug("Determined " + clusters.size() + " clusters in " + chunkIds.size() + " chunks");
-        //LoggerBase.logDebug("handlePrepareNewCluster #3  " + LoggerBase.getTime(step2Time, step3Time) + " ms");
+        //LoggerBase.logDebug("handlePrepareNewCluster #3  " + LoggerBase.getTime(step1Time, step2Time) + " ms");
 
 
-        clusters.forEach((id, clusterMap) -> {
 
-            existingClusters.put(id, clusterMap);
+        // #3. Add clusters to determinedClusters
+        for( String id: chunkIds)
+        {
+            ManagedChunk chunk = loadedChunks.getOrDefault(id, new ManagedChunk(id));
+            chunk.addClusterTypes(clusters.get(id));
+            determinedChunks.put(id, chunk);
+        }
 
-            LinkedHashSet<String> oreTypesInThisCluster = new LinkedHashSet<>(clusterMap.keySet());
+        long step3Time = System.nanoTime();
+        //        //LoggerBase.logDebug("handlePrepareNewCluster #3  " + LoggerBase.getTime(step2Time, step3Time) + " ms");
+
+        for( Map.Entry<String, HashMap<String, Vec3i>> cluster : clusters.entrySet())
+        {
+            //Add chunkId to existingClustersByType Map
+            LinkedHashSet<String> oreTypesInThisCluster = new LinkedHashSet<>(cluster.getValue().keySet());
             existingClustersByType.forEach((type, set) -> {
                 if (oreTypesInThisCluster.remove(type))
-                    set.add(id);
+                    set.add(cluster.getKey());
             });
 
+            //Ore types not yet added to the Aggregate List
             oreTypesInThisCluster.forEach(type -> {
                 HashSet<String> set = new HashSet<>();
-                set.add(id);
+                set.add(cluster.getKey());
                 existingClustersByType.put(type, set);
             });
         });
-        long step4Time = System.nanoTime();
-        //LoggerBase.logDebug("handlePrepareNewCluster #4  " + LoggerBase.getTime(step3Time, step4Time) + " ms");
 
-        exploredChunks.addAll(chunkIds);
+
         long endTime = System.nanoTime();
-        //LoggerBase.logDebug("handlePrepareNewCluster #5  " + LoggerBase.getTime(step4Time, endTime) + " ms");
+        //LoggerBase.logDebug("handlePrepareNewCluster #4  " + LoggerBase.getTime(step3Time, endTime) + " ms");
+    }
+
+    private void handleClusterCleaning( ManagedChunk chunk )
+    {
+        //1. Get clusters for chunk
+        //2. Clean clusters in world
+        //3. Write data to chunk NBT data
+        //4. Release hold on resource
+    }
+
+
+    /**
+     * Handles creation of each type of ore cluster within each chunk
+     */
+    private void handleClusterGeneration(ManagedChunk chunk)
+    {
+        LoggerBase.logDebug("Generating clusters for chunk: " + chunk.getId());
+
+        HashMap<String, Vec3i> clusters = chunk.getClusterTypes();
+        List<Pair<String, Vec3i>> cluster = chunk.getClusters();
+        clusters.forEach((oreType, position) -> {
+            position = oreClusterCalculator.determineSourcePosition(oreType, chunk.getChunk());
+            cluster.addAll( oreClusterCalculator.generateCluster(oreType, position, chunk.getChunk()) );
+        });
+
+        chunk.setStatus(ManagedChunk.ClusterStatus.GENERATED);
+
+    }
+
+    /**
+     * Alters the chunk to place blocks in the world as necessary to build clusters or reduce
+     * @param chunk
+     */
+    private void handleClusterManifestation(ManagedChunk chunk)
+    {
+        //1. Get clusters for chunk
+
+
+        //2. Generate clusters in world
+
+        //3. Write data to chunk NBT data
+
+        //4. Release hold on resource
+    }
+
+
+    /**
+     *              UTILITY SECTION
+     */
+
+    private ChunkAccess getChunkAccess(String id) {
+        return this.config.LEVEL.getServer().overworld()
+            .getChunk(ChunkUtil.getPos(id).x, ChunkUtil.getPos(id).z);
     }
 
     /**
@@ -324,7 +391,7 @@ public class OreClusterManager {
     private LinkedHashSet<String> getBatchedChunkList(int batchSize, ChunkAccess start) {
         LinkedHashSet<String> chunkIds = new LinkedHashSet<>();
         ChunkGenerationOrderHandler chunkIdGeneratorHandler = mainSpiral;
-        if (exploredChunks.size() > Math.pow(RealTimeConfig.ORE_CLUSTER_DTRM_RADIUS_STRATEGY_CHANGE, 2)) {
+        if (determinedChunks.size() > Math.pow(RealTimeConfig.ORE_CLUSTER_DTRM_RADIUS_STRATEGY_CHANGE, 2)) {
             chunkIdGeneratorHandler = new ChunkGenerationOrderHandler(start.getPos());
         }
 
@@ -337,54 +404,6 @@ public class OreClusterManager {
     }
 
     /**
-     * Handles creation of each type of ore cluster within each chunk
-     */
-    private void handleClusterGeneration(ChunkAccess chunk)
-    {
-        String chunkId = ChunkUtil.getId(chunk);
-        LoggerBase.logDebug("Generating clusters for chunk: " + chunkId);
-
-        chunk.getBlockEntity(new BlockPos(0, 0, 0));
-
-        HashMap<String, Vec3i> clusters = existingClusters.get(chunkId);
-        List<Pair<String, Vec3i>> cluster = chunksPendingManifestation.getOrDefault(chunkId, new LinkedList<>());
-        clusters.forEach((oreType, position) -> {
-            position = oreClusterCalculator.determineSourcePosition(oreType, chunk);
-            cluster.addAll( oreClusterCalculator.generateCluster(oreType, position, chunk) );
-        });
-
-        chunksPendingManifestation.put(chunkId, cluster);
-
-    }
-
-    private void mainThreadGenerateClusters( ChunkAccess chunk )
-    {
-        //1. Get clusters for chunk
-        String chunkId = ChunkUtil.getId(chunk);
-
-
-        //2. Generate clusters in world
-
-        //3. Write data to chunk NBT data
-
-        //4. Release hold on resource
-    }
-
-    public void onChunkUnload(ChunkEvent.Unload chunk) {
-        // Implementation for chunk unload
-        newlyLoadedChunks.remove(ChunkUtil.getId(chunk.getChunk()));
-    }
-
-    /**
-     *              UTILITY SECTION
-     */
-
-    private ChunkAccess getChunkAccess(String id) {
-        return this.config.LEVEL.getServer().overworld()
-            .getChunk(ChunkUtil.getPos(id).x, ChunkUtil.getPos(id).z);
-    }
-
-    /**
      * If the main spiral is still being explored (within 256x256 chunks of worldspawn)
      * then we return all explored chunks, otherwise we generate a new spiral with the requested area
      * at the requested chunk
@@ -392,19 +411,43 @@ public class OreClusterManager {
      * @param spiralArea
      * @return LinkedHashSet of chunkIds that were recently explored
      */
-    public LinkedHashSet<String> getRecentChunkIds(ChunkPos start, int spiralArea) {
-        if (exploredChunks.size() < Math.pow(RealTimeConfig.ORE_CLUSTER_DTRM_RADIUS_STRATEGY_CHANGE, 2)) {
-            return new LinkedHashSet<>(exploredChunks);
-        } else {
-            LinkedHashSet<String> chunkIds = new LinkedHashSet<>();
+    public ConcurrentHashMap<String, ManagedChunk> getRecentChunkIds(ChunkPos start, int spiralArea)
+    {
+        if (determinedChunks.size() < Math.pow(RealTimeConfig.ORE_CLUSTER_DTRM_RADIUS_STRATEGY_CHANGE, 2)) {
+            return determinedChunks;
+        } else
+        {
+            ConcurrentHashMap<String, ManagedChunk> chunkIds = new ConcurrentHashMap<>();
             ChunkGenerationOrderHandler spiralHandler = new ChunkGenerationOrderHandler(start);
             for (int i = 0; i < spiralArea; i++) {
                 ChunkPos next = spiralHandler.getNextSpiralChunk();
-                chunkIds.add(ChunkUtil.getId(next));
+                chunkIds.put(ChunkUtil.getId(next), null);
             }
+
             return chunkIds;
         }
     }
+
+    /**
+     * Edits a ManagedChunk object from determinedChunks with a consumer, ensuring each object is edited atomically
+     * @param chunkId
+     * @param consumer
+     * @return
+     */
+    @ThreadSafe
+    private synchronized Optional<ManagedChunk> editManagedChunk(String chunkId, Consumer<ManagedChunk> consumer)
+    {
+        ManagedChunk chunk = determinedChunks.get(chunkId);
+        if (chunk != null) {
+            synchronized (chunk) {
+                consumer.accept(chunk);
+            }
+
+        }
+
+        return Optional.ofNullable(chunk);
+    }
+
 
 
     public void shutdown() {
