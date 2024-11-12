@@ -89,9 +89,11 @@ and their Standard deviation is determined by {mean / (log2(mean) * 2)}
 ---
 	- Added logId to all printable console log building statements
 	- Added logId and classId values to all logging statements in actionable classes
-
 	- fixed bug in MangedChunk.java that failed to check for null value when combining maps
 
+determinedChunks.keySet()
+1566727526
+1566727526
 
 TEST CASES
 ---
