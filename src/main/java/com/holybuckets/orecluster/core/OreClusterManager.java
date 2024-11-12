@@ -16,6 +16,7 @@ import oshi.annotation.concurrent.ThreadSafe;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static java.lang.Thread.sleep;
 
@@ -161,7 +162,7 @@ public class OreClusterManager {
         loadedChunks.put(chunkId, new ManagedChunk(chunk));
         chunksPendingHandling.add(chunkId);
         threadPoolLoadedChunks.submit(this::onNewlyAddedChunk);
-        LoggerBase.logInfo("002001", "Chunk " + chunkId + " added to queue size " + chunksPendingHandling.size());
+        //LoggerBase.logInfo("002001", "Chunk " + chunkId + " added to queue size " + chunksPendingHandling.size());
 
     }
 
@@ -187,7 +188,7 @@ public class OreClusterManager {
                 long start = System.nanoTime();
                 handleClustersForChunk(chunkId);
                 long end = System.nanoTime();
-                LoggerBase.logDebug("002002","Chunk " + chunkId + " processed. Queue size: " + chunksPendingHandling.size());
+                //LoggerBase.logDebug("002002","Chunk " + chunkId + " processed. Queue size: " + chunksPendingHandling.size());
                 //LoggerBase.logDebug("Full process for Chunk " + chunkId + "  took " + LoggerBase.getTime(start, end) + " ms");
 
                 //Remove duplicates
@@ -214,7 +215,7 @@ public class OreClusterManager {
      */
     private void handleClustersForChunk(String chunkId)
     {
-        if (determinedChunks.get(chunkId).hasClusters() ) {
+        if (determinedChunks.get(chunkId) != null && determinedChunks.get(chunkId).hasClusters() ) {
             LoggerBase.logDebug("002004","Chunk " + chunkId + " contains a cluster");
             //Check regen
         } else if (determinedChunks.containsKey(chunkId)) {
@@ -239,17 +240,17 @@ public class OreClusterManager {
                 if( chunkId == null )
                     break;
 
-                LoggerBase.logDebug("002017", "workerThreadDetermineClusters for chunkId: " + chunkId);
+                //LoggerBase.logDebug("002017", "workerThreadDetermineClusters for chunkId: " + chunkId);
                 while (!determinedChunks.containsKey(chunkId))
                 {
                     LoggerBase.logDebug("002018", "handleClusterDetermination, starting batch for: " + chunkId);
                     handleClusterDetermination(RealTimeConfig.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL, chunkId);
-                    LoggerBase.logDebug("002019", "handleClusterDetermination, finished batch for: " + chunkId);
+                   //LoggerBase.logDebug("002019", "handleClusterDetermination, finished batch for: " + chunkId);
 
                 }
 
                 //MAX
-                LoggerBase.logDebug("002020", "workerThreadDetermineClusters, after handleClusterDetermination for chunkId: " + chunkId);
+                //LoggerBase.logDebug("002020", "workerThreadDetermineClusters, after handleClusterDetermination for chunkId: " + chunkId);
             }
 
         }
@@ -297,7 +298,7 @@ public class OreClusterManager {
         ChunkAccess start = getChunkAccess(chunkId);
         LinkedHashSet<String> chunkIds = getBatchedChunkList(batchSize, start);
         long step1Time = System.nanoTime();
-        LoggerBase.logDebug("002008", "Queued " + chunkIds.size() + " chunks for cluster determination");
+        //LoggerBase.logDebug("002008", "Queued " + chunkIds.size() + " chunks for cluster determination");
 
 
         //LoggerBase.logDebug("handlePrepareNewCluster #1  " + LoggerBase.getTime(startTime, step1Time) + " ms");
@@ -306,7 +307,7 @@ public class OreClusterManager {
         HashMap<String, HashMap<String, Vec3i>> clusters;
         clusters = oreClusterCalculator.calculateClusterLocations(chunkIds.stream().toList() , randSeqClusterPositionGen);
         long step2Time = System.nanoTime();
-        LoggerBase.logDebug("002009","Determined " + clusters.size() + " clusters in " + chunkIds.size() + " chunks");
+        //LoggerBase.logDebug("002009","Determined " + clusters.size() + " clusters in " + chunkIds.size() + " chunks");
         //LoggerBase.logDebug("handlePrepareNewCluster #3  " + LoggerBase.getTime(step1Time, step2Time) + " ms");
 
 
@@ -318,7 +319,7 @@ public class OreClusterManager {
             chunk.addClusterTypes(clusters.get(id));
             determinedChunks.put(id, chunk);
         }
-        LoggerBase.logDebug("002010","Added " + clusters.size() + " clusters to determinedChunks");
+        //LoggerBase.logDebug("002010","Added " + clusters.size() + " clusters to determinedChunks");
 
         long step3Time = System.nanoTime();
         //        //LoggerBase.logDebug("handlePrepareNewCluster #3  " + LoggerBase.getTime(step2Time, step3Time) + " ms");
@@ -415,7 +416,8 @@ public class OreClusterManager {
      * Batch process that determines the location of clusters in the next n chunks
      * Chunk cluster determinations are made spirally from the 'start' chunk, up, right, down, left
      */
-    private LinkedHashSet<String> getBatchedChunkList(int batchSize, ChunkAccess start) {
+    private LinkedHashSet<String> getBatchedChunkList(int batchSize, ChunkAccess start)
+    {
         LinkedHashSet<String> chunkIds = new LinkedHashSet<>();
         ChunkGenerationOrderHandler chunkIdGeneratorHandler = mainSpiral;
         if (determinedChunks.size() > Math.pow(RealTimeConfig.ORE_CLUSTER_DTRM_RADIUS_STRATEGY_CHANGE, 2)) {
@@ -438,26 +440,26 @@ public class OreClusterManager {
      * @param spiralArea
      * @return LinkedHashSet of chunkIds that were recently explored
      */
-    public ConcurrentHashMap<String, ManagedChunk> getRecentChunkIds(ChunkPos start, int spiralArea)
+    public LinkedHashSet<String> getRecentChunkIds(ChunkPos start, int spiralArea)
     {
         if (determinedChunks.size() < Math.pow(RealTimeConfig.ORE_CLUSTER_DTRM_RADIUS_STRATEGY_CHANGE, 2)) {
-            return determinedChunks;
-        } else
+            return determinedChunks.keySet().stream().collect(
+                Collectors.toCollection(LinkedHashSet::new));
+        }
+        else
         {
-            ConcurrentHashMap<String, ManagedChunk> chunkIds = new ConcurrentHashMap<>();
+            LinkedHashSet<String> chunkIds = new LinkedHashSet<>();
             ChunkGenerationOrderHandler spiralHandler = new ChunkGenerationOrderHandler(start);
-            for (int i = 0; i < spiralArea; i++)
+
+            try
             {
-
-                try {
-
+                for (int i = 0; i < spiralArea; i++) {
                     ChunkPos next = spiralHandler.getNextSpiralChunk();
-                    chunkIds.put(ChunkUtil.getId(next), null);
-
-                } catch (Exception e) {
-                    LoggerBase.logError("002016","Error generating spiral chunk ids at: " + i + " message " + e.getMessage());
+                    chunkIds.add( ChunkUtil.getId(next) );
                 }
 
+            } catch (Exception e) {
+                LoggerBase.logError("002016","Error generating spiral chunk ids at startPos: " + start.toString() + " message " + e.getMessage());
             }
 
             return chunkIds;
@@ -507,7 +509,8 @@ public class OreClusterManager {
         private int dirCount;
         private int[] dir;
 
-        public ChunkGenerationOrderHandler(ChunkPos start) {
+        public ChunkGenerationOrderHandler(ChunkPos start)
+        {
             this.currentPos = (start == null) ? new ChunkPos(0, 0) : start;
             this.sequence = new LinkedHashSet<>();
             this.count = 1;

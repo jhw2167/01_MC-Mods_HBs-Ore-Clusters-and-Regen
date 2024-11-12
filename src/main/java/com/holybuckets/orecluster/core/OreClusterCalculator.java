@@ -96,8 +96,8 @@ public class OreClusterCalculator {
          int batchDimensions = (int) Math.ceil( Math.sqrt( chunks.size() ) );
          int spiralRadius = batchDimensions + MIN_SPACING_VALIDATOR_CUTOFF_RADIUS;
          int spiralArea = (int) Math.pow( spiralRadius, 2 );
-         ConcurrentHashMap<String, ManagedChunk> recentlyLoadedChunks =
-            manager.getRecentChunkIds( ChunkUtil.getPos( chunks.get(0)), spiralArea );
+        //LinkedHashSet<String> recentlyLoadedChunks = manager.getRecentChunkIds( ChunkUtil.getPos( chunks.get(0)), spiralArea );
+
         LinkedHashSet<String> localExistingClusters = determinedChunks.keySet().stream().
             collect(Collectors.toCollection(LinkedHashSet::new));
 
