@@ -56,6 +56,8 @@ import java.util.function.Consumer;
 
 public class OreClusterManager {
 
+    public static final String CLASS_ID = "002";    //value used in logs
+
     /** Variables **/
     private final RealTimeConfig config;
     private Random randSeqClusterPositionGen;
@@ -110,7 +112,7 @@ public class OreClusterManager {
         this.threadPoolClusterGeneration = Executors.newFixedThreadPool(3);
 
         init();
-        LoggerBase.logInit(this.getClass().getName());
+        LoggerBase.logInit("002000", this.getClass().getName());
     }
 
     /** Get Methods **/
@@ -157,7 +159,7 @@ public class OreClusterManager {
         loadedChunks.put(chunkId, new ManagedChunk(chunk));
         chunksPendingHandling.add(chunkId);
         threadPoolLoadedChunks.submit(this::onNewlyAddedChunk);
-        LoggerBase.logInfo("Chunk " + chunkId + " added to queue size " + chunksPendingHandling.size());
+        LoggerBase.logInfo("002001", "Chunk " + chunkId + " added to queue size " + chunksPendingHandling.size());
 
     }
 
@@ -183,7 +185,7 @@ public class OreClusterManager {
                 long start = System.nanoTime();
                 handleClustersForChunk(chunkId);
                 long end = System.nanoTime();
-                LoggerBase.logDebug("Chunk " + chunkId + " processed. Queue size: " + chunksPendingHandling.size());
+                LoggerBase.logDebug("002002","Chunk " + chunkId + " processed. Queue size: " + chunksPendingHandling.size());
                 //LoggerBase.logDebug("Full process for Chunk " + chunkId + "  took " + LoggerBase.getTime(start, end) + " ms");
 
                 //Remove duplicates
@@ -194,7 +196,7 @@ public class OreClusterManager {
         }
         catch (InterruptedException e)
         {
-            LoggerBase.logError("OreClusterManager::onNewlyAddedChunk() thread interrupted: "
+            LoggerBase.logError("002003","OreClusterManager::onNewlyAddedChunk() thread interrupted: "
                  + e.getMessage());
         }
 
@@ -211,12 +213,12 @@ public class OreClusterManager {
     private void handleClustersForChunk(String chunkId)
     {
         if (determinedChunks.containsKey(chunkId)) {
-            LoggerBase.logDebug("Chunk " + chunkId + " contains a cluster");
+            LoggerBase.logDebug("002004","Chunk " + chunkId + " contains a cluster");
             //Check regen
         } else if (determinedChunks.contains(chunkId)) {
-            LoggerBase.logDebug("Chunk " + chunkId + " has already been explored");
+            LoggerBase.logDebug("002005","Chunk " + chunkId + " has already been explored");
         } else {
-            LoggerBase.logDebug("Chunk " + chunkId + " has not been explored");
+            LoggerBase.logDebug("002006","Chunk " + chunkId + " has not been explored");
             //LoggerBase.logInfo("Chunk " + chunkId + " has not been explored");
 
             chunksPendingDeterminations.add(chunkId);
@@ -245,7 +247,7 @@ public class OreClusterManager {
             thrown = e;
         }
         finally {
-            LoggerBase.threadExited(this, thrown);
+            LoggerBase.threadExited("002011",this, thrown);
         }
     }
 
@@ -269,7 +271,7 @@ public class OreClusterManager {
             thrown = e;
         }
         finally {
-            LoggerBase.threadExited(this, thrown);
+            LoggerBase.threadExited("002007",this, thrown);
         }
     }
 
@@ -285,7 +287,8 @@ public class OreClusterManager {
         ChunkAccess start = getChunkAccess(chunkId);
         LinkedHashSet<String> chunkIds = getBatchedChunkList(batchSize, start);
         long step1Time = System.nanoTime();
-        LoggerBase.logDebug("Queued " + chunkIds.size() + " chunks for cluster determination");
+        LoggerBase.logDebug("002008", "Queued " + chunkIds.size() + " chunks for cluster determination");
+
 
         //LoggerBase.logDebug("handlePrepareNewCluster #1  " + LoggerBase.getTime(startTime, step1Time) + " ms");
 
@@ -293,7 +296,7 @@ public class OreClusterManager {
         HashMap<String, HashMap<String, Vec3i>> clusters;
         clusters = oreClusterCalculator.calculateClusterLocations(chunkIds.stream().toList() , randSeqClusterPositionGen);
         long step2Time = System.nanoTime();
-        LoggerBase.logDebug("Determined " + clusters.size() + " clusters in " + chunkIds.size() + " chunks");
+        LoggerBase.logDebug("002009","Determined " + clusters.size() + " clusters in " + chunkIds.size() + " chunks");
         //LoggerBase.logDebug("handlePrepareNewCluster #3  " + LoggerBase.getTime(step1Time, step2Time) + " ms");
 
 
@@ -305,6 +308,7 @@ public class OreClusterManager {
             chunk.addClusterTypes(clusters.get(id));
             determinedChunks.put(id, chunk);
         }
+        LoggerBase.logDebug("002010","Added " + clusters.size() + " clusters to determinedChunks");
 
         long step3Time = System.nanoTime();
         //        //LoggerBase.logDebug("handlePrepareNewCluster #3  " + LoggerBase.getTime(step2Time, step3Time) + " ms");
@@ -318,13 +322,25 @@ public class OreClusterManager {
                     set.add(cluster.getKey());
             });
 
+           // LoggerBase.logDebug("002012","determined oreTypesInThisCluster: " + oreTypesInThisCluster.size());
+
+
+            if(oreTypesInThisCluster.size() == 0)
+            {
+                //LoggerBase.logDebug("002013","No new ore types in this cluster");
+                continue;
+            }
+
+
             //Ore types not yet added to the Aggregate List
             oreTypesInThisCluster.forEach(type -> {
                 HashSet<String> set = new HashSet<>();
                 set.add(cluster.getKey());
                 existingClustersByType.put(type, set);
             });
-        });
+
+           //LoggerBase.logDebug("002014","Added net new oreTypes to grand list, new size " + existingClustersByType.size());
+        }
 
 
         long endTime = System.nanoTime();
@@ -345,7 +361,9 @@ public class OreClusterManager {
      */
     private void handleClusterGeneration(ManagedChunk chunk)
     {
-        LoggerBase.logDebug("Generating clusters for chunk: " + chunk.getId());
+        //MAX
+        LoggerBase.logDebug("002015","Generating clusters for chunk: " + chunk.getId());
+
 
         HashMap<String, Vec3i> clusters = chunk.getClusterTypes();
         List<Pair<String, Vec3i>> cluster = chunk.getClusters();

@@ -22,7 +22,7 @@ public class OreClusterModEventHandler {
         AllConfigs.onLoad( event );
         OreClustersAndRegenMain.onLoad( event );
 
-        LoggerBase.logInit( "Handler-onLoad" );
+        LoggerBase.logInit( "006002","Handler-onLoad" );
     }
 
     @SubscribeEvent
@@ -31,7 +31,7 @@ public class OreClusterModEventHandler {
         AllConfigs.onReload( event );
         OreClustersAndRegenMain.onReload( event );
 
-        LoggerBase.logInit( "Handler-onReLoad" );
+        LoggerBase.logInit( "006003", "Handler-onReLoad" );
     }
 
 

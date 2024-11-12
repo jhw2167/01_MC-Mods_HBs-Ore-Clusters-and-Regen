@@ -29,6 +29,8 @@ public class AllConfigs {
 
 	/** Configuration Data **/
 
+	public static final String CLASS_ID = "005";
+
 	private static final Map<ModConfig.Type, ConfigBase> CONFIGS = new EnumMap<>(ModConfig.Type.class);
 
 	private static CClient client;
@@ -80,7 +82,7 @@ public class AllConfigs {
 				.getSpec())
 				config.onLoad();
 
-		LoggerBase.logInit( "AllConfigs-onLoad" );
+		LoggerBase.logInit( "005001","AllConfigs-onLoad" );
 	}
 
 	//@SubscribeEvent
@@ -90,13 +92,13 @@ public class AllConfigs {
 				.getSpec())
 				config.onReload();
 
-		LoggerBase.logInit( "AllConfigs-onReLoad" );
+		LoggerBase.logInit( "005002","AllConfigs-onReLoad" );
 	}
 
 	@SubscribeEvent
 	public void onServerStarted(final ServerStartedEvent event)
 	{
-		LoggerBase.logInfo("**** SERVER STARTED EVENT ****");
+		LoggerBase.logInfo("005003","**** SERVER STARTED EVENT ****");
 	}
 
 

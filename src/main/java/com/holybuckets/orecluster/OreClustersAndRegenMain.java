@@ -23,6 +23,8 @@ import java.util.Random;
 @Mod(OreClustersAndRegenMain.MODID)
 public class OreClustersAndRegenMain
 {
+    public static final String CLASS_ID = "001";    //unused variable, value will be used for logging messages
+
     // Define mod id in a common place for everything to reference
     public static final String MODID = "hbs_ore_clusters_and_regen";
     public static final String NAME = "HB's Ore Clusters and Regen";
@@ -64,7 +66,7 @@ public class OreClustersAndRegenMain
 
     public OreClustersAndRegenMain() {
         initMod();
-        LoggerBase.logInit( this.getClass().getName() );
+        LoggerBase.logInit( "001000", this.getClass().getName() );
     }
 
     public static void initMod() {
@@ -130,16 +132,16 @@ public class OreClustersAndRegenMain
     }
 
     public static void onLoad(ModConfigEvent.Loading event) {
-        LoggerBase.logInit( "Main-onLoad" );
+        LoggerBase.logInit( "001001", "Main-onLoad" );
     }
 
     public static void onReload(ModConfigEvent.Reloading event) {
-        LoggerBase.logInit( "Main-onReLoad" );
+        LoggerBase.logInit( "001002",  "Main-onReLoad" );
     }
 
     public static void onLoadWorld(LevelAccessor world)
     {
-        LoggerBase.logDebug("**** WORLD LOAD EVENT ****");
+        LoggerBase.logDebug("001003", "**** WORLD LOAD EVENT ****");
         realTimeConfig = new RealTimeConfig( world );
         oreClusterManager = new OreClusterManager( realTimeConfig );
     }
@@ -147,7 +149,7 @@ public class OreClustersAndRegenMain
     public static void onUnloadWorld(LevelAccessor world)
     {
         // Capture the world seed
-        LoggerBase.logDebug("**** WORLD UNLOAD EVENT ****");
+        LoggerBase.logDebug("001004", "**** WORLD UNLOAD EVENT ****");
         oreClusterManager.shutdown();
         realTimeConfig = null;
         oreClusterManager = null;
