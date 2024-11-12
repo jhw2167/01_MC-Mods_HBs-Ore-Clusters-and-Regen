@@ -88,8 +88,10 @@ public class LoggerBase {
             //get the stack trace of the exception into a string to load into sb
             StackTraceElement[] stackTrace = thrown.getStackTrace();
             for (StackTraceElement ste : stackTrace) {
-                sb.append(ste.toString() + "\n");
+                sb.append("\n" + ste.toString() );
             }
+            sb.append("\n\n");
+
             logError(logId, sb.toString());
 
         }

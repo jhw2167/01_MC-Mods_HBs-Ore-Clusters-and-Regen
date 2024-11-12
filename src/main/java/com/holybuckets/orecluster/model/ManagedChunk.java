@@ -91,6 +91,9 @@ public class ManagedChunk {
         return clusters;
     }
 
+    public boolean hasClusters() {
+        return clusters.size() > 0;
+    }
 
 
     public HashMap<String, Vec3i> getClusterTypes() {
