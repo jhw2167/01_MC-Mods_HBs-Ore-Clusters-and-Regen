@@ -18,6 +18,8 @@ import org.apache.commons.lang3.tuple.Pair;
 
 public class OreClusterCalculator {
 
+    public static final String CLASS_ID = "003";    //value used in logs
+
     private OreClusterManager manager;
     private RealTimeConfig C;
     private ConcurrentHashMap<String, ManagedChunk> determinedChunks;
@@ -333,7 +335,7 @@ public class OreClusterCalculator {
          {
             StringBuilder sb = new StringBuilder();
             clusterCounts.entrySet().forEach( ore -> sb.append(ore.getKey() + ": " + ore.getValue() + ", "));
-            LoggerBase.logWarning("Unable to place all ore clusters: " + e.getMessage() + "Remaining Counts: " + sb.toString());
+            LoggerBase.logWarning("003001", "Unable to place all ore clusters: " + e.getMessage() + "Remaining Counts: " + sb.toString());
              e.printStackTrace();
          }
 

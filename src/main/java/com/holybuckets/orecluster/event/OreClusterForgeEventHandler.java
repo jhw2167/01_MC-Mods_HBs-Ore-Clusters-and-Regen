@@ -13,6 +13,8 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 @EventBusSubscriber(bus = EventBusSubscriber.Bus.FORGE, modid = OreClustersAndRegenMain.MODID)
 public class OreClusterForgeEventHandler {
 
+    //create class_id
+    public static final String CLASS_ID = "006";
 
     @SubscribeEvent
     public static void onLoadWorld(LevelEvent.Load event)
@@ -38,7 +40,7 @@ public class OreClusterForgeEventHandler {
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         OreClustersAndRegenMain.realTimeConfig.PLAYER_LOADED = true;
-        LoggerBase.logDebug("Player Logged In");
+        LoggerBase.logDebug("006001", "Player Logged In");
     }
 
 

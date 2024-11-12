@@ -7,6 +7,9 @@ import java.util.HashSet;
 
 public class ConfigModelBase {
 
+    //create static final class_id
+    public static final String CLASS_ID = "001";
+
     public static final HashSet<String> ACCEPTED_STRING_BOOLEAN_TRUE = new HashSet<>(Arrays.asList("true", "yes", "1"));
 
 
@@ -26,7 +29,7 @@ public class ConfigModelBase {
         if( f.test(value) )
             return true;
         else {
-            LoggerBase.logWarning(error.toString());
+            LoggerBase.logWarning("001001",error.toString());
             return false;
         }
     }
@@ -42,7 +45,7 @@ public class ConfigModelBase {
         if( i.test(value) )
             return true;
         else {
-            LoggerBase.logWarning(error.toString());
+            LoggerBase.logWarning("001002",error.toString());
             return false;
         }
     }

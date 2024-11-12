@@ -31,6 +31,8 @@ import com.holybuckets.orecluster.config.AllConfigs;
 @Mod.EventBusSubscriber(modid = OreClustersAndRegenMain.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class RealTimeConfig
 {
+    public static final String CLASS_ID = "000";
+
     /**
      *  Base User configured data: defaultConfig and oreConfigs for particular ores
      */
@@ -108,7 +110,7 @@ public class RealTimeConfig
                 CLUSTER_SEED = WORLD_SEED;
             }
 
-            LoggerBase.logInit(this.getClass().getName());
+            LoggerBase.logInit("000000", this.getClass().getName());
         }
 
         /**
@@ -151,8 +153,8 @@ public class RealTimeConfig
                 WORLD_SEED = server.overworld().getSeed();
                 WORLD_SPAWN = server.overworld().getSharedSpawnPos();
 
-                LoggerBase.logInfo("World Seed: " + WORLD_SEED);
-                LoggerBase.logInfo("World Spawn: " + WORLD_SPAWN);
+                LoggerBase.logInfo("000001","World Seed: " + WORLD_SEED);
+                LoggerBase.logInfo("000002","World Spawn: " + WORLD_SPAWN);
 
             }
 

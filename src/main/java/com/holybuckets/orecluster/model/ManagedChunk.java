@@ -121,9 +121,17 @@ public class ManagedChunk {
     }
 
 
-    public void addClusterTypes(HashMap<String, Vec3i> clusterMap) {
+    public void addClusterTypes(HashMap<String, Vec3i> clusterMap)
+    {
+        if( clusterMap == null )
+            return;
+
+        if( clusterMap.size() == 0 )
+            return;
+
         this.clusterTypes.putAll( clusterMap );
     }
 
 
 }
+//END CLASS
