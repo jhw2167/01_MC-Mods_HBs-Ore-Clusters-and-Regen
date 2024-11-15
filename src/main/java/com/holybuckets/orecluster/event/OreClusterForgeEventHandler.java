@@ -2,12 +2,24 @@ package com.holybuckets.orecluster.event;
 
 import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.orecluster.OreClustersAndRegenMain;
+import com.holybuckets.orecluster.model.ManagedChunk;
+import com.holybuckets.orecluster.modelinterface.IMangedChunk;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraftforge.common.capabilities.*;
+
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 @EventBusSubscriber(bus = EventBusSubscriber.Bus.FORGE, modid = OreClustersAndRegenMain.MODID)
@@ -15,6 +27,12 @@ public class OreClusterForgeEventHandler {
 
     //create class_id
     public static final String CLASS_ID = "006";
+
+    @SubscribeEvent
+    public void onAttachingCapabilities(final AttachCapabilitiesEvent<LevelChunk> event)
+    {
+        //event.addCapability(new ResourceLocation(OreClustersAndRegenMain.MODID, "managedChunkData"), event.getObject());
+    }
 
     @SubscribeEvent
     public static void onLoadWorld(LevelEvent.Load event)
