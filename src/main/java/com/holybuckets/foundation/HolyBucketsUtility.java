@@ -1,17 +1,19 @@
 package com.holybuckets.foundation;
 
 
+import com.holybuckets.foundation.database.DatabaseManager;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
 
 /**
 * Class: HolyBucketsUtility
 *
-* Description: This class will contain utility methods that I find myself using frequently
+* Description: This class will contain utility methods amd objects that I find myself using frequently
 *
  */
 public class HolyBucketsUtility {
 
+    public static DatabaseManager databaseManager = null;
 
     public static class ChunkUtil {
 

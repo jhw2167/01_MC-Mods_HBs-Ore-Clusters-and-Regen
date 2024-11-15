@@ -1,13 +1,13 @@
 package com.holybuckets.foundation.database;
-
 import com.holybuckets.foundation.LoggerBase;
-
 import java.sql.SQLException;
+import org.sqlite.JDBC;
+import org.sqlite.SQLiteJDBCLoader;
 
 public class DatabaseManager
 {
     private static DatabaseManager instance;
-    public static final String CLASS_ID = "000";
+    public static final String CLASS_ID = "001";
 
     private DatabaseManager() { }
 
@@ -24,16 +24,38 @@ public class DatabaseManager
 
     public synchronized void startDatabase(String levelName) throws SQLException
     {
-        try {
-            DatabaseAccessor.initiateInstance(levelName);
 
-        } catch (SQLException e) {
+        try {
+
+            boolean sqliteLoaded = SQLiteJDBCLoader.initialize();
+            if (!sqliteLoaded)
+                throw new RuntimeException("Failed to load SQLite native library. Hopefully SQLite logged a reason for this failure.");
+
+            Class.forName("org.sqlite.JDBC");
+            DatabaseAccessor.initiateInstance(levelName);
+        }
+        catch (ClassNotFoundException e) {
+            StringBuilder sb = new StringBuilder( "Class not found exception for JDBC driver" );
+            sb.append( e.getMessage() );
+            LoggerBase.logError("001000", sb.toString() );
+
+        }
+         catch (SQLException e) {
             StringBuilder sb = new StringBuilder( "Error starting database, this is considered a critical error and the game will crash, SQL error message: ");
             sb.append( e.getMessage() );
-            LoggerBase.logError("000000", sb.toString() );
+            LoggerBase.logError("001001", sb.toString() );
 
             throw e;
         }
+        catch (Throwable e) {
+            StringBuilder sb = new StringBuilder( "Critical programmer error: One or more libraries aren't present. Error: [" );
+            sb.append( e.getMessage() );
+            sb.append( "].");
+            LoggerBase.logError("001002", sb.toString() );
+
+            throw new RuntimeException(e);
+        }
+
     }
 
     /**

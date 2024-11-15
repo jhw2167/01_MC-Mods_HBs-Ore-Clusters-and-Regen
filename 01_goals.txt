@@ -99,6 +99,22 @@ and their Standard deviation is determined by {mean / (log2(mean) * 2)}
 	- write chunk data to file based on dimension
 	-
 
+17.
+---
+
+Dependencies are always an issue:
+
+// Add runtime dependencies to jar
+jarJar.fromRuntimeConfiguration()
+
+jarJar {
+    // Include or exclude dependencies here from runtime configuration
+    dependencies {
+        include(dependency("org.xerial:sqlite-jdbc:3.46.1.0"))
+    }
+}
+
+
 determinedChunks.keySet()
 1566727526
 1566727526
