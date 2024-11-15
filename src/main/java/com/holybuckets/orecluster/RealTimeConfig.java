@@ -144,7 +144,7 @@ public class RealTimeConfig
 
         public void initWorldConfigs( LevelAccessor level )
         {
-            // Capture the world seed
+            // Capture the world seed, use logical server
             if( !level.isClientSide() )
             {
                 LEVEL = level;

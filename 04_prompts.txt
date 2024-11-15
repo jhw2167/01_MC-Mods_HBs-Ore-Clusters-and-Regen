@@ -156,8 +156,38 @@ Clean up CServer.java, CClient.java and CCommon.java to remove variables and cla
 	and mention the particular ore that failed.
 
 
-8. Writing Deseriaize function
+8. Write a database implementation using SQLite
 ---
+
+I want com.holybuckets.foundation package to support an SQLite database. This will be a very simple database with 4 classes. Add a new subpackage:
+com.holybuckets.foundation.database. Here are the 4 classes in this subpackage:
+
+GenericDTO - every database table will use this same DataTransferObject as the template for its schema, there are 4 state variables that will read in and out from the db:
+String id;
+String timeEntered;
+String timeLastModified;
+String data;
+
+DatabaseQueryExecuter - defines and implements various queries that can be made to the database as methods. Queries include:
+	Methods:
+	getAll() - returns all data from the table as List<GenericDTO>
+	getAllData() - returns all GenericDTO.data from the table as List<String>
+	getById(String id) - returns DTO by passing String ID
+	getDataById(String id) - returns String GenericDTO.data
+
+DatabaseAccessor - holds the connection java object used for the connection to the db
+	- DatabaseAccessor(String levelName) (constructor) - establishes a connection to the SQLite database in the local directory, throws an exception if it fails
+	- Controls access to DatabaseQueryExecuter objects to run queries on the data
+	- This is the only object that can write to the database, access to it must be thread safe
+	Methods:
+	- getQueryExecutor(String Tablename) - returns Database DatabaseQueryExecuter
+
+DatabaseManger - manages connection to multiple local SQLite databases
+	- Holds a singleton database accessor object
+	Methods:
+	- startDatabase(String levelName) that attempts to locate the database in the local directory by the name "levelName", and if it fails, creates a new database, creates DatabaseAccessor state variable
+	- getDatabaseAccessor() - thread safe method that returns the databaseAccessor object
+
 
 
 9. Writing Deseriaize function

@@ -91,6 +91,14 @@ and their Standard deviation is determined by {mean / (log2(mean) * 2)}
 	- Added logId and classId values to all logging statements in actionable classes
 	- fixed bug in MangedChunk.java that failed to check for null value when combining maps
 
+16.
+---
+	- Ensure chunk generation works outside of 256x256 area
+	- Ensure we can write chunk data to file
+	- write chunk data to file based on world name
+	- write chunk data to file based on dimension
+	-
+
 determinedChunks.keySet()
 1566727526
 1566727526
