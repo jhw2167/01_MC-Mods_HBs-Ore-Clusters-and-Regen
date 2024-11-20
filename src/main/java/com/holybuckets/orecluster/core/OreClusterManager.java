@@ -3,7 +3,7 @@ package com.holybuckets.orecluster.core;
 import com.holybuckets.foundation.HolyBucketsUtility.*;
 import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.orecluster.RealTimeConfig;
-import com.holybuckets.orecluster.model.ManagedChunk;
+import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -70,12 +70,12 @@ public class OreClusterManager {
     private final LinkedBlockingQueue<String> chunksPendingHandling;
     private final LinkedBlockingQueue<String> chunksPendingDeterminations;
     private final LinkedBlockingQueue<String> chunksPendingGeneration;
-    private final ConcurrentHashMap<String, ManagedChunk> chunksPendingManifestation;
+    private final ConcurrentHashMap<String, ManagedOreClusterChunk> chunksPendingManifestation;
 
     //<chunkId, <oreType, Vec3i>>
 
-    private final ConcurrentHashMap<String, ManagedChunk> determinedChunks;
-    private final ConcurrentHashMap<String, ManagedChunk> loadedChunks;
+    private final ConcurrentHashMap<String, ManagedOreClusterChunk> determinedChunks;
+    private final ConcurrentHashMap<String, ManagedOreClusterChunk> loadedChunks;
     //<oreType, <chunkIds>>
     private final ConcurrentHashMap<String, HashSet<String>> existingClustersByType;
 
@@ -123,7 +123,7 @@ public class OreClusterManager {
         return config;
     }
 
-    public ConcurrentHashMap<String, ManagedChunk> getDeterminedChunks() {
+    public ConcurrentHashMap<String, ManagedOreClusterChunk> getDeterminedChunks() {
         return determinedChunks;
     }
 
@@ -159,7 +159,7 @@ public class OreClusterManager {
         String chunkId = ChunkUtil.getId(chunkEvent.getChunk());
         ChunkAccess chunk = chunkEvent.getChunk();
 
-        loadedChunks.put(chunkId, new ManagedChunk(chunk));
+        loadedChunks.put(chunkId, new ManagedOreClusterChunk(chunk));
         chunksPendingHandling.add(chunkId);
         threadPoolLoadedChunks.submit(this::onNewlyAddedChunk);
         //LoggerBase.logInfo("002001", "Chunk " + chunkId + " added to queue size " + chunksPendingHandling.size());
@@ -273,7 +273,7 @@ public class OreClusterManager {
                 if( chunkId == null )
                     break;
 
-                Optional<ManagedChunk> chunk = editManagedChunk(chunkId, this::handleClusterGeneration);
+                Optional<ManagedOreClusterChunk> chunk = editManagedChunk(chunkId, this::handleClusterGeneration);
 
             }
 
@@ -315,7 +315,7 @@ public class OreClusterManager {
         // #3. Add clusters to determinedClusters
         for( String id: chunkIds)
         {
-            ManagedChunk chunk = loadedChunks.getOrDefault(id, new ManagedChunk(id));
+            ManagedOreClusterChunk chunk = loadedChunks.getOrDefault(id, new ManagedOreClusterChunk(id));
             chunk.addClusterTypes(clusters.get(id));
             determinedChunks.put(id, chunk);
         }
@@ -358,7 +358,7 @@ public class OreClusterManager {
         //LoggerBase.logDebug("handlePrepareNewCluster #4  " + LoggerBase.getTime(step3Time, endTime) + " ms");
     }
 
-    private void handleClusterCleaning( ManagedChunk chunk )
+    private void handleClusterCleaning( ManagedOreClusterChunk chunk )
     {
         //1. Get clusters for chunk
         //2. Clean clusters in world
@@ -370,7 +370,7 @@ public class OreClusterManager {
     /**
      * Handles creation of each type of ore cluster within each chunk
      */
-    private void handleClusterGeneration(ManagedChunk chunk)
+    private void handleClusterGeneration(ManagedOreClusterChunk chunk)
     {
         LoggerBase.logDebug("002015","Generating clusters for chunk: " + chunk.getId());
 
@@ -382,7 +382,7 @@ public class OreClusterManager {
             cluster.addAll( oreClusterCalculator.generateCluster(oreType, position, chunk.getChunk()) );
         });
 
-        chunk.setStatus(ManagedChunk.ClusterStatus.GENERATED);
+        chunk.setStatus(ManagedOreClusterChunk.ClusterStatus.GENERATED);
 
     }
 
@@ -390,7 +390,7 @@ public class OreClusterManager {
      * Alters the chunk to place blocks in the world as necessary to build clusters or reduce
      * @param chunk
      */
-    private void handleClusterManifestation(ManagedChunk chunk)
+    private void handleClusterManifestation(ManagedOreClusterChunk chunk)
     {
         //1. Get clusters for chunk
 
@@ -473,9 +473,9 @@ public class OreClusterManager {
      * @return
      */
     @ThreadSafe
-    private synchronized Optional<ManagedChunk> editManagedChunk(String chunkId, Consumer<ManagedChunk> consumer)
+    private synchronized Optional<ManagedOreClusterChunk> editManagedChunk(String chunkId, Consumer<ManagedOreClusterChunk> consumer)
     {
-        ManagedChunk chunk = determinedChunks.get(chunkId);
+        ManagedOreClusterChunk chunk = determinedChunks.get(chunkId);
         if (chunk != null) {
             synchronized (chunk) {
                 consumer.accept(chunk);
@@ -492,7 +492,10 @@ public class OreClusterManager {
         managerRunning = false;
         threadPoolLoadedChunks.shutdown();
     }
-    
+
+    public ConcurrentHashMap<String, ManagedOreClusterChunk> getLoadedChunks() {
+        return loadedChunks;
+    }
 
 
     private class ChunkGenerationOrderHandler

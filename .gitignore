@@ -1,6 +1,7 @@
 #Base leave .bat file in case someone else wants to pull directory and use gradle
 *.sh
 run/*
+.idea/*
 
 # From https://github.com/github/gitignore/blob/master/Gradle.gitignore
 .gradle

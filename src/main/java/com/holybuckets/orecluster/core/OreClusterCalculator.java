@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import com.holybuckets.orecluster.model.ManagedChunk;
+import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -22,7 +22,7 @@ public class OreClusterCalculator {
 
     private OreClusterManager manager;
     private RealTimeConfig C;
-    private ConcurrentHashMap<String, ManagedChunk> determinedChunks;
+    private ConcurrentHashMap<String, ManagedOreClusterChunk> determinedChunks;
     private ConcurrentHashMap<String, HashSet<String>> existingClustersByType;
 
 
