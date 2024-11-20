@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="output" path="bin/default"/>
+	<classpathentry output="bin/main" kind="src" path="src/main/java">
+		<attributes>
+			<attribute name="gradle_scope" value="main"/>
+			<attribute name="gradle_used_by_scope" value="main,test"/>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="C:\Users\jack\source\repos\Java\Minecraft\00_mod-dev\01_MC-Mods_HBs-Ore-Clusters-and-Regen\build\natives"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry output="bin/main" kind="src" path="src/main/resources">
+		<attributes>
+			<attribute name="gradle_scope" value="main"/>
+			<attribute name="gradle_used_by_scope" value="main,test"/>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="C:\Users\jack\source\repos\Java\Minecraft\00_mod-dev\01_MC-Mods_HBs-Ore-Clusters-and-Regen\build\natives"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry output="bin/main" kind="src" path="src/generated/resources">
+		<attributes>
+			<attribute name="gradle_scope" value="main"/>
+			<attribute name="gradle_used_by_scope" value="main,test"/>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="C:\Users\jack\source\repos\Java\Minecraft\00_mod-dev\01_MC-Mods_HBs-Ore-Clusters-and-Regen\build\natives"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry output="bin/test" kind="src" path="src/test/java">
+		<attributes>
+			<attribute name="gradle_scope" value="test"/>
+			<attribute name="gradle_used_by_scope" value="test"/>
+			<attribute name="test" value="true"/>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="C:\Users\jack\source\repos\Java\Minecraft\00_mod-dev\01_MC-Mods_HBs-Ore-Clusters-and-Regen\build\natives"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry output="bin/test" kind="src" path="src/test/resources">
+		<attributes>
+			<attribute name="gradle_scope" value="test"/>
+			<attribute name="gradle_used_by_scope" value="test"/>
+			<attribute name="test" value="true"/>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="C:\Users\jack\source\repos\Java\Minecraft\00_mod-dev\01_MC-Mods_HBs-Ore-Clusters-and-Regen\build\natives"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-17/"/>
+	<classpathentry sourcepath="C:/Users/jack/.gradle/caches/modules-2/files-2.1/com.google.code.gson/gson/2.8.9/e1167849f172a0b75d6ffe4e4b2f34b9259795bb/gson-2.8.9-sources.jar" kind="lib" path="C:/Users/jack/.gradle/caches/modules-2/files-2.1/com.google.code.gson/gson/2.8.9/8a432c1d6825781e21a02db2e2c33c5fde2833b9/gson-2.8.9.jar">
+		<attributes>
+			<attribute name="gradle_used_by_scope" value=""/>
+		</attributes>
+	</classpathentry>
+	<classpathentry sourcepath="C:/Users/jack/.gradle/caches/modules-2/files-2.1/org.antlr/antlr4-runtime/4.9.3/69de5778d09b719b362230212fc9dbdfcbf3ebd1/antlr4-runtime-4.9.3-sources.jar" kind="lib" path="C:/Users/jack/.gradle/caches/modules-2/files-2.1/org.antlr/antlr4-runtime/4.9.3/81befc16ebedb8b8aea3e4c0835dd5ca7e8523a8/antlr4-runtime-4.9.3.jar">
+		<attributes>
+			<attribute name="gradle_used_by_scope" value=""/>
+		</attributes>
+	</classpathentry>
+	<classpathentry sourcepath="C:/Users/jack/.gradle/caches/modules-2/files-2.1/org.xerial/sqlite-jdbc/3.46.1.0/75bce902332f6a4525fe7c984563de0799fc146e/sqlite-jdbc-3.46.1.0-sources.jar" kind="lib" path="C:/Users/jack/.gradle/caches/modules-2/files-2.1/org.xerial/sqlite-jdbc/3.46.1.0/97ca06712e2afa8c0e551245da72280fca5474cf/sqlite-jdbc-3.46.1.0.jar">
+		<attributes>
+			<attribute name="gradle_used_by_scope" value=""/>
+		</attributes>
+	</classpathentry>
+	<classpathentry sourcepath="C:/Users/jack/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/1.7.36/ae9c1aae0033af915cfa75d850eb9d880f21a701/slf4j-api-1.7.36-sources.jar" kind="lib" path="C:/Users/jack/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/1.7.36/6c62681a2f655b49963a5983b8b0950a6120ae14/slf4j-api-1.7.36.jar">
+		<attributes>
+			<attribute name="gradle_used_by_scope" value=""/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/jack/source/repos/Java/Minecraft/00_mod-dev/01_MC-Mods_HBs-Ore-Clusters-and-Regen/unresolved dependency - net.minecraftforge forge 1.20.1-47.3.0_mapped_parchment_2023.09.03-1.20.1">
+		<attributes>
+			<attribute name="gradle_used_by_scope" value=""/>
+		</attributes>
+	</classpathentry>
+</classpath>

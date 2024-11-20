@@ -1,29 +1,19 @@
 package com.holybuckets.orecluster.model;
 
+import com.holybuckets.foundation.Exception.InvalidId;
 import com.holybuckets.foundation.HolyBucketsUtility.ChunkUtil;
-import com.holybuckets.orecluster.modelinterface.IMangedChunk;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
+import com.holybuckets.foundation.modelInterface.IMangedChunkData;
+import com.holybuckets.orecluster.OreClustersAndRegenMain;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.BossEvent;
-import net.minecraft.world.entity.raid.Raid;
+
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ImposterProtoChunk;
-import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.util.INBTSerializable;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Class: ManagedChunk
@@ -44,23 +34,9 @@ import java.util.*;
  *
  */
 
-public class ManagedChunk implements IMangedChunk {
+public class ManagedOreClusterChunk implements IMangedChunkData {
 
     private static final String NBT_KEY_HEADER = "managedChunk";
-
-    @Override
-    public CompoundTag serializeNBT() {
-        CompoundTag tag = new CompoundTag();
-
-        //Needs to be reworked to put a tag of data
-        tag.putString(NBT_KEY_HEADER, this.id);
-        return tag;
-    }
-
-    @Override
-    public void deserializeNBT(CompoundTag compoundTag) {
-        this.id = compoundTag.getString(NBT_KEY_HEADER);
-    }
 
     public static enum ClusterStatus {
         NONE,
@@ -71,19 +47,34 @@ public class ManagedChunk implements IMangedChunk {
     }
 
     /** Variables **/
+    private String id;
     private ChunkAccess chunk;
     private ChunkPos pos;
-    private String id;
     private ClusterStatus status;
     private HashMap<String, Vec3i> clusterTypes;
     private List<Pair<String, Vec3i>> clusters;
 
+    //Reference to OreClusterManager's array of ManagedOreClusterChunks
+    private static ConcurrentHashMap<String, ManagedOreClusterChunk> loadedChunks =
+        OreClustersAndRegenMain.oreClusterManager.getLoadedChunks();
 
 
     /** Constructors **/
 
+    //Default constructor - creates dummy node to be loaded from HashMap later
+    public ManagedOreClusterChunk()
+    {
+        super();
+        this.chunk = null;
+        this.id = null;
+        this.pos = null;
+        this.status = ClusterStatus.NONE;
+        this.clusterTypes = new HashMap<>();
+        this.clusters = new LinkedList<>();
+    }
+
     //One for building with chunk
-    public ManagedChunk(ChunkAccess chunk)
+    public ManagedOreClusterChunk(ChunkAccess chunk)
     {
         super();
         this.chunk = chunk;
@@ -95,7 +86,7 @@ public class ManagedChunk implements IMangedChunk {
     }
 
     //One for building with id
-    public ManagedChunk(String id)
+    public ManagedOreClusterChunk(String id)
      {
         super();
         this.chunk = null;
@@ -106,8 +97,9 @@ public class ManagedChunk implements IMangedChunk {
         this.clusters = new LinkedList<>();
     }
 
+
     //Constructor for building from NBT data
-    public ManagedChunk(ServerLevel pLevel, CompoundTag pCompound)
+    public ManagedOreClusterChunk(ServerLevel pLevel, CompoundTag pCompound)
     {
     /*
         this.raidEvent = new ServerBossEvent(RAID_NAME_COMPONENT, BossEvent.BossBarColor.RED, BossEvent.BossBarOverlay.NOTCHED_10);
@@ -203,38 +195,56 @@ public class ManagedChunk implements IMangedChunk {
         this.clusterTypes.putAll( clusterMap );
     }
 
-
-
-    //@Override
-    public CompoundTag save(CompoundTag pCompound)
+    /**
+     * Checks if the chunk is loaded and makes a deep copy, or initializes itself
+     *
+     * @param id
+     * @throws InvalidId
+     */
+    @Override
+    public void init(String id) throws InvalidId
     {
-        /*
-        pCompound.putInt("Id", this.id);
-        pCompound.putBoolean("Started", this.started);
-        pCompound.putBoolean("Active", this.active);
-        pCompound.putLong("TicksActive", this.ticksActive);
-        pCompound.putInt("BadOmenLevel", this.badOmenLevel);
-        pCompound.putInt("GroupsSpawned", this.groupsSpawned);
-        pCompound.putInt("PreRaidTicks", this.raidCooldownTicks);
-        pCompound.putInt("PostRaidTicks", this.postRaidTicks);
-        pCompound.putFloat("TotalHealth", this.totalHealth);
-        pCompound.putInt("NumGroups", this.numGroups);
-        pCompound.putString("Status", this.status.getName());
-        pCompound.putInt("CX", this.center.getX());
-        pCompound.putInt("CY", this.center.getY());
-        pCompound.putInt("CZ", this.center.getZ());
-        ListTag listtag = new ListTag();
-        Iterator var3 = this.heroesOfTheVillage.iterator();
+        ManagedOreClusterChunk chunk = loadedChunks.get(id);
 
-        while(var3.hasNext()) {
-            UUID uuid = (UUID)var3.next();
-            listtag.add(NbtUtils.createUUID(uuid));
+        if(chunk == null)
+            throw new InvalidId(null);
+
+        CompoundTag tag = chunk.serializeNBT();
+        this.deserializeNBT(tag);
+    }
+
+    /**
+     * Gets the instance of the chunk from the loadedChunks HashMap
+     * @param id
+     * @return
+     * @throws InvalidId
+     */
+    @Override
+    public ManagedOreClusterChunk getInstance(String id) throws InvalidId
+    {
+        if(id == null) {
+            throw new InvalidId(null);
         }
+        ManagedOreClusterChunk chunk = loadedChunks.get(id);
 
-        pCompound.put("HeroesOfTheVillage", listtag);
+        if(chunk == null) {
+            throw new InvalidId(null);
+        }
+        return chunk;
+    }
 
-        */
-        return pCompound;
+    @Override
+    public CompoundTag serializeNBT() {
+        CompoundTag tag = new CompoundTag();
+        //id may be null
+        tag.putString(NBT_KEY_HEADER, this.id);
+        return tag;
+    }
+
+    @Override
+    public void deserializeNBT(CompoundTag compoundTag) {
+        //may be null
+        this.id = compoundTag.getString(NBT_KEY_HEADER);
     }
 
 
