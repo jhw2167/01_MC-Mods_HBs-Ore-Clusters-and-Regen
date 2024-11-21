@@ -1,36 +1,15 @@
-package com.holybuckets.foundation;
+package com.holybuckets.orecluster;
 
-import com.holybuckets.orecluster.OreClustersAndRegenMain;
 import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
+import com.holybuckets.foundation.LoggerBase;
 
-import java.io.PrintStream;
-
-
-public class LoggerBase {
+public class LoggerProject extends LoggerBase {
 
 
     public static final Logger LOGGER = LogUtils.getLogger();
-    public static final String PREFIX = "[" + HolyBucketsUtility.NAME + "]";
-    public static final Boolean DEBUG_MODE = true;
-
-    /*
-     *  1. We want to have static methods for logging info, warnings, and errors to server console.
-     *  2. We want to have static methods for logging info, warnings, and errors to Client Chat.
-
-     */
-
-    protected static String buildBaseConsoleMessage(String id, String prefix, String message) {
-        return prefix + " " + "(" + id + "): " + message;
-    }
-
-    protected static String buildBaseClientMessage(String prefix, String message) {
-        return prefix + ":" + message;
-    }
-
-    protected static String buildClientDisplayMessage(String prefix, String message) {
-        return message;
-    }
+    public static final String PREFIX = "[" + OreClustersAndRegenMain.NAME + "]";
+    public static final Boolean DEBUG_MODE = OreClustersAndRegenMain.DEBUG;
 
     public static void logInfo(String logId, String message) {
         LOGGER.info(buildBaseConsoleMessage(logId, PREFIX, message));

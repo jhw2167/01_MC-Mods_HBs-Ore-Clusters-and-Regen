@@ -3,10 +3,8 @@ package com.holybuckets.orecluster;
 //MC Imports
 
 //Forge Imports
-import com.holybuckets.foundation.LoggerBase;
+import com.holybuckets.foundation.GeneralRealTimeConfig;
 import com.holybuckets.orecluster.config.COreClusters;
-import it.unimi.dsi.fastutil.Hash;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.Vec3i;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.LevelAccessor;
@@ -29,7 +27,7 @@ import com.holybuckets.orecluster.config.AllConfigs;
 
  */
 @Mod.EventBusSubscriber(modid = OreClustersAndRegenMain.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
-public class RealTimeConfig
+public class ModRealTimeConfig
 {
     public static final String CLASS_ID = "000";
 
@@ -61,22 +59,13 @@ public class RealTimeConfig
     public static final Integer ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL = 256; //chunks per batch
     public static final Integer ORE_CLUSTER_DTRM_RADIUS_STRATEGY_CHANGE = 256;  //square chunks
 
-    /** World Data **/
-    //public static Minecraft mc = Minecraft.getInstance();
-    public LevelAccessor LEVEL;
-    public Long WORLD_SEED;
-    public Vec3i WORLD_SPAWN;
-    public Boolean PLAYER_LOADED = false;
-
 
     //Using minecraft world seed as default
     public static Long CLUSTER_SEED = null;
 
         //Constructor initializes the defaultConfigs and oreConfigs from forge properties
-        public RealTimeConfig(LevelAccessor level)
+        public ModRealTimeConfig(LevelAccessor level)
         {
-
-            initWorldConfigs( level );
 
             COreClusters clusterConfig = AllConfigs.server().cOreClusters;
             defaultConfig = new OreClusterConfigModel(clusterConfig);
@@ -107,10 +96,10 @@ public class RealTimeConfig
             if( !defaultConfig.subSeed.equals(0L) ) {
                 CLUSTER_SEED = defaultConfig.subSeed;
             } else {
-                CLUSTER_SEED = WORLD_SEED;
+                CLUSTER_SEED = GeneralRealTimeConfig.getInstance().getWORLD_SEED();
             }
 
-            LoggerBase.logInit("000000", this.getClass().getName());
+            LoggerProject.logInit("000000", this.getClass().getName());
         }
 
         /**
@@ -135,29 +124,6 @@ public class RealTimeConfig
 
         public void setOreConfigs(Map<String, OreClusterConfigModel> oreConfigs) {
             this.oreConfigs = oreConfigs;
-        }
-
-
-        /**
-        * REAL TIME SERVER CONFIG FROM EVENTS
-         */
-
-        public void initWorldConfigs( LevelAccessor level )
-        {
-            // Capture the world seed, use logical server
-            if( !level.isClientSide() )
-            {
-                LEVEL = level;
-                //MinecraftServer server = level.getServer().overworld().getServer();
-                MinecraftServer server = level.getServer();
-                WORLD_SEED = server.overworld().getSeed();
-                WORLD_SPAWN = server.overworld().getSharedSpawnPos();
-
-                LoggerBase.logInfo("000001","World Seed: " + WORLD_SEED);
-                LoggerBase.logInfo("000002","World Spawn: " + WORLD_SPAWN);
-
-            }
-
         }
 
     /**

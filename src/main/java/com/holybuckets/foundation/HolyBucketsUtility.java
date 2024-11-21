@@ -13,6 +13,13 @@ import net.minecraft.world.level.chunk.ChunkAccess;
  */
 public class HolyBucketsUtility {
 
+    /*
+    * General variables
+     */
+    public static final String NAME = "HBs Utility";
+
+    public static final String RESOURCE_NAMESPACE = "hb";
+
     public static DatabaseManager databaseManager = null;
 
     public static class ChunkUtil {

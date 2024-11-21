@@ -4,6 +4,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.holybuckets.orecluster.ModRealTimeConfig;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
@@ -11,8 +12,7 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 
 import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
 import com.holybuckets.foundation.HolyBucketsUtility.*;
-import com.holybuckets.foundation.LoggerBase;
-import com.holybuckets.orecluster.RealTimeConfig;
+import com.holybuckets.orecluster.LoggerProject;
 import org.antlr.v4.runtime.misc.Triple;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -21,7 +21,7 @@ public class OreClusterCalculator {
     public static final String CLASS_ID = "003";    //value used in logs
 
     private OreClusterManager manager;
-    private RealTimeConfig C;
+    private ModRealTimeConfig C;
     private ConcurrentHashMap<String, ManagedOreClusterChunk> determinedChunks;
     private ConcurrentHashMap<String, HashSet<String>> existingClustersByType;
 
@@ -53,7 +53,7 @@ public class OreClusterCalculator {
         for (String oreType : oreClusterTypes)
         {
             int normalizedSpawnRate = clusterConfigs.get(oreType).oreClusterSpawnRate;
-            double sigma = RealTimeConfig.CHUNK_DISTRIBUTION_STDV_FUNC.apply(normalizedSpawnRate);
+            double sigma = ModRealTimeConfig.CHUNK_DISTRIBUTION_STDV_FUNC.apply(normalizedSpawnRate);
             int numClusters = (int) Math.round(rng.nextGaussian() * sigma + normalizedSpawnRate);
 
             clusterCounts.put(oreType, numClusters);
@@ -335,7 +335,7 @@ public class OreClusterCalculator {
          {
             StringBuilder sb = new StringBuilder();
             clusterCounts.entrySet().forEach( ore -> sb.append(ore.getKey() + ": " + ore.getValue() + ", "));
-            LoggerBase.logWarning("003001", "Unable to place all ore clusters: " + e.getMessage() + "Remaining Counts: " + sb.toString());
+            LoggerProject.logWarning("003001", "Unable to place all ore clusters: " + e.getMessage() + "Remaining Counts: " + sb.toString());
              e.printStackTrace();
          }
 

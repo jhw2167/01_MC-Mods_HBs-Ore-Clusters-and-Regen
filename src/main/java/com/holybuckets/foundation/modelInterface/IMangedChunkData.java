@@ -1,6 +1,6 @@
 package com.holybuckets.foundation.modelInterface;
 
-import com.holybuckets.foundation.Exception.InvalidId;
+import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.common.util.INBTSerializable;
@@ -13,6 +13,7 @@ public interface IMangedChunkData extends INBTSerializable<CompoundTag> {
 
      */
     public void init(String id) throws InvalidId;
+    public boolean isInit(String subclass);
     public ManagedOreClusterChunk getInstance(String id) throws InvalidId;
     //public void saveNBTData(CompoundTag nbt);
     //public void loadNBTData(CompoundTag nbt);

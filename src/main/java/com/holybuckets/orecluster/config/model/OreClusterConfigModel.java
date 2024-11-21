@@ -2,7 +2,7 @@ package com.holybuckets.orecluster.config.model;
 
 import com.holybuckets.foundation.ConfigBase;
 import com.holybuckets.foundation.ConfigModelBase;
-import com.holybuckets.foundation.LoggerBase;
+import com.holybuckets.orecluster.LoggerProject;
 import net.minecraft.world.level.block.Block;
 import org.antlr.v4.runtime.misc.Triple;
 
@@ -343,7 +343,7 @@ public class OreClusterConfigModel extends ConfigModelBase {
         error.append(ore);
         error.append( defaultMessage );
         error.append(defaultValue);
-        LoggerBase.logWarning("004001", error.toString());
+        LoggerProject.logWarning("004001", error.toString());
     }
 
 
@@ -388,83 +388,83 @@ public class OreClusterConfigModel extends ConfigModelBase {
         try {
             setOreClusterType(jsonObject.get("oreClusterType").getAsString());
         } catch (Exception e) {
-            LoggerBase.logError("004002","Error parsing oreClusterType for an undefined ore" + e.getMessage());
+            LoggerProject.logError("004002","Error parsing oreClusterType for an undefined ore" + e.getMessage());
         }
 
         try {
             setOreClusterSpawnRate(jsonObject.get("oreClusterSpawnRate").getAsInt());
         } catch (Exception e) {
-            LoggerBase.logError("004003", "Error parsing " +
+            LoggerProject.logError("004003", "Error parsing " +
             oreClusterDefaultConfigs.defaultOreClusterSpawnRate.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
             setOreClusterVolume(jsonObject.get("oreClusterVolume").getAsString());
         } catch (Exception e) {
-            LoggerBase.logError("004004","Error parsing " +
+            LoggerProject.logError("004004","Error parsing " +
             oreClusterDefaultConfigs.defaultOreClusterVolume.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
             setOreClusterDensity(jsonObject.get("oreClusterDensity").getAsFloat());
         } catch (Exception e) {
-            LoggerBase.logError("004005","Error parsing " +
+            LoggerProject.logError("004005","Error parsing " +
             oreClusterDefaultConfigs.defaultOreClusterDensity.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
             setOreClusterShape(jsonObject.get("oreClusterShape").getAsString());
         } catch (Exception e) {
-            LoggerBase.logError("004006","Error parsing " +
+            LoggerProject.logError("004006","Error parsing " +
             oreClusterDefaultConfigs.defaultOreClusterShape.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
             setOreClusterMaxYLevelSpawn(jsonObject.get("oreClusterMaxYLevelSpawn").getAsInt());
         } catch (Exception e) {
-            LoggerBase.logError("004007","Error parsing " +
+            LoggerProject.logError("004007","Error parsing " +
             oreClusterDefaultConfigs.oreClusterMaxYLevelSpawn.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
             setMinChunksBetweenOreClusters(jsonObject.get("minChunksBetweenOreClusters").getAsInt());
         } catch (Exception e) {
-            LoggerBase.logError("004008","Error parsing " +
+            LoggerProject.logError("004008","Error parsing " +
             oreClusterDefaultConfigs.minChunksBetweenOreClusters.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
             //setMaxChunksBetweenOreClusters(jsonObject.get("maxChunksBetweenOreClusters").getAsInt());
         } catch (Exception e) {
-            LoggerBase.logError("004009","Error parsing " +
+            LoggerProject.logError("004009","Error parsing " +
             oreClusterDefaultConfigs.maxChunksBetweenOreClusters.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
             setOreVeinModifier(jsonObject.get("oreVeinModifier").getAsFloat());
         } catch (Exception e) {
-            LoggerBase.logError("004010", "Error parsing " +
+            LoggerProject.logError("004010", "Error parsing " +
             oreClusterDefaultConfigs.defaultOreVeinModifier.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
             setOreClusterNonReplaceableBlocks(jsonObject.get("oreClusterNonReplaceableBlocks").getAsString());
         } catch (Exception e) {
-            LoggerBase.logError("004011", "Error parsing " +
+            LoggerProject.logError("004011", "Error parsing " +
             oreClusterDefaultConfigs.defaultOreClusterNonReplaceableBlocks.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
             setOreClusterReplaceableEmptyBlocks(jsonObject.get("oreClusterReplaceableEmptyBlocks").getAsString());
         } catch (Exception e) {
-            LoggerBase.logError("004012", "Error parsing " +
+            LoggerProject.logError("004012", "Error parsing " +
             oreClusterDefaultConfigs.defaultOreClusterReplaceableEmptyBlocks.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
         try {
             setOreClusterDoesRegenerate(jsonObject.get("oreClusterDoesRegenerate").getAsString());
         } catch (Exception e) {
-            LoggerBase.logError("004013", "Error parsing " +
+            LoggerProject.logError("004013", "Error parsing " +
             oreClusterDefaultConfigs.regenerateOreClusters.getName() + " for ore: " + this.oreClusterType + ". " + e.getMessage());
         }
 
@@ -474,7 +474,7 @@ public class OreClusterConfigModel extends ConfigModelBase {
         complete.append(" has been created with the following properties: \n");
         complete.append(serialize());
         complete.append("\n\n");
-        LoggerBase.logInfo("004014", complete.toString());
+        LoggerProject.logInfo("004014", complete.toString());
     }
 
 
