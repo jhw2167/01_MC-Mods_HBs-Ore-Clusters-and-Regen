@@ -32,13 +32,19 @@ public class ManagedChunkCapabilityProvider implements ICapabilityProvider, INBT
     @Override
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
+        if(this.managedChunk == null)
+            return tag;
+
         tag.put("managedChunk", this.managedChunk.serializeNBT());
         return tag;
     }
 
     @Override
     public void deserializeNBT(CompoundTag nbt) {
-        this.managedChunk.deserializeNBT(nbt.getCompound("managedChunk"));
+    CompoundTag tag = nbt.getCompound("managedChunk");
+        if(this.managedChunk == null)
+            this.managedChunk = new ManagedChunk(tag);
+        this.managedChunk.deserializeNBT(tag);
     }
 
     @Override

@@ -2,6 +2,8 @@ package com.holybuckets.orecluster.core;
 
 import com.holybuckets.foundation.GeneralRealTimeConfig;
 import com.holybuckets.foundation.HolyBucketsUtility.*;
+import com.holybuckets.foundation.exception.InvalidId;
+import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
 import com.holybuckets.orecluster.LoggerProject;
 import com.holybuckets.orecluster.ModRealTimeConfig;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
@@ -9,6 +11,7 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.event.level.ChunkEvent;
 import org.apache.commons.lang3.tuple.Pair;
 import oshi.annotation.concurrent.ThreadSafe;
@@ -170,17 +173,30 @@ public class OreClusterManager {
 
     }
 
-    public void onChunkUnload(ChunkEvent.Unload event) {
+    public void onChunkUnload(ChunkEvent.Unload event)
+    {
         // Implementation for chunk unload
         ChunkAccess chunk = event.getChunk();
         String chunkId = ChunkUtil.getId(event.getChunk());
+        LevelChunk levelChunk = level.getChunkSource().getChunk(chunk.getPos().x, chunk.getPos().z, false);
 
-
-        //define a consumer method that initializes the ManagedChunk from the capability
-
-
+        if (levelChunk == null)
+        {
+            LoggerProject.logDebug("002021", "Chunk " + chunkId + " unloaded before data could be written");
+        }
+        else
+        {
+            levelChunk.getCapability(ManagedChunkCapabilityProvider.MANAGED_CHUNK).ifPresent(c -> {
+                try{
+                    c.init(level, chunkId);
+                } catch (InvalidId e) {
+                    LoggerProject.logError("002022", "Error initializing serialization for ManagedChunk with id: " + chunkId);
+                }
+            });
+            LoggerProject.logDebug("002023", "Chunk " + chunkId + " unloaded and data written");
+        }
         editManagedChunk(chunkId, c -> c.setChunk(null));
-
+        //loadedChunks.remove(chunkId);
     }
 
     /**
@@ -227,9 +243,9 @@ public class OreClusterManager {
             LoggerProject.logDebug("002004","Chunk " + chunkId + " contains a cluster");
             //Check regen
         } else if (determinedChunks.containsKey(chunkId)) {
-            LoggerProject.logDebug("002005","Chunk " + chunkId + " has already been explored");
+            //LoggerProject.logDebug("002005","Chunk " + chunkId + " has already been explored");
         } else {
-            LoggerProject.logDebug("002006","Chunk " + chunkId + " has not been explored");
+            //LoggerProject.logDebug("002006","Chunk " + chunkId + " has not been explored");
             //LoggerBase.logInfo("Chunk " + chunkId + " has not been explored");
 
             chunksPendingDeterminations.add(chunkId);

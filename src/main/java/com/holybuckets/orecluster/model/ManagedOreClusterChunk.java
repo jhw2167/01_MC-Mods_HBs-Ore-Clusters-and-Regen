@@ -4,6 +4,7 @@ import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.foundation.HolyBucketsUtility.ChunkUtil;
 import com.holybuckets.foundation.model.ManagedChunk;
 import com.holybuckets.foundation.modelInterface.IMangedChunkData;
+import com.holybuckets.orecluster.LoggerProject;
 import com.holybuckets.orecluster.OreClustersAndRegenMain;
 import com.holybuckets.orecluster.core.OreClusterManager;
 import net.minecraft.core.Vec3i;
@@ -164,8 +165,9 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
      * @throws InvalidId
      */
     @Override
-    public void init(String id) throws InvalidId
+    public void init(LevelAccessor level, String id) throws InvalidId
     {
+        this.level = level;
         ManagedOreClusterChunk chunk = this.getInstance(id);
         CompoundTag tag = chunk.serializeNBT();
         this.deserializeNBT(tag);
@@ -200,14 +202,20 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     }
 
     @Override
-    public CompoundTag serializeNBT() {
+    public CompoundTag serializeNBT()
+    {
+        LoggerProject.logDebug("003002", "Serializing ManagedOreClusterChunk");
         CompoundTag tag = new CompoundTag();
         tag.putString(NBT_KEY_HEADER, this.id);
         return tag;
     }
 
     @Override
-    public void deserializeNBT(CompoundTag compoundTag) {
+    public void deserializeNBT(CompoundTag compoundTag)
+    {
+        LoggerProject.logDebug("003003", "Deserializing ManagedOreClusterChunk");
+        if(compoundTag == null)
+            return;
         this.id = compoundTag.getString(NBT_KEY_HEADER);
     }
 
