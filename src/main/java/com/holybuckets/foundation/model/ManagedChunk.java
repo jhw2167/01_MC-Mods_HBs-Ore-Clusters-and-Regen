@@ -1,5 +1,6 @@
 package com.holybuckets.foundation.model;
 
+import com.holybuckets.foundation.GeneralRealTimeConfig;
 import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.foundation.modelInterface.IMangedChunkData;
@@ -14,24 +15,29 @@ public class ManagedChunk implements IMangedChunkData {
 
     public static final String CLASS_ID = "003";
     public static final String NBT_KEY_HEADER = "managedChunk";
-
+    public static final GeneralRealTimeConfig GENERAL_CONFIG = GeneralRealTimeConfig.getInstance();
 
     private String id;
+    private LevelAccessor level;
     private ChunkAccess chunk;
     private ManagedOreClusterChunk managedOreClusterChunk;
 
     /** CONSTRUCTORS **/
-    public ManagedChunk() {
+    private ManagedChunk() {
         super();
+    }
+
+    public ManagedChunk( CompoundTag tag ) {
+        super();
+        this.deserializeNBT(tag);
     }
 
     public ManagedChunk(LevelAccessor level, String id)
     {
         this();
-        ManagedOreClusterChunk managedOreClusterChunk = new ManagedOreClusterChunk(level);
         this.id = id;
         try {
-            init(id);
+            init(level, id);
         } catch (InvalidId e) {
             LoggerBase.logError("003002", "Error initializing ManagedChunk with id: " + id);
         }
@@ -50,8 +56,11 @@ public class ManagedChunk implements IMangedChunkData {
 
     /** OVERRIDES **/
     @Override
-    public void init(String id) throws InvalidId
+    public void init(LevelAccessor level, String id) throws InvalidId
     {
+        this.id = id;
+        this.level = level;
+
         LoggerBase.logInfo("003000", "Initializing ManagedChunk with id: " + id);
         int errorCount = 0;
         try {
@@ -86,14 +95,31 @@ public class ManagedChunk implements IMangedChunkData {
     }
 
     @Override
-    public CompoundTag serializeNBT() {
+    public CompoundTag serializeNBT()
+    {
+        if( this.id != null && this.id.contains("6") )
+        {
+            LoggerBase.logDebug("003003", "Serializing ManagedChunk " + this.id);
+        }
+
+
         CompoundTag tag = new CompoundTag();
+        tag.putString("id", this.id);
+        tag.putString("level", this.level.hashCode() + "");
         tag.put("managedOreClusterChunk", this.managedOreClusterChunk.serializeNBT());
         return tag;
     }
 
     @Override
-    public void deserializeNBT(CompoundTag compoundTag) {
-        this.managedOreClusterChunk.deserializeNBT(compoundTag.getCompound("managedOreClusterChunk"));
+    public void deserializeNBT(CompoundTag tag)
+    {
+        if(tag == null)
+            return;
+
+        //print tag as string, info
+        LoggerBase.logInfo("003005", "Deserializing ManagedChunk: " + tag.toString());
+        this.id = tag.getString("id");
+        this.level = GENERAL_CONFIG.getLEVELS().get( tag.get("level") );
+        this.managedOreClusterChunk.deserializeNBT(tag.getCompound("managedOreClusterChunk"));
     }
 }

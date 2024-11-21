@@ -27,7 +27,7 @@ public class GeneralRealTimeConfig
 
     /** World Data **/
     private static GeneralRealTimeConfig instance;
-    private Set<LevelAccessor> LEVELS;
+    private Map<Integer, LevelAccessor> LEVELS;
     private Long WORLD_SEED;
     private Vec3i WORLD_SPAWN;
     private Boolean PLAYER_LOADED = false;
@@ -40,7 +40,7 @@ public class GeneralRealTimeConfig
         /** Constructor **/
         private GeneralRealTimeConfig()
         {
-            this.LEVELS = new HashSet<>();
+            this.LEVELS = new HashMap<>();
 
             instance = this;
             LoggerBase.logInit("000000", this.getClass().getName());
@@ -66,7 +66,7 @@ public class GeneralRealTimeConfig
                 MinecraftServer server = level.getServer();
                 instance.WORLD_SEED = server.overworld().getSeed();
                 instance.WORLD_SPAWN = server.overworld().getSharedSpawnPos();
-                instance.LEVELS.add(level);
+                instance.LEVELS.put( level.hashCode(), level );
 
                 LoggerBase.logInfo("000001","World Seed: " + instance.WORLD_SEED);
                 LoggerBase.logInfo("000002","World Spawn: " + instance.WORLD_SPAWN);
@@ -105,7 +105,7 @@ public class GeneralRealTimeConfig
         /**
          *  Getters
          */
-        public Set<LevelAccessor> getLEVELS() {
+        public Map<Integer, LevelAccessor> getLEVELS() {
             return LEVELS;
         }
 
