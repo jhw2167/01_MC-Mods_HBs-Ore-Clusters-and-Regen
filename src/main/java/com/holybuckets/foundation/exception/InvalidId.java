@@ -1,4 +1,4 @@
-package com.holybuckets.foundation.Exception;
+package com.holybuckets.foundation.exception;
 
 public class InvalidId extends Exception {
     public InvalidId(String message) {

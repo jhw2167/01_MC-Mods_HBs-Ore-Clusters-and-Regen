@@ -19,9 +19,7 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 
 import com.holybuckets.foundation.ConfigBase;
-import com.holybuckets.foundation.LoggerBase;
-import com.holybuckets.orecluster.core.OreClusterManager;
-import com.holybuckets.orecluster.RealTimeConfig;
+import com.holybuckets.orecluster.LoggerProject;
 
 
 @EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD, modid = OreClustersAndRegenMain.MODID)
@@ -82,7 +80,7 @@ public class AllConfigs {
 				.getSpec())
 				config.onLoad();
 
-		LoggerBase.logInit( "005001","AllConfigs-onLoad" );
+		LoggerProject.logInit( "005001","AllConfigs-onLoad" );
 	}
 
 	//@SubscribeEvent
@@ -92,13 +90,13 @@ public class AllConfigs {
 				.getSpec())
 				config.onReload();
 
-		LoggerBase.logInit( "005002","AllConfigs-onReLoad" );
+		LoggerProject.logInit( "005002","AllConfigs-onReLoad" );
 	}
 
 	@SubscribeEvent
 	public void onServerStarted(final ServerStartedEvent event)
 	{
-		LoggerBase.logInfo("005003","**** SERVER STARTED EVENT ****");
+		LoggerProject.logInfo("005003","**** SERVER STARTED EVENT ****");
 	}
 
 

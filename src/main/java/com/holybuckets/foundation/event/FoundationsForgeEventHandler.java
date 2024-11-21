@@ -1,11 +1,17 @@
-package com.holybuckets.orecluster.event;
+package com.holybuckets.foundation.event;
 
+import com.holybuckets.foundation.GeneralRealTimeConfig;
 import com.holybuckets.foundation.HolyBucketsUtility;
 import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.foundation.database.DatabaseManager;
+import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
 import com.holybuckets.orecluster.OreClustersAndRegenMain;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.LevelAccessor;
 
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
@@ -17,10 +23,27 @@ public class FoundationsForgeEventHandler {
     //create class_id
     public static final String CLASS_ID = "002";
 
+    private static final GeneralRealTimeConfig config = GeneralRealTimeConfig.getInstance();
+
+    @SubscribeEvent
+    public static void onAttachCapabilities(AttachCapabilitiesEvent<LevelChunk> event)
+    {
+        LevelChunk c = event.getObject();
+
+        if( event.getObject() instanceof LevelChunk ) {
+            //LoggerBase.logDebug("002001", "Attaching Capabilities to MOD EVENT:  ");
+            if( !event.getObject().getCapability(ManagedChunkCapabilityProvider.MANAGED_CHUNK).isPresent() ) {
+                event.addCapability(new ResourceLocation(HolyBucketsUtility.RESOURCE_NAMESPACE, "chunk"), new ManagedChunkCapabilityProvider());
+            }
+        }
+    }
+
 
     @SubscribeEvent
     public static void onLoadWorld(LevelEvent.Load event)
     {
+        LoggerBase.logDebug("002003", "**** WORLD LOAD EVENT ****");
+
         LevelAccessor world = event.getLevel();
         if( world.isClientSide() )
         {
@@ -28,19 +51,32 @@ public class FoundationsForgeEventHandler {
         }
         else
         {
+            config.onLoadLevel( event );
             //start the database
             LoggerBase.logInfo("002000", "Starting SQLite Database");
             HolyBucketsUtility.databaseManager = DatabaseManager.getInstance();
             try {
                 //world.getLevelData().
-                HolyBucketsUtility.databaseManager.startDatabase( "world" );
+                //HolyBucketsUtility.databaseManager.startDatabase( "world" );
             } catch (Exception e) {
-                LoggerBase.logError("002000", "Error starting database, attempting to cancel world load");
+                LoggerBase.logError("002001", "Error starting database, attempting to cancel world load");
                 event.setCanceled(true);
             }
-            LoggerBase.logInfo("002001", "Database started successfully");
+            LoggerBase.logInfo("002002", "Database started successfully");
         }
 
+    }
+
+    @SubscribeEvent
+    public static void onUnloadWorld(LevelEvent.Unload event) {
+        config.onUnLoadLevel( event );
+        LoggerBase.logDebug("002004", "**** WORLD UNLOAD EVENT ****");
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        config.initPlayerConfigs( event );
+        LoggerBase.logDebug("002005", "Player Logged In");
     }
 
 }

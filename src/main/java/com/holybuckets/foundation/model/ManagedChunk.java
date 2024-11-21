@@ -1,13 +1,20 @@
 package com.holybuckets.foundation.model;
 
-import com.holybuckets.foundation.Exception.InvalidId;
 import com.holybuckets.foundation.LoggerBase;
+import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.foundation.modelInterface.IMangedChunkData;
+import com.holybuckets.orecluster.core.OreClusterManager;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.chunk.ChunkAccess;
 
 public class ManagedChunk implements IMangedChunkData {
+
+    public static final String CLASS_ID = "003";
+    public static final String NBT_KEY_HEADER = "managedChunk";
+
 
     private String id;
     private ChunkAccess chunk;
@@ -15,10 +22,13 @@ public class ManagedChunk implements IMangedChunkData {
 
     /** CONSTRUCTORS **/
     public ManagedChunk() {
-        this.managedOreClusterChunk = new ManagedOreClusterChunk();
+        super();
     }
 
-    public ManagedChunk(String id) {
+    public ManagedChunk(LevelAccessor level, String id)
+    {
+        this();
+        ManagedOreClusterChunk managedOreClusterChunk = new ManagedOreClusterChunk(level);
         this.id = id;
         try {
             init(id);
@@ -51,6 +61,23 @@ public class ManagedChunk implements IMangedChunkData {
             LoggerBase.logDebug("003001", "No managedOreClusterChunk found with id: " + id);
         }
 
+    }
+
+    /**
+    * Check if all subclasses are not null and initialized successfully
+    * @return boolean
+    */
+    @Override
+    public boolean isInit(String subClass) {
+        boolean isInit = false;
+        IMangedChunkData sub = this.managedOreClusterChunk;
+        boolean subClassInit =  (sub != null && sub.isInit(subClass));
+
+        if(subClass.equals("ManagedOreClusterChunk")) {
+            isInit = subClassInit;
+        }
+
+        return isInit;
     }
 
     @Override
