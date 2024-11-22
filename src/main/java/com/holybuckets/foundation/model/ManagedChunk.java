@@ -25,7 +25,7 @@ public class ManagedChunk implements IMangedChunkData {
     private LevelAccessor level;
     private ChunkAccess chunk;
     private int tickLastLoaded;
-    private IMangedChunkData managedOreClusterChunk;
+    private HashMap<Integer, IMangedChunkData> managedChunkData = new HashMap<>();
 
 
     /** CONSTRUCTORS **/
@@ -47,24 +47,22 @@ public class ManagedChunk implements IMangedChunkData {
     }
 
     /** GETTERS & SETTERS **/
-    public IMangedChunkData getManagedOreClusterChunk() {
-        return managedOreClusterChunk;
+    public IMangedChunkData getSubclass(Class<? extends IMangedChunkData> classObject) {
+        return managedChunkData.get(classObject.hashCode());
     }
 
     /**
-     *
-     * @param classObject, managedChunkData
-     * @return
+     * Set a managed chunk data subclass
+     * @param classObject The class of the managed chunk data
+     * @param data The managed chunk data instance
+     * @return true if set successfully
      */
-    public Boolean setSubclass(Class<IMangedChunkData> classObject, IMangedChunkData managedChunkData) {
-        if (classObject == null || managedChunkData == null) {
+    public Boolean setSubclass(Class<? extends IMangedChunkData> classObject, IMangedChunkData data) {
+        if (classObject == null || data == null) {
             return false;
         }
-        if (classObject.getName().equals(ManagedOreClusterChunk.class.getName())) {
-            this.managedOreClusterChunk = managedChunkData;
-            return true;
-        }
-        return false;
+        managedChunkData.put(classObject.hashCode(), data);
+        return true;
     }
 
 
@@ -78,10 +76,12 @@ public class ManagedChunk implements IMangedChunkData {
         //LoggerBase.logInfo("003000", "Initializing ManagedChunk with id: " + id);
         HashMap<String, String> errors = new HashMap<>();
 
-        IMangedChunkData sub = new ManagedOreClusterChunk();
-        this.managedOreClusterChunk = sub.getStaticInstance(level, id);
-        if(this.managedOreClusterChunk == null) {
-            errors.put(sub.getClass().getName(), "returned null");
+        IMangedChunkData oreClusterChunk = new ManagedOreClusterChunk();
+        IMangedChunkData instance = oreClusterChunk.getStaticInstance(level, id);
+        if(instance == null) {
+            errors.put(oreClusterChunk.getClass().getName(), "returned null");
+        } else {
+            setSubclass(ManagedOreClusterChunk.class, instance);
         }
 
         if(errors.size() > 0)
@@ -102,15 +102,11 @@ public class ManagedChunk implements IMangedChunkData {
     */
     @Override
     public boolean isInit(String subClass) {
-        boolean isInit = false;
-        IMangedChunkData sub = this.managedOreClusterChunk;
-        boolean subClassInit =  (sub != null && sub.isInit(subClass));
-
         if(subClass.equals("ManagedOreClusterChunk")) {
-            isInit = subClassInit;
+            IMangedChunkData data = getSubclass(ManagedOreClusterChunk.class);
+            return data != null && data.isInit(subClass);
         }
-
-        return isInit;
+        return false;
     }
 
     @Override
@@ -128,9 +124,8 @@ public class ManagedChunk implements IMangedChunkData {
 
         details.putString("id", this.id);
         details.putInt("level", this.level.hashCode());
-        if(this.managedOreClusterChunk != null) {
-            IMangedChunkData sub = this.managedOreClusterChunk;
-            details.put(sub.getClass().getName(), sub.serializeNBT());
+        for(IMangedChunkData data : managedChunkData.values()) {
+            details.put(data.getClass().getName(), data.serializeNBT());
         }
 
         if( this.id != null)
@@ -141,8 +136,9 @@ public class ManagedChunk implements IMangedChunkData {
             LoggerBase.logDebug("003003", "Serializing ManagedChunk " + this.id);
             LoggerBase.logDebug("003004", "This String: " + this.toString());
             LoggerBase.logDebug("003005", "Wrapper String: " + wrapper.toString());
-            if(this.managedOreClusterChunk != null)
-                LoggerBase.logDebug("003006", "OreCluster String: " + this.managedOreClusterChunk.toString());
+            IMangedChunkData oreClusterData = getSubclass(ManagedOreClusterChunk.class);
+            if(oreClusterData != null)
+                LoggerBase.logDebug("003006", "OreCluster String: " + oreClusterData.toString());
 
         }
 
@@ -162,11 +158,14 @@ public class ManagedChunk implements IMangedChunkData {
         this.level = GENERAL_CONFIG.getLEVELS().get( tag.get("level") );
         this.tickLastLoaded = GENERAL_CONFIG.getSERVER().getTickCount();
 
-        //For all subclasses, attempt to pull from RAM, otherwise deserialize
-        IMangedChunkData sub = new ManagedOreClusterChunk();
-        sub = sub.getStaticInstance(this.level, this.id);
-        if (sub == null) {
-            sub.deserializeNBT(details.getCompound(sub.getClass().getName()));
+        // Initialize ManagedOreClusterChunk
+        IMangedChunkData oreClusterChunk = new ManagedOreClusterChunk();
+        IMangedChunkData instance = oreClusterChunk.getStaticInstance(this.level, this.id);
+        if (instance == null) {
+            oreClusterChunk.deserializeNBT(details.getCompound(oreClusterChunk.getClass().getName()));
+            setSubclass(ManagedOreClusterChunk.class, oreClusterChunk);
+        } else {
+            setSubclass(ManagedOreClusterChunk.class, instance);
         }
 
         //if id is not null and contains 6, log debug
