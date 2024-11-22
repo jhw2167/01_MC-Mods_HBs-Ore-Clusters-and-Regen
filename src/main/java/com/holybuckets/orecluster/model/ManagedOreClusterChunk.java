@@ -3,8 +3,7 @@ package com.holybuckets.orecluster.model;
 import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.foundation.HolyBucketsUtility.ChunkUtil;
 import com.holybuckets.foundation.modelInterface.IMangedChunkData;
-import com.holybuckets.orecluster.LoggerProject;
-import com.holybuckets.orecluster.OreClustersAndRegenMain;
+import com.holybuckets.foundation.modelInterface.IMangedChunkManager;
 import com.holybuckets.orecluster.core.OreClusterManager;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
@@ -14,6 +13,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.security.Provider;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -57,8 +57,13 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     private HashMap<String, Vec3i> clusterTypes;
     private List<Pair<String, Vec3i>> clusters;
 
-
     /** Constructors **/
+    /**
+        Dummy Constructor for using getInstance, should only have local scope
+     */
+    public ManagedOreClusterChunk() {
+        super();
+    }
 
     //Default constructor - creates dummy node to be loaded from HashMap later
     public ManagedOreClusterChunk(LevelAccessor level)
@@ -194,21 +199,18 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     }
     */
 
-    public static ManagedOreClusterChunk getStaticInstance(LevelAccessor level, String id) throws InvalidId
+    public ManagedOreClusterChunk getStaticInstance(LevelAccessor level, String id)
     {
-        if(id == null) {
-            throw new InvalidId(null);
-        }
-        //Reference to OreClusterManager's array of ManagedOreClusterChunks
-        OreClusterManager manager = OreClustersAndRegenMain.oreClusterManagers.getOrDefault(level, null);
-        if(manager == null)
-            return null;
-        ConcurrentHashMap<String, ManagedOreClusterChunk> loadedChunks = manager.getLoadedChunks();
-        ManagedOreClusterChunk chunk = loadedChunks.get(id);
+        if(id == null) { return null; }
 
-        if(chunk == null) {
-            throw new InvalidId(null);
-        }
+        //Reference to OreClusterManager's array of ManagedOreClusterChunks
+        OreClusterManager manager = OreClusterManager.oreClusterManagers.getOrDefault(level, null);
+        if(manager == null) { return null; }
+
+        ConcurrentHashMap<String, ManagedOreClusterChunk> loadedChunks = manager.getLoadedChunks();
+        if(loadedChunks == null) { return null; }
+
+        ManagedOreClusterChunk chunk = loadedChunks.get(id);
         return chunk;
     }
 
@@ -240,7 +242,14 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
             return;
 
         //LoggerProject.logDebug("003003", "Deserializing ManagedOreClusterChunk");
-        this.id = compoundTag.getString(NBT_KEY_HEADER);
+        CompoundTag wrapper = compoundTag.getCompound(NBT_KEY_HEADER);
+
+        if(wrapper == null)
+            return;
+
+        this.id = wrapper.getString("id");
+        this.status = ClusterStatus.valueOf( wrapper.getString("status") );
+
     }
 
 

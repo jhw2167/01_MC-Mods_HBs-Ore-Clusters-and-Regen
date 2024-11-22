@@ -2,8 +2,12 @@ package com.holybuckets.foundation;
 
 
 import com.holybuckets.foundation.database.DatabaseManager;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Iterator;
 
 /**
 * Class: HolyBucketsUtility
@@ -79,6 +83,31 @@ public class HolyBucketsUtility {
         public static String writeNBT(ChunkAccess chunk, String property, String value) {
             return "";
         }
+
+    }
+
+    public static class SerializeUtil {
+
+        /**
+         * Serialize iterable object to a string
+         */
+        public static String serialize( Iterable<?> iterable) {
+            StringBuilder sb = new StringBuilder();
+            for (Object o : iterable) {
+                sb.append(o.toString());
+                sb.append(",");
+            }
+            return sb.toString();
+        }
+
+        /**
+         * Deserialize a string to an iterable object
+          */
+
+        public static Iterable<String> deserialize(CompoundTag tag, String property) {
+            return null;
+        }
+
 
     }
 
