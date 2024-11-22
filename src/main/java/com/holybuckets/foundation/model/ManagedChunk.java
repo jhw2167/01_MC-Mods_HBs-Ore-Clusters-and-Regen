@@ -4,6 +4,7 @@ import com.holybuckets.foundation.GeneralRealTimeConfig;
 import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.foundation.modelInterface.IMangedChunkData;
+import com.holybuckets.foundation.modelInterface.IMangedChunkManager;
 import com.holybuckets.orecluster.core.OreClusterManager;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
 import net.minecraft.nbt.CompoundTag;
@@ -50,8 +51,20 @@ public class ManagedChunk implements IMangedChunkData {
         return managedOreClusterChunk;
     }
 
-    public void setManagedOreClusterChunk(ManagedOreClusterChunk c) {
-        this.managedOreClusterChunk = c;
+    /**
+     *
+     * @param classObject, managedChunkData
+     * @return
+     */
+    public Boolean setSubclass(Class<IMangedChunkData> classObject, IMangedChunkData managedChunkData) {
+        if (classObject == null || managedChunkData == null) {
+            return false;
+        }
+        if (classObject.getName().equals(ManagedOreClusterChunk.class.getName())) {
+            this.managedOreClusterChunk = managedChunkData;
+            return true;
+        }
+        return false;
     }
 
 
@@ -128,7 +141,8 @@ public class ManagedChunk implements IMangedChunkData {
             LoggerBase.logDebug("003003", "Serializing ManagedChunk " + this.id);
             LoggerBase.logDebug("003004", "This String: " + this.toString());
             LoggerBase.logDebug("003005", "Wrapper String: " + wrapper.toString());
-            LoggerBase.logDebug("003006", "OreCluster String: " + this.managedOreClusterChunk.toString());
+            if(this.managedOreClusterChunk != null)
+                LoggerBase.logDebug("003006", "OreCluster String: " + this.managedOreClusterChunk.toString());
 
         }
 
