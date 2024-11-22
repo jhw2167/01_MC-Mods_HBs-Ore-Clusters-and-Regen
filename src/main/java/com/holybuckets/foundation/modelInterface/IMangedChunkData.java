@@ -17,9 +17,7 @@ public interface IMangedChunkData extends INBTSerializable<CompoundTag> {
      * Initialize the ManagedChunk and underlying data from memory or
      * perform any necessary configuration
      */
-    void init(LevelAccessor level, String id) throws InvalidId;
-
-    public boolean isInit(String subclass);
+    boolean isInit(String subclass);
 
     /**
      * Create a dummy constructor to call this method and return a reference to an

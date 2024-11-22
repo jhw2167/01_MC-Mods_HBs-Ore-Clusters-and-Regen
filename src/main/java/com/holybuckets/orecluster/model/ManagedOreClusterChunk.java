@@ -1,5 +1,6 @@
 package com.holybuckets.orecluster.model;
 
+import com.google.gson.Gson;
 import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.foundation.HolyBucketsUtility.ChunkUtil;
 import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
@@ -189,43 +190,12 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.clusterTypes.putAll( clusterMap );
     }
 
-    /**
-     * Checks if the chunk is loaded and makes a deep copy, or thows exception
-     *
-     * @param id
-     * @throws InvalidId
-     */
-    @Override
-    public void init(LevelAccessor level, String id) throws InvalidId
-    {
-        this.level = level;
-        ManagedOreClusterChunk chunk = getStaticInstance(level, id);
-        CompoundTag tag = chunk.serializeNBT();
-        this.deserializeNBT(tag);
-    }
 
     @Override
     public boolean isInit(String subClass) {
         return this.id != null;
     }
 
-    /**
-     * Gets the instance of the chunk from the loadedChunks HashMap
-     * @param id
-     * @return
-     * @throws InvalidId
-     *
-    @Override
-    public ManagedOreClusterChunk getInstance(String id) throws InvalidId
-    {
-        return getStaticInstance(this.level, id);
-    }
-
-    @Override
-    public ManagedOreClusterChunk getInstance(LevelAccessor level, String id) throws InvalidId {
-        return getStaticInstance(level, id);
-    }
-    */
 
     public ManagedOreClusterChunk getStaticInstance(LevelAccessor level, String id)
     {
@@ -253,6 +223,33 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         CompoundTag details = new CompoundTag();
         details.putString("id", this.id);
         details.putString("status", this.status.toString());
+
+        CompoundTag clustersWrapper = new CompoundTag();
+        {
+            Gson gson = new Gson();
+            CompoundTag clusters = new CompoundTag();
+            clustersWrapper.putString("clusters", gson.toJson(this.clusters));
+            /*
+            for(Pair<String, Vec3i> cluster : this.clusters)
+            {
+                StringBuilder clusterData = new StringBuilder();
+                clusterData.append(cluster.getLeft());
+                clusterData.append(" ");
+
+                clusters.putInt(cluster.getLeft(), cluster.getRight().hashCode());
+            }
+            */
+
+        }
+        details.put("clusters", clustersWrapper);
+
+        CompoundTag clusterTypes = new CompoundTag();
+        {
+            Gson gson = new Gson();
+            clusterTypes.putString("clusterTypes", gson.toJson(this.clusterTypes));
+
+        }
+        details.put("clusterTypes", clusterTypes);
 
         //details.put("clusters", OreClustersAndRegenMain.serializeClusters(this.clusters));
         //details.put("clusterTypes", OreClustersAndRegenMain.serializeClusterTypes(this.clusterTypes));

@@ -25,6 +25,7 @@ public class ManagedChunk implements IMangedChunkData {
     public static final String NBT_KEY_HEADER = "managedChunk";
     public static final GeneralRealTimeConfig GENERAL_CONFIG = GeneralRealTimeConfig.getInstance();
     public static final HashMap<Integer, ManagedChunk> MANAGED_CHUNKS = new HashMap<>();
+    public static final HashMap<Integer, IMangedChunkData> MANAGED_SUBCLASSES = new HashMap<>();
 
     private String id;
     private LevelAccessor level;
@@ -70,23 +71,40 @@ public class ManagedChunk implements IMangedChunkData {
         return true;
     }
 
+    private void initSubclassesFromMemory(LevelAccessor level, String chunkId)
+    {
+        for(IMangedChunkData data : MANAGED_SUBCLASSES.values()) {
+            setSubclass( data.getClass(), data.getStaticInstance(level, chunkId));
+        }
+
+    }
+
 
     /** OVERRIDES **/
-    @Override
-    public void init(LevelAccessor level, String id) throws InvalidId
+    private void init(LevelAccessor level, String id, CompoundTag nbtData) throws InvalidId
     {
         this.id = id;
         this.level = level;
-
-        //LoggerBase.logInfo("003000", "Initializing ManagedChunk with id: " + id);
         HashMap<String, String> errors = new HashMap<>();
 
-        IMangedChunkData oreClusterChunk = new ManagedOreClusterChunk();
-        IMangedChunkData instance = oreClusterChunk.getStaticInstance(level, id);
-        if(instance == null) {
-            errors.put(oreClusterChunk.getClass().getName(), "returned null");
-        } else {
-            setSubclass(ManagedOreClusterChunk.class, instance);
+        //Attempt to link existing subclasses from RAM
+        this.initSubclassesFromMemory(level, id);
+
+        //Loop over all subclasses and deserialize if matching chunk not found in RAM
+        for(Map.Entry entry : managedChunkData.entrySet())
+        {
+            if (entry.getValue() != null)
+                continue;
+
+            try {
+                IMangedChunkData sub = (IMangedChunkData) entry.getKey().getClass().newInstance();
+                sub.deserializeNBT(nbtData.getCompound(sub.getClass().getName()));
+                setSubclass(sub.getClass(), sub);
+
+            } catch (Exception e) {
+                errors.put(entry.getKey().getClass().getName(), e.getMessage());
+            }
+
         }
 
         if(errors.size() > 0)
@@ -123,9 +141,11 @@ public class ManagedChunk implements IMangedChunkData {
     @Override
     public CompoundTag serializeNBT()
     {
-
         CompoundTag details = new CompoundTag();
         CompoundTag wrapper = new CompoundTag();
+
+        if( this.id == null || this.level == null )
+            return wrapper;
 
         details.putString("id", this.id);
         details.putInt("level", this.level.hashCode());
@@ -135,6 +155,8 @@ public class ManagedChunk implements IMangedChunkData {
 
         if( this.id != null)
             wrapper.put(NBT_KEY_HEADER, details);
+
+        LoggerBase.logDebug("003002", "Serializing ManagedChunk with data: " + wrapper.toString());
 
         return wrapper;
     }
@@ -152,29 +174,10 @@ public class ManagedChunk implements IMangedChunkData {
         this.level = GENERAL_CONFIG.getLEVELS().get( tag.get("level") );
         this.tickLastLoaded = GENERAL_CONFIG.getSERVER().getTickCount();
 
-        //Loop over all subclasses and deserialize
-        for(Map.Entry entry : managedChunkData.entrySet())
-        {
-            try {
-                IMangedChunkData sub = (IMangedChunkData) entry.getKey().getClass().newInstance();
-                IMangedChunkData instance = sub.getStaticInstance(this.level, this.id);
-
-                if (instance == null)
-                {
-                    sub.deserializeNBT(details.getCompound(instance.getClass().getName()));
-                    setSubclass(ManagedOreClusterChunk.class, sub);
-                }
-                else
-                {
-                    setSubclass(ManagedOreClusterChunk.class, instance);
-                }
-
-            } catch (InstantiationException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-
+        try {
+            this.init(level, id, details );
+        } catch (InvalidId e) {
+            LoggerProject.logError("002021", "Error initializing ManagedChunk with id: " + id);
         }
 
     }
@@ -198,20 +201,8 @@ public class ManagedChunk implements IMangedChunkData {
         else
         {
             levelChunk.getCapability(ManagedChunkCapabilityProvider.MANAGED_CHUNK).ifPresent(c -> {
-                try{
-                    c.init(level, chunkId);
-                } catch (InvalidId e) {
-                    if( isLinked.get(chunkId) == null ) {
-                        isLinked.put(chunkId, 1);
-                    }
-                    else {
-                        Integer times = isLinked.get(chunkId) + 1;
-                        isLinked.put(chunkId, times);
-                        LoggerProject.logError("002021", "Error initializing ManagedChunk with id: " + chunkId + " times " + times);
-                    }
-                }
+                    c.initSubclassesFromMemory(level, chunkId);
             });
-
         }
 
         //loadedChunks.remove(chunkId);
