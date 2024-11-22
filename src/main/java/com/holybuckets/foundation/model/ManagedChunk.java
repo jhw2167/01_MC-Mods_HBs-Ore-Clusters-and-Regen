@@ -11,16 +11,21 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.chunk.ChunkAccess;
 
+import java.util.HashMap;
+
 public class ManagedChunk implements IMangedChunkData {
 
     public static final String CLASS_ID = "003";
     public static final String NBT_KEY_HEADER = "managedChunk";
     public static final GeneralRealTimeConfig GENERAL_CONFIG = GeneralRealTimeConfig.getInstance();
+    public static final HashMap<Integer, ManagedChunk> MANAGED_CHUNKS = new HashMap<>();
 
     private String id;
     private LevelAccessor level;
     private ChunkAccess chunk;
+    private int tickLastLoaded;
     private ManagedOreClusterChunk managedOreClusterChunk;
+
 
     /** CONSTRUCTORS **/
     private ManagedChunk() {
@@ -61,13 +66,13 @@ public class ManagedChunk implements IMangedChunkData {
         this.id = id;
         this.level = level;
 
-        LoggerBase.logInfo("003000", "Initializing ManagedChunk with id: " + id);
+        //LoggerBase.logInfo("003000", "Initializing ManagedChunk with id: " + id);
         int errorCount = 0;
         try {
-            this.managedOreClusterChunk = this.managedOreClusterChunk.getInstance(id);
+            this.managedOreClusterChunk = ManagedOreClusterChunk.getStaticInstance(level, id);
         } catch (InvalidId e) {
             errorCount++;
-            LoggerBase.logDebug("003001", "No managedOreClusterChunk found with id: " + id);
+            //LoggerBase.logDebug("003001", "No managedOreClusterChunk found with id: " + id);
         }
 
     }
@@ -89,25 +94,29 @@ public class ManagedChunk implements IMangedChunkData {
         return isInit;
     }
 
-    @Override
-    public ManagedOreClusterChunk getInstance(String id) throws InvalidId {
-        return null;
-    }
 
     @Override
     public CompoundTag serializeNBT()
     {
         if( this.id != null && this.id.contains("6") )
         {
-            LoggerBase.logDebug("003003", "Serializing ManagedChunk " + this.id);
+            //LoggerBase.logDebug("003003", "Serializing ManagedChunk " + this.id);
         }
 
+        CompoundTag details = new CompoundTag();
+        CompoundTag wrapper = new CompoundTag();
 
-        CompoundTag tag = new CompoundTag();
-        tag.putString("id", this.id);
-        tag.putString("level", this.level.hashCode() + "");
-        tag.put("managedOreClusterChunk", this.managedOreClusterChunk.serializeNBT());
-        return tag;
+        details.putString("id", this.id);
+        details.putInt("level", this.level.hashCode());
+        if(this.managedOreClusterChunk != null) {
+            IMangedChunkData sub = this.managedOreClusterChunk;
+            details.put(sub.getClass().getName(), sub.serializeNBT());
+        }
+
+        if( this.id == null)
+            wrapper.put(NBT_KEY_HEADER, details);
+
+        return wrapper;
     }
 
     @Override
@@ -116,10 +125,18 @@ public class ManagedChunk implements IMangedChunkData {
         if(tag == null)
             return;
 
+        CompoundTag details = tag.getCompound(NBT_KEY_HEADER);
+
         //print tag as string, info
-        LoggerBase.logInfo("003005", "Deserializing ManagedChunk: " + tag.toString());
-        this.id = tag.getString("id");
+        this.id = details.getString("id");
         this.level = GENERAL_CONFIG.getLEVELS().get( tag.get("level") );
+        this.tickLastLoaded = GENERAL_CONFIG.getTICKS();
         this.managedOreClusterChunk.deserializeNBT(tag.getCompound("managedOreClusterChunk"));
+
+        //if id is not null and contains 6, log debug
+        if( this.id != null && this.id.contains("6") )
+        {
+            LoggerBase.logInfo("003005", "Deserializing ManagedChunk: " + tag.toString());
+        }
     }
 }

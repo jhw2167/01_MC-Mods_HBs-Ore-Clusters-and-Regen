@@ -27,14 +27,15 @@ public class GeneralRealTimeConfig
 
     /** World Data **/
     private static GeneralRealTimeConfig instance;
+    private MinecraftServer SERVER;
     private Map<Integer, LevelAccessor> LEVELS;
     private Long WORLD_SEED;
     private Vec3i WORLD_SPAWN;
     private Boolean PLAYER_LOADED = false;
 
-    private static final List<Consumer<LevelEvent.Load>> ON_LEVEL_LOAD = new ArrayList<>();
-    private static final List<Consumer<PlayerEvent.PlayerLoggedInEvent>> ON_PLAYER_LOAD = new ArrayList<>();
-    private static final List<Consumer<LevelEvent.Unload>> ON_LEVEL_UNLOAD = new ArrayList<>();
+    private final List<Consumer<LevelEvent.Load>> ON_LEVEL_LOAD = new ArrayList<>();
+    private final List<Consumer<PlayerEvent.PlayerLoggedInEvent>> ON_PLAYER_LOAD = new ArrayList<>();
+    private final List<Consumer<LevelEvent.Unload>> ON_LEVEL_UNLOAD = new ArrayList<>();
 
 
         /** Constructor **/
@@ -67,6 +68,7 @@ public class GeneralRealTimeConfig
                 instance.WORLD_SEED = server.overworld().getSeed();
                 instance.WORLD_SPAWN = server.overworld().getSharedSpawnPos();
                 instance.LEVELS.put( level.hashCode(), level );
+                instance.SERVER = level.getServer();
 
                 LoggerBase.logInfo("000001","World Seed: " + instance.WORLD_SEED);
                 LoggerBase.logInfo("000002","World Spawn: " + instance.WORLD_SPAWN);
@@ -121,6 +123,9 @@ public class GeneralRealTimeConfig
             return PLAYER_LOADED;
         }
 
+        public MinecraftServer getSERVER() { return SERVER; }
+}
+
         /**
          *  Setters
          */
@@ -139,5 +144,5 @@ public class GeneralRealTimeConfig
         }
 
 
-}
+
 //END CLASS

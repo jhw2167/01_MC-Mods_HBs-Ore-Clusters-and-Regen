@@ -1,8 +1,10 @@
 package com.holybuckets.foundation.model;
 
+import com.holybuckets.foundation.HolyBucketsUtility;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.CapabilityToken;
@@ -19,14 +21,21 @@ public class ManagedChunkCapabilityProvider implements ICapabilityProvider, INBT
     private ManagedChunk managedChunk = null;
     private final LazyOptional<ManagedChunk> optional = LazyOptional.of(this::getManagedChunk);
 
-    public ManagedChunk initManagedChunk(LevelAccessor level, String id) {
+    public ManagedChunkCapabilityProvider(LevelChunk chunk)
+    {
+        super();
+        String id = HolyBucketsUtility.ChunkUtil.getId(chunk.getPos());
+        this.init(chunk.getLevel(), id);
+    }
+
+    public ManagedChunk init(LevelAccessor level, String id) {
         if(this.managedChunk == null)
             this.managedChunk = new ManagedChunk(level, id);
         return this.managedChunk;
     }
 
     public ManagedChunk getManagedChunk() {
-        return managedChunk;
+        return this.managedChunk;
     }
 
     @Override

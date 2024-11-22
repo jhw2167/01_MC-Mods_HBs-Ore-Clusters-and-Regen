@@ -2,14 +2,12 @@ package com.holybuckets.orecluster.model;
 
 import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.foundation.HolyBucketsUtility.ChunkUtil;
-import com.holybuckets.foundation.model.ManagedChunk;
 import com.holybuckets.foundation.modelInterface.IMangedChunkData;
 import com.holybuckets.orecluster.LoggerProject;
 import com.holybuckets.orecluster.OreClustersAndRegenMain;
 import com.holybuckets.orecluster.core.OreClusterManager;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.server.level.ServerLevel;
 
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
@@ -40,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ManagedOreClusterChunk implements IMangedChunkData {
 
-    private static final String NBT_KEY_HEADER = "managedChunk";
+    private static final String NBT_KEY_HEADER = "managedOreClusterChunk";
 
     public static enum ClusterStatus {
         NONE,
@@ -168,7 +166,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     public void init(LevelAccessor level, String id) throws InvalidId
     {
         this.level = level;
-        ManagedOreClusterChunk chunk = this.getInstance(id);
+        ManagedOreClusterChunk chunk = getStaticInstance(level, id);
         CompoundTag tag = chunk.serializeNBT();
         this.deserializeNBT(tag);
     }
@@ -183,15 +181,28 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
      * @param id
      * @return
      * @throws InvalidId
-     */
+     *
     @Override
     public ManagedOreClusterChunk getInstance(String id) throws InvalidId
+    {
+        return getStaticInstance(this.level, id);
+    }
+
+    @Override
+    public ManagedOreClusterChunk getInstance(LevelAccessor level, String id) throws InvalidId {
+        return getStaticInstance(level, id);
+    }
+    */
+
+    public static ManagedOreClusterChunk getStaticInstance(LevelAccessor level, String id) throws InvalidId
     {
         if(id == null) {
             throw new InvalidId(null);
         }
         //Reference to OreClusterManager's array of ManagedOreClusterChunks
-        OreClusterManager manager = OreClustersAndRegenMain.oreClusterManagers.get( this.level );
+        OreClusterManager manager = OreClustersAndRegenMain.oreClusterManagers.getOrDefault(level, null);
+        if(manager == null)
+            return null;
         ConcurrentHashMap<String, ManagedOreClusterChunk> loadedChunks = manager.getLoadedChunks();
         ManagedOreClusterChunk chunk = loadedChunks.get(id);
 
@@ -201,21 +212,34 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         return chunk;
     }
 
+
+
     @Override
     public CompoundTag serializeNBT()
     {
-        LoggerProject.logDebug("003002", "Serializing ManagedOreClusterChunk");
-        CompoundTag tag = new CompoundTag();
-        tag.putString(NBT_KEY_HEADER, this.id);
-        return tag;
+        //LoggerProject.logDebug("003002", "Serializing ManagedOreClusterChunk");
+        CompoundTag wrapper = new CompoundTag();
+
+        CompoundTag details = new CompoundTag();
+        details.putString("id", this.id);
+        details.putString("status", this.status.toString());
+
+        //details.put("clusters", OreClustersAndRegenMain.serializeClusters(this.clusters));
+        //details.put("clusterTypes", OreClustersAndRegenMain.serializeClusterTypes(this.clusterTypes));
+
+        if(this.id != null)
+            wrapper.put(NBT_KEY_HEADER, details);
+
+        return wrapper;
     }
 
     @Override
     public void deserializeNBT(CompoundTag compoundTag)
     {
-        LoggerProject.logDebug("003003", "Deserializing ManagedOreClusterChunk");
         if(compoundTag == null)
             return;
+
+        //LoggerProject.logDebug("003003", "Deserializing ManagedOreClusterChunk");
         this.id = compoundTag.getString(NBT_KEY_HEADER);
     }
 

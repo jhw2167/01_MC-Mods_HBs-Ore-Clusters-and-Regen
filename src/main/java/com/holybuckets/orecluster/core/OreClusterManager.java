@@ -178,8 +178,8 @@ public class OreClusterManager {
         // Implementation for chunk unload
         ChunkAccess chunk = event.getChunk();
         String chunkId = ChunkUtil.getId(event.getChunk());
-        LevelChunk levelChunk = level.getChunkSource().getChunk(chunk.getPos().x, chunk.getPos().z, false);
-
+        LevelChunk levelChunk = level.getChunkSource().getChunk(chunk.getPos().x, chunk.getPos().z, true);
+        
         if (levelChunk == null)
         {
             LoggerProject.logDebug("002021", "Chunk " + chunkId + " unloaded before data could be written");

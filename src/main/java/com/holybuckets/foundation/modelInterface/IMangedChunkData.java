@@ -17,7 +17,7 @@ public interface IMangedChunkData extends INBTSerializable<CompoundTag> {
      */
     public void init(LevelAccessor level, String id) throws InvalidId;
     public boolean isInit(String subclass);
-    public ManagedOreClusterChunk getInstance(  String id) throws InvalidId;
+    //public ManagedOreClusterChunk getInstance(  String id) throws InvalidId;
     //public void saveNBTData(CompoundTag nbt);
     //public void loadNBTData(CompoundTag nbt);
 }
