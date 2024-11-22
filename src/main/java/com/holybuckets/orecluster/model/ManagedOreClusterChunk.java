@@ -2,6 +2,7 @@ package com.holybuckets.orecluster.model;
 
 import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.foundation.HolyBucketsUtility.ChunkUtil;
+import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
 import com.holybuckets.foundation.modelInterface.IMangedChunkData;
 import com.holybuckets.foundation.modelInterface.IMangedChunkManager;
 import com.holybuckets.orecluster.core.OreClusterManager;
@@ -11,6 +12,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunk;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.security.Provider;
@@ -66,7 +68,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     }
 
     //Default constructor - creates dummy node to be loaded from HashMap later
-    public ManagedOreClusterChunk(LevelAccessor level)
+    private ManagedOreClusterChunk(LevelAccessor level)
     {
         super();
         this.level = level;
@@ -79,22 +81,48 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     }
 
     //One for building with chunk
-    public ManagedOreClusterChunk(LevelAccessor level, ChunkAccess chunk)
+    private ManagedOreClusterChunk(LevelAccessor level, ChunkAccess chunk)
     {
         this(level);
         this.chunk = chunk;
         this.pos = chunk.getPos();
         this.id = ChunkUtil.getId( this.pos );
+
+        //Use getChgunkSource to get LevelChunk, then use capability to add this reference to the ManagedChunk
+        LevelChunk c = level.getChunkSource().getChunkNow( this.pos.x, this.pos.z );
+        c.getCapability(ManagedChunkCapabilityProvider.MANAGED_CHUNK).ifPresent(cap -> {
+            cap.setSubclass(ManagedOreClusterChunk.class, this);
+        });
     }
 
     //One for building with id
-    public ManagedOreClusterChunk(LevelAccessor level, String id)
+    private ManagedOreClusterChunk(LevelAccessor level, String id)
      {
         this(level);
         this.id = id;
         this.pos = ChunkUtil.getPos( id );
     }
 
+    /**
+     * Get an instance of the ManagedOreClusterChunk using a loaded chunk
+     * @param level
+     * @param chunk
+     * @return
+     */
+    public static ManagedOreClusterChunk getInstance(LevelAccessor level, ChunkAccess chunk) {
+        return new ManagedOreClusterChunk(level, chunk);
+    }
+
+    /**
+     * Get an instance of the ManagedOreClusterChunk using an existing id, for a chunk that may not be loaded yet
+     * @param level
+     * @param id
+     * @return
+     */
+    public static ManagedOreClusterChunk getInstance(LevelAccessor level, String id)
+    {
+        return new ManagedOreClusterChunk(level, id);
+    }
 
     /** Getters **/
     public ChunkAccess getChunk() {
@@ -207,7 +235,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         OreClusterManager manager = OreClusterManager.oreClusterManagers.getOrDefault(level, null);
         if(manager == null) { return null; }
 
-        ConcurrentHashMap<String, ManagedOreClusterChunk> loadedChunks = manager.getLoadedChunks();
+        ConcurrentHashMap<String, ManagedOreClusterChunk> loadedChunks = manager.getDeterminedChunks();
         if(loadedChunks == null) { return null; }
 
         ManagedOreClusterChunk chunk = loadedChunks.get(id);

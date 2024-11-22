@@ -2,6 +2,7 @@ package com.holybuckets.orecluster.event;
 
 import com.holybuckets.foundation.HolyBucketsUtility;
 import com.holybuckets.foundation.exception.InvalidId;
+import com.holybuckets.foundation.model.ManagedChunk;
 import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
 import com.holybuckets.orecluster.LoggerProject;
 import com.holybuckets.orecluster.OreClustersAndRegenMain;
@@ -33,7 +34,7 @@ public class OreClusterForgeEventHandler {
     {
 
         LevelAccessor level = event.getLevel();
-        linkChunk(event);
+        ManagedChunk.onChunkLoad(event);
         if( level !=null && level.isClientSide() )
         {
             //Client side
@@ -47,43 +48,6 @@ public class OreClusterForgeEventHandler {
                 }
             }
         }
-
-    }
-
-    public static HashMap<String, Integer> isLinked = new HashMap<>();
-    public static void linkChunk( final ChunkEvent.Load event )
-    {
-            // Implementation for chunk unload
-            LevelAccessor level = event.getLevel();
-            ChunkAccess chunk = event.getChunk();
-            String chunkId = HolyBucketsUtility.ChunkUtil.getId(event.getChunk());
-            //LevelChunk levelChunk = level.getChunkSource().getChunk(chunk.getPos().x, chunk.getPos().z, false);
-        LevelChunk levelChunk = level.getChunkSource().getChunkNow(chunk.getPos().x, chunk.getPos().z);
-
-        if (levelChunk == null)
-        {
-            LoggerProject.logDebug("002021", "Chunk " + chunkId + " unloaded before data could be written");
-        }
-        else
-        {
-            levelChunk.getCapability(ManagedChunkCapabilityProvider.MANAGED_CHUNK).ifPresent(c -> {
-                try{
-                    c.init(level, chunkId);
-                } catch (InvalidId e) {
-                    if( isLinked.get(chunkId) == null ) {
-                        isLinked.put(chunkId, 1);
-                    }
-                    else {
-                    Integer times = isLinked.get(chunkId);
-                        isLinked.put(chunkId, times + 1);
-                        LoggerProject.logError("002021", "Error initializing ManagedChunk with id: " + chunkId + " times " + times);
-                    }
-                }
-            });
-
-        }
-
-        //loadedChunks.remove(chunkId);
 
     }
 

@@ -170,7 +170,7 @@ public class OreClusterManager {
         String chunkId = ChunkUtil.getId(chunkEvent.getChunk());
         ChunkAccess chunk = chunkEvent.getChunk();
 
-        loadedChunks.put(chunkId, new ManagedOreClusterChunk(level, chunk));
+        loadedChunks.put(chunkId, ManagedOreClusterChunk.getInstance( level, chunk) );
         chunksPendingHandling.add(chunkId);
         threadPoolLoadedChunks.submit(this::onNewlyAddedChunk);
         //LoggerBase.logInfo("002001", "Chunk " + chunkId + " added to queue size " + chunksPendingHandling.size());
@@ -327,7 +327,8 @@ public class OreClusterManager {
         // #3. Add clusters to determinedClusters
         for( String id: chunkIds)
         {
-            ManagedOreClusterChunk chunk = loadedChunks.getOrDefault(id, new ManagedOreClusterChunk(level, id));
+        //Create clusters for chunks that aren't loaded yet
+            ManagedOreClusterChunk chunk = loadedChunks.getOrDefault(id, ManagedOreClusterChunk.getInstance(level, id) );
             chunk.addClusterTypes(clusters.get(id));
             determinedChunks.put(id, chunk);
         }
