@@ -1,18 +1,23 @@
 package com.holybuckets.foundation.model;
 
 import com.holybuckets.foundation.GeneralRealTimeConfig;
+import com.holybuckets.foundation.HolyBucketsUtility;
 import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.foundation.modelInterface.IMangedChunkData;
 import com.holybuckets.foundation.modelInterface.IMangedChunkManager;
+import com.holybuckets.orecluster.LoggerProject;
 import com.holybuckets.orecluster.core.OreClusterManager;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraftforge.event.level.ChunkEvent;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class ManagedChunk implements IMangedChunkData {
 
@@ -25,7 +30,7 @@ public class ManagedChunk implements IMangedChunkData {
     private LevelAccessor level;
     private ChunkAccess chunk;
     private int tickLastLoaded;
-    private HashMap<Integer, IMangedChunkData> managedChunkData = new HashMap<>();
+    private HashMap<Class<? extends IMangedChunkData>, IMangedChunkData> managedChunkData = new HashMap<>();
 
 
     /** CONSTRUCTORS **/
@@ -48,7 +53,7 @@ public class ManagedChunk implements IMangedChunkData {
 
     /** GETTERS & SETTERS **/
     public IMangedChunkData getSubclass(Class<? extends IMangedChunkData> classObject) {
-        return managedChunkData.get(classObject.hashCode());
+        return managedChunkData.get(classObject);
     }
 
     /**
@@ -61,7 +66,7 @@ public class ManagedChunk implements IMangedChunkData {
         if (classObject == null || data == null) {
             return false;
         }
-        managedChunkData.put(classObject.hashCode(), data);
+        managedChunkData.put(classObject, data);
         return true;
     }
 
@@ -131,17 +136,6 @@ public class ManagedChunk implements IMangedChunkData {
         if( this.id != null)
             wrapper.put(NBT_KEY_HEADER, details);
 
-        if( this.id != null && this.id.contains("16") )
-        {
-            LoggerBase.logDebug("003003", "Serializing ManagedChunk " + this.id);
-            LoggerBase.logDebug("003004", "This String: " + this.toString());
-            LoggerBase.logDebug("003005", "Wrapper String: " + wrapper.toString());
-            IMangedChunkData oreClusterData = getSubclass(ManagedOreClusterChunk.class);
-            if(oreClusterData != null)
-                LoggerBase.logDebug("003006", "OreCluster String: " + oreClusterData.toString());
-
-        }
-
         return wrapper;
     }
 
@@ -158,20 +152,72 @@ public class ManagedChunk implements IMangedChunkData {
         this.level = GENERAL_CONFIG.getLEVELS().get( tag.get("level") );
         this.tickLastLoaded = GENERAL_CONFIG.getSERVER().getTickCount();
 
-        // Initialize ManagedOreClusterChunk
-        IMangedChunkData oreClusterChunk = new ManagedOreClusterChunk();
-        IMangedChunkData instance = oreClusterChunk.getStaticInstance(this.level, this.id);
-        if (instance == null) {
-            oreClusterChunk.deserializeNBT(details.getCompound(oreClusterChunk.getClass().getName()));
-            setSubclass(ManagedOreClusterChunk.class, oreClusterChunk);
-        } else {
-            setSubclass(ManagedOreClusterChunk.class, instance);
+        //Loop over all subclasses and deserialize
+        for(Map.Entry entry : managedChunkData.entrySet())
+        {
+            try {
+                IMangedChunkData sub = (IMangedChunkData) entry.getKey().getClass().newInstance();
+                IMangedChunkData instance = sub.getStaticInstance(this.level, this.id);
+
+                if (instance == null)
+                {
+                    sub.deserializeNBT(details.getCompound(instance.getClass().getName()));
+                    setSubclass(ManagedOreClusterChunk.class, sub);
+                }
+                else
+                {
+                    setSubclass(ManagedOreClusterChunk.class, instance);
+                }
+
+            } catch (InstantiationException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+
         }
 
-        //if id is not null and contains 6, log debug
-        if( this.id != null && this.id.contains("6") )
-        {
-            LoggerBase.logInfo("003005", "Deserializing ManagedChunk: " + tag.toString());
-        }
     }
+
+    /** STATIC UTILITY METHODS **/
+
+    public static HashMap<String, Integer> isLinked = new HashMap<>();
+    public static void onChunkLoad( final ChunkEvent.Load event )
+    {
+        // Implementation for chunk unload
+        LevelAccessor level = event.getLevel();
+        ChunkAccess chunk = event.getChunk();
+        String chunkId = HolyBucketsUtility.ChunkUtil.getId(event.getChunk());
+        //LevelChunk levelChunk = level.getChunkSource().getChunk(chunk.getPos().x, chunk.getPos().z, false);
+        LevelChunk levelChunk = level.getChunkSource().getChunkNow(chunk.getPos().x, chunk.getPos().z);
+
+        if (levelChunk == null)
+        {
+            //LoggerProject.logDebug("002021", "Chunk " + chunkId + " unloaded before data could be written");
+        }
+        else
+        {
+            levelChunk.getCapability(ManagedChunkCapabilityProvider.MANAGED_CHUNK).ifPresent(c -> {
+                try{
+                    c.init(level, chunkId);
+                } catch (InvalidId e) {
+                    if( isLinked.get(chunkId) == null ) {
+                        isLinked.put(chunkId, 1);
+                    }
+                    else {
+                        Integer times = isLinked.get(chunkId) + 1;
+                        isLinked.put(chunkId, times);
+                        LoggerProject.logError("002021", "Error initializing ManagedChunk with id: " + chunkId + " times " + times);
+                    }
+                }
+            });
+
+        }
+
+        //loadedChunks.remove(chunkId);
+
+    }
+
+
 }
+//END CLASS
