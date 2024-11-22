@@ -66,6 +66,8 @@ public class OreClusterManager {
 
     public static final String CLASS_ID = "002";    //value used in logs
     public static final GeneralRealTimeConfig GENERAL_CONFIG = GeneralRealTimeConfig.getInstance();
+    public static Map<LevelAccessor, OreClusterManager> oreClusterManagers = new HashMap<>();
+
     /** Variables **/
     private final LevelAccessor level;
     private final ModRealTimeConfig config;
@@ -99,6 +101,8 @@ public class OreClusterManager {
     /** Constructor **/
     public OreClusterManager(LevelAccessor level, ModRealTimeConfig config)
     {
+        super();
+        oreClusterManagers.put(level, this);
         this.level = level;
         this.config = config;
 
@@ -178,25 +182,9 @@ public class OreClusterManager {
         // Implementation for chunk unload
         ChunkAccess chunk = event.getChunk();
         String chunkId = ChunkUtil.getId(event.getChunk());
-        LevelChunk levelChunk = level.getChunkSource().getChunk(chunk.getPos().x, chunk.getPos().z, true);
-        
-        if (levelChunk == null)
-        {
-            LoggerProject.logDebug("002021", "Chunk " + chunkId + " unloaded before data could be written");
-        }
-        else
-        {
-            levelChunk.getCapability(ManagedChunkCapabilityProvider.MANAGED_CHUNK).ifPresent(c -> {
-                try{
-                    c.init(level, chunkId);
-                } catch (InvalidId e) {
-                    LoggerProject.logError("002022", "Error initializing serialization for ManagedChunk with id: " + chunkId);
-                }
-            });
-            LoggerProject.logDebug("002023", "Chunk " + chunkId + " unloaded and data written");
-        }
-        editManagedChunk(chunkId, c -> c.setChunk(null));
-        //loadedChunks.remove(chunkId);
+        //LevelChunk levelChunk = level.getChunkSource().getChunk(chunk.getPos().x, chunk.getPos().z, true);
+        //editManagedChunk(chunkId, c -> c.setChunk(null));
+
     }
 
     /**

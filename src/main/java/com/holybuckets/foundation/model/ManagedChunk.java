@@ -24,7 +24,7 @@ public class ManagedChunk implements IMangedChunkData {
     private LevelAccessor level;
     private ChunkAccess chunk;
     private int tickLastLoaded;
-    private ManagedOreClusterChunk managedOreClusterChunk;
+    private IMangedChunkData managedOreClusterChunk;
 
 
     /** CONSTRUCTORS **/
@@ -41,16 +41,12 @@ public class ManagedChunk implements IMangedChunkData {
     {
         this();
         this.id = id;
-        try {
-            init(level, id);
-        } catch (InvalidId e) {
-            LoggerBase.logError("003002", "Error initializing ManagedChunk with id: " + id);
-        }
-
+        this.level = level;
+        //Dont init here, working static maps will never be ready at this time
     }
 
     /** GETTERS & SETTERS **/
-    public ManagedOreClusterChunk getManagedOreClusterChunk() {
+    public IMangedChunkData getManagedOreClusterChunk() {
         return managedOreClusterChunk;
     }
 
@@ -67,12 +63,22 @@ public class ManagedChunk implements IMangedChunkData {
         this.level = level;
 
         //LoggerBase.logInfo("003000", "Initializing ManagedChunk with id: " + id);
-        int errorCount = 0;
-        try {
-            this.managedOreClusterChunk = ManagedOreClusterChunk.getStaticInstance(level, id);
-        } catch (InvalidId e) {
-            errorCount++;
-            //LoggerBase.logDebug("003001", "No managedOreClusterChunk found with id: " + id);
+        HashMap<String, String> errors = new HashMap<>();
+
+        IMangedChunkData sub = new ManagedOreClusterChunk();
+        this.managedOreClusterChunk = sub.getStaticInstance(level, id);
+        if(this.managedOreClusterChunk == null) {
+            errors.put(sub.getClass().getName(), "returned null");
+        }
+
+        if(errors.size() > 0)
+        {
+        //Add all errors in list to error message
+            StringBuilder error = new StringBuilder();
+            for (String key : errors.keySet()) {
+                error.append(key).append(": ").append(errors.get(key)).append("\n");
+            }
+            throw new InvalidId(error.toString());
         }
 
     }
@@ -94,14 +100,15 @@ public class ManagedChunk implements IMangedChunkData {
         return isInit;
     }
 
+    @Override
+    public IMangedChunkData getStaticInstance(LevelAccessor level, String id) {
+        return this;
+    }
+
 
     @Override
     public CompoundTag serializeNBT()
     {
-        if( this.id != null && this.id.contains("6") )
-        {
-            //LoggerBase.logDebug("003003", "Serializing ManagedChunk " + this.id);
-        }
 
         CompoundTag details = new CompoundTag();
         CompoundTag wrapper = new CompoundTag();
@@ -113,8 +120,17 @@ public class ManagedChunk implements IMangedChunkData {
             details.put(sub.getClass().getName(), sub.serializeNBT());
         }
 
-        if( this.id == null)
+        if( this.id != null)
             wrapper.put(NBT_KEY_HEADER, details);
+
+        if( this.id != null && this.id.contains("16") )
+        {
+            LoggerBase.logDebug("003003", "Serializing ManagedChunk " + this.id);
+            LoggerBase.logDebug("003004", "This String: " + this.toString());
+            LoggerBase.logDebug("003005", "Wrapper String: " + wrapper.toString());
+            LoggerBase.logDebug("003006", "OreCluster String: " + this.managedOreClusterChunk.toString());
+
+        }
 
         return wrapper;
     }
@@ -130,8 +146,14 @@ public class ManagedChunk implements IMangedChunkData {
         //print tag as string, info
         this.id = details.getString("id");
         this.level = GENERAL_CONFIG.getLEVELS().get( tag.get("level") );
-        this.tickLastLoaded = GENERAL_CONFIG.getTICKS();
-        this.managedOreClusterChunk.deserializeNBT(tag.getCompound("managedOreClusterChunk"));
+        this.tickLastLoaded = GENERAL_CONFIG.getSERVER().getTickCount();
+
+        //For all subclasses, attempt to pull from RAM, otherwise deserialize
+        IMangedChunkData sub = new ManagedOreClusterChunk();
+        sub = sub.getStaticInstance(this.level, this.id);
+        if (sub == null) {
+            sub.deserializeNBT(details.getCompound(sub.getClass().getName()));
+        }
 
         //if id is not null and contains 6, log debug
         if( this.id != null && this.id.contains("6") )

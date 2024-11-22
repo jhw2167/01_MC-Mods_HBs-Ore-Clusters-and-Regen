@@ -18,8 +18,6 @@ import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 
 // The value here should match an entry in the META-INF/mods.toml file
@@ -50,7 +48,6 @@ public class OreClustersAndRegenMain
     /** Use the {@link Random} of a local {@link Level} or {@link Entity} or create one */
     @Deprecated
     public static final Random RANDOM = new Random();
-    public static Map<LevelAccessor, OreClusterManager> oreClusterManagers = new HashMap<>();
 
     /**
      * <b>Other mods should not use this field!</b> If you are an addon developer, create your own instance of
@@ -156,7 +153,7 @@ public class OreClustersAndRegenMain
             modRealTimeConfig = new ModRealTimeConfig( level );
         }
 
-        oreClusterManagers.put( level, new OreClusterManager(level, modRealTimeConfig) );
+        new OreClusterManager(level, modRealTimeConfig);
     }
 
     public static void onUnloadWorld(LevelAccessor world)
