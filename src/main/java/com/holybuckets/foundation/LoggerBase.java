@@ -24,7 +24,8 @@ public class LoggerBase {
         return prefix + " " + "(" + id + "): " + message;
     }
 
-    protected static String buildBaseClientMessage(String prefix, String message) {
+    protected static String buildBaseClientMessage(String prefix, String message)
+    {
         return prefix + ":" + message;
     }
 
