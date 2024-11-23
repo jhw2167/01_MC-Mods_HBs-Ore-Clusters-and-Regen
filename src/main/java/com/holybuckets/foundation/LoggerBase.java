@@ -15,6 +15,14 @@ public class LoggerBase {
     private static List<LogEntry> logHistory = new ArrayList<>();
     private static final int MAX_LOG_HISTORY = 1000; // Limit the history size
 
+    // Sampling configuration
+    private static final float SAMPLE_RATE = 0.1f; // Sample 10% of messages by default
+    private static String FILTER_TYPE = null; // Only log messages of this type if set
+    private static String FILTER_ID = null; // Only log messages with this ID if set
+    private static String FILTER_PREFIX = null; // Only log messages with this prefix if set
+    private static String FILTER_CONTENT = null; // Only log messages containing this content if set
+    private static boolean SAMPLING_ENABLED = false;
+
     // Log entry class to store log information
     protected static class LogEntry {
         String type;
@@ -54,6 +62,53 @@ public class LoggerBase {
         return prefix + " " + "(" + id + "): " + message;
     }
 
+    protected static String buildBaseConsoleMessage(LogEntry entry) {
+        return entry.prefix + " " + "(" + entry.id + "): " + entry.message;
+    }
+
+    public static void setSamplingEnabled(boolean enabled) {
+        SAMPLING_ENABLED = enabled;
+    }
+
+    public static void setTypeFilter(String type) {
+        FILTER_TYPE = type;
+    }
+
+    public static void setIdFilter(String id) {
+        FILTER_ID = id;
+    }
+
+    public static void setPrefixFilter(String prefix) {
+        FILTER_PREFIX = prefix;
+    }
+
+    public static void setContentFilter(String content) {
+        FILTER_CONTENT = content;
+    }
+
+    private static boolean shouldSampleLog(LogEntry entry) {
+        if (!SAMPLING_ENABLED) {
+            return true;
+        }
+
+        // Check if entry matches any active filters
+        if (FILTER_TYPE != null && !entry.type.equals(FILTER_TYPE)) {
+            return false;
+        }
+        if (FILTER_ID != null && !entry.id.equals(FILTER_ID)) {
+            return false;
+        }
+        if (FILTER_PREFIX != null && !entry.prefix.equals(FILTER_PREFIX)) {
+            return false;
+        }
+        if (FILTER_CONTENT != null && !entry.message.contains(FILTER_CONTENT)) {
+            return false;
+        }
+
+        // Apply sampling rate
+        return Math.random() < SAMPLE_RATE;
+    }
+
     protected static String buildBaseClientMessage(String prefix, String message)
     {
         return prefix + ":" + message;
@@ -65,27 +120,35 @@ public class LoggerBase {
 
     public static void logInfo(String logId, String message) {
         LogEntry entry = new LogEntry("INFO", logId, PREFIX, message);
-        addToHistory(entry);
-        LOGGER.info(buildBaseConsoleMessage(logId, PREFIX, message));
+        if (shouldSampleLog(entry)) {
+            addToHistory(entry);
+            LOGGER.info(buildBaseConsoleMessage(entry));
+        }
     }
 
     public static void logWarning(String logId, String string) {
         LogEntry entry = new LogEntry("WARN", logId, PREFIX, string);
-        addToHistory(entry);
-        LOGGER.warn(buildBaseConsoleMessage(logId, PREFIX, string));
+        if (shouldSampleLog(entry)) {
+            addToHistory(entry);
+            LOGGER.warn(buildBaseConsoleMessage(entry));
+        }
     }
 
     public static void logError(String logId, String string) {
         LogEntry entry = new LogEntry("ERROR", logId, PREFIX, string);
-        addToHistory(entry);
-        LOGGER.error(buildBaseConsoleMessage(logId, PREFIX, string));
+        if (shouldSampleLog(entry)) {
+            addToHistory(entry);
+            LOGGER.error(buildBaseConsoleMessage(entry));
+        }
     }
 
     public static void logDebug(String logId, String string) {
         if (DEBUG_MODE) {
             LogEntry entry = new LogEntry("DEBUG", logId, PREFIX, string);
-            addToHistory(entry);
-            LOGGER.info(buildBaseConsoleMessage(logId, PREFIX, string));
+            if (shouldSampleLog(entry)) {
+                addToHistory(entry);
+                LOGGER.info(buildBaseConsoleMessage(entry));
+            }
         }
     }
 
