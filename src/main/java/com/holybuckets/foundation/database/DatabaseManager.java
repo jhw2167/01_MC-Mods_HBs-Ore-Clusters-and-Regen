@@ -37,13 +37,13 @@ public class DatabaseManager
         catch (ClassNotFoundException e) {
             StringBuilder sb = new StringBuilder( "Class not found exception for JDBC driver" );
             sb.append( e.getMessage() );
-            LoggerBase.logError("001000", sb.toString() );
+            LoggerBase.logError( null, "001000", sb.toString() );
 
         }
          catch (SQLException e) {
             StringBuilder sb = new StringBuilder( "Error starting database, this is considered a critical error and the game will crash, SQL error message: ");
             sb.append( e.getMessage() );
-            LoggerBase.logError("001001", sb.toString() );
+            LoggerBase.logError( null, "001001", sb.toString() );
 
             throw e;
         }
@@ -51,7 +51,7 @@ public class DatabaseManager
             StringBuilder sb = new StringBuilder( "Critical programmer error: One or more libraries aren't present. Error: [" );
             sb.append( e.getMessage() );
             sb.append( "].");
-            LoggerBase.logError("001002", sb.toString() );
+            LoggerBase.logError( null, "001002", sb.toString() );
 
             throw new RuntimeException(e);
         }

@@ -1,10 +1,9 @@
 package com.holybuckets.foundation;
 
-import com.holybuckets.orecluster.OreClustersAndRegenMain;
 import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
 
-import java.io.PrintStream;
+import java.util.HashMap;
 import java.util.function.Predicate;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,10 +12,10 @@ import java.util.List;
 public class LoggerBase {
     // Store log entries for filtering
     private static List<LogEntry> logHistory = new ArrayList<>();
-    private static final int MAX_LOG_HISTORY = 1000; // Limit the history size
+    private static final int MAX_LOG_HISTORY = 10000; // Limit the history size
 
     // Sampling configuration
-    private static final float SAMPLE_RATE = 0.1f; // Sample 10% of messages by default
+    private static final float SAMPLE_RATE = 0.4f; // Sample 10% of messages by default
     private static String FILTER_TYPE = null; // Only log messages of this type if set
     private static String FILTER_ID = null; // Only log messages with this ID if set
     private static String FILTER_PREFIX = null; // Only log messages with this prefix if set
@@ -86,8 +85,50 @@ public class LoggerBase {
         FILTER_CONTENT = content;
     }
 
+    //create a statatic final hashmap called FILTER_RULES that holds log entries
+    private static final HashMap<String, LogEntry> FILTER_RULES = new HashMap<>();
+
+    static {
+        //FILTER_RULES.put("INFO", new LogEntry("INFO", "000", PREFIX, "This is an info message"));
+        FILTER_RULES.put("003002", new LogEntry(null, null, null, "DETERMINED"));
+        FILTER_RULES.put("003007", new LogEntry(null, null, null, "minecraft:"));
+        FILTER_RULES.put("007002", new LogEntry(null, null, null, "1"));
+
+        FILTER_RULES.put("003005", new LogEntry(null, null, null, null));
+        FILTER_RULES.put("003006", new LogEntry(null, null, null, "minecraft"));
+        FILTER_RULES.put("002020", new LogEntry(null, null, null, null));
+        FILTER_RULES.put("002004", new LogEntry(null, null, null, null));
+
+    }
+
+    private static LogEntry applySamplingRate(LogEntry entry) {
+        boolean containsFilterableType = FILTER_RULES.containsKey(entry.type);
+        boolean containsFilterableId = FILTER_RULES.containsKey(entry.id);
+
+        if (containsFilterableType) {
+            return FILTER_RULES.get(entry.type);
+        }
+
+        if (containsFilterableId) {
+            return FILTER_RULES.get(entry.id);
+        }
+        // Apply sampling rate
+        //return Math.random() < SAMPLE_RATE;
+        return null;
+    }
+
     private static boolean shouldSampleLog(LogEntry entry) {
-        if (!SAMPLING_ENABLED) {
+        LogEntry filterRule = applySamplingRate(entry);
+        if ( filterRule != null )
+        {
+            FILTER_TYPE = filterRule.type;
+            FILTER_ID = filterRule.id;
+            FILTER_PREFIX = filterRule.prefix;
+            FILTER_CONTENT = filterRule.message;
+            //logInfo(null, "000000", "Filter Rule Applied: " + entry.id + " : " + filterRule.message);
+        }
+        else
+        {
             return true;
         }
 
@@ -105,8 +146,13 @@ public class LoggerBase {
             return false;
         }
 
+        //if all filter rules are null, apply sampling rate
+        if (FILTER_TYPE == null && FILTER_ID == null && FILTER_PREFIX == null && FILTER_CONTENT == null) {
+            return Math.random() < SAMPLE_RATE;
+        }
+
         // Apply sampling rate
-        return Math.random() < SAMPLE_RATE;
+        return true;
     }
 
     protected static String buildBaseClientMessage(String prefix, String message)
@@ -118,23 +164,35 @@ public class LoggerBase {
         return message;
     }
 
-    public static void logInfo(String logId, String message) {
-        LogEntry entry = new LogEntry("INFO", logId, PREFIX, message);
+    public static void logInfo(String prefix, String logId, String message)
+    {
+        if( prefix == null)
+            prefix = PREFIX;
+
+        LogEntry entry = new LogEntry("INFO", logId, prefix, message);
         if (shouldSampleLog(entry)) {
             addToHistory(entry);
             LOGGER.info(buildBaseConsoleMessage(entry));
         }
     }
 
-    public static void logWarning(String logId, String string) {
-        LogEntry entry = new LogEntry("WARN", logId, PREFIX, string);
+    public static void logWarning(String prefix, String logId, String string)
+    {
+        if( prefix == null)
+            prefix = PREFIX;
+
+        LogEntry entry = new LogEntry("WARN", logId, prefix, string);
         if (shouldSampleLog(entry)) {
             addToHistory(entry);
             LOGGER.warn(buildBaseConsoleMessage(entry));
         }
     }
 
-    public static void logError(String logId, String string) {
+    public static void logError(String prefix, String logId, String string)
+    {
+        if( prefix == null)
+            prefix = PREFIX;
+
         LogEntry entry = new LogEntry("ERROR", logId, PREFIX, string);
         if (shouldSampleLog(entry)) {
             addToHistory(entry);
@@ -142,7 +200,8 @@ public class LoggerBase {
         }
     }
 
-    public static void logDebug(String logId, String string) {
+    public static void logDebug(String prefix, String logId, String string)
+    {
         if (DEBUG_MODE) {
             LogEntry entry = new LogEntry("DEBUG", logId, PREFIX, string);
             if (shouldSampleLog(entry)) {
@@ -183,8 +242,8 @@ public class LoggerBase {
         return filtered;
     }
 
-    public static void logInit(String logId, String string) {
-        logDebug(logId, "--------" + string.toUpperCase() + " INITIALIZED --------");
+    public static void logInit(String prefix, String logId, String string) {
+        logDebug(prefix, logId, "--------" + string.toUpperCase() + " INITIALIZED --------");
     }
 
 
@@ -208,13 +267,13 @@ public class LoggerBase {
         return (t2 - t1) / 1000_000L;
     }
 
-    public static void threadExited(String logId, Object threadContainer, Throwable thrown) {
+    public static void threadExited(String prefix, String logId, Object threadContainer, Throwable thrown) {
         StringBuilder sb = new StringBuilder();
         sb.append("Thread " + Thread.currentThread().getName() + " exited");
 
         if (thrown == null)
         {
-            logDebug(logId, sb + " gracefully");
+            logDebug(null, logId, sb + " gracefully");
         } else
         {
             sb.append(" with exception: " + thrown.getMessage());
@@ -226,7 +285,7 @@ public class LoggerBase {
             }
             sb.append("\n\n");
 
-            logError(logId, sb.toString());
+            logError(null, logId, sb.toString());
 
         }
     }

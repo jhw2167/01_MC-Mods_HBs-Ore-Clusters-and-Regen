@@ -1,12 +1,13 @@
 package com.holybuckets.foundation.model;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.holybuckets.foundation.GeneralRealTimeConfig;
 import com.holybuckets.foundation.HolyBucketsUtility;
 import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.foundation.modelInterface.IMangedChunkData;
 import com.holybuckets.foundation.modelInterface.IMangedChunkManager;
-import com.holybuckets.orecluster.LoggerProject;
 import com.holybuckets.orecluster.core.OreClusterManager;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
 import net.minecraft.nbt.CompoundTag;
@@ -24,14 +25,16 @@ public class ManagedChunk implements IMangedChunkData {
     public static final String CLASS_ID = "003";
     public static final String NBT_KEY_HEADER = "managedChunk";
     public static final GeneralRealTimeConfig GENERAL_CONFIG = GeneralRealTimeConfig.getInstance();
-    public static final HashMap<Integer, ManagedChunk> MANAGED_CHUNKS = new HashMap<>();
-    public static final HashMap<Integer, IMangedChunkData> MANAGED_SUBCLASSES = new HashMap<>();
+    public static final HashMap<Class<? extends IMangedChunkData>, IMangedChunkData> MANAGED_SUBCLASSES = new HashMap<>();
+    public static final Gson GSON_BUILDER = new GsonBuilder().serializeNulls().create();
 
     private String id;
     private LevelAccessor level;
     private ChunkAccess chunk;
     private int tickLastLoaded;
-    private HashMap<Class<? extends IMangedChunkData>, IMangedChunkData> managedChunkData = new HashMap<>();
+    private int tickLoaded;
+    private final HashMap<Class<? extends IMangedChunkData>, IMangedChunkData> managedChunkData = new HashMap<>();
+
 
 
     /** CONSTRUCTORS **/
@@ -73,8 +76,8 @@ public class ManagedChunk implements IMangedChunkData {
 
     private void initSubclassesFromMemory(LevelAccessor level, String chunkId)
     {
-        for(IMangedChunkData data : MANAGED_SUBCLASSES.values()) {
-            setSubclass( data.getClass(), data.getStaticInstance(level, chunkId));
+        for(Map.Entry<Class<? extends IMangedChunkData>, IMangedChunkData> data : MANAGED_SUBCLASSES.entrySet() ) {
+            setSubclass( data.getKey() , data.getValue().getStaticInstance(level, chunkId) );
         }
 
     }
@@ -125,9 +128,15 @@ public class ManagedChunk implements IMangedChunkData {
     */
     @Override
     public boolean isInit(String subClass) {
-        if(subClass.equals("ManagedOreClusterChunk")) {
-            IMangedChunkData data = getSubclass(ManagedOreClusterChunk.class);
-            return data != null && data.isInit(subClass);
+        for(IMangedChunkData data : managedChunkData.values())
+        {
+            if( !data.getClass().getName().equals(subClass) )
+                continue;
+
+            if( !data.isInit(subClass) )
+                return false;
+            else
+                return true;
         }
         return false;
     }
@@ -149,6 +158,18 @@ public class ManagedChunk implements IMangedChunkData {
 
         details.putString("id", this.id);
         details.putInt("level", this.level.hashCode());
+        details.putInt("tickLastLoaded", GENERAL_CONFIG.getSERVER().getTickCount());
+
+        for(IMangedChunkData data : MANAGED_SUBCLASSES.values()) {
+            if( !managedChunkData.containsKey(data.getClass()) );
+            {
+                managedChunkData.put(data.getClass(), data.getStaticInstance(level, id));
+                LoggerBase.logDebug( null,"003001", "Adding subclass: " + this.id +
+                " and has clusters " + ((ManagedOreClusterChunk) managedChunkData.get(data.getClass())).hasClusters() );
+            }
+
+        }
+
         for(IMangedChunkData data : managedChunkData.values()) {
             details.put(data.getClass().getName(), data.serializeNBT());
         }
@@ -156,7 +177,7 @@ public class ManagedChunk implements IMangedChunkData {
         if( this.id != null)
             wrapper.put(NBT_KEY_HEADER, details);
 
-        LoggerBase.logDebug("003002", "Serializing ManagedChunk with data: " + wrapper.toString());
+        LoggerBase.logDebug( null,"003002", "Serializing ManagedChunk with data: " + wrapper);
 
         return wrapper;
     }
@@ -169,15 +190,21 @@ public class ManagedChunk implements IMangedChunkData {
 
         CompoundTag details = tag.getCompound(NBT_KEY_HEADER);
 
+        if(true)
+        {
+            //return;
+        }
+
         //print tag as string, info
         this.id = details.getString("id");
         this.level = GENERAL_CONFIG.getLEVELS().get( tag.get("level") );
-        this.tickLastLoaded = GENERAL_CONFIG.getSERVER().getTickCount();
+        this.tickLastLoaded = details.getInt("tickLastLoaded");
+        this.tickLoaded = GENERAL_CONFIG.getSERVER().getTickCount();
 
         try {
             this.init(level, id, details );
         } catch (InvalidId e) {
-            LoggerProject.logError("002021", "Error initializing ManagedChunk with id: " + id);
+            LoggerBase.logError(null, "002021", "Error initializing ManagedChunk with id: " + id);
         }
 
     }

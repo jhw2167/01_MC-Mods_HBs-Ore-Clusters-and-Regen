@@ -46,7 +46,7 @@ public class GeneralRealTimeConfig {
         this.LEVELS = new HashMap<>();
 
         instance = this;
-        LoggerBase.logInit("000000", this.getClass().getName());
+        LoggerBase.logInit( null, "000000", this.getClass().getName());
     }
 
     public static GeneralRealTimeConfig getInstance() {
@@ -70,8 +70,8 @@ public class GeneralRealTimeConfig {
             instance.LEVELS.put(level.hashCode(), level);
             instance.SERVER = level.getServer();
 
-            LoggerBase.logInfo("000001", "World Seed: " + instance.WORLD_SEED);
-            LoggerBase.logInfo("000002", "World Spawn: " + instance.WORLD_SPAWN);
+            LoggerBase.logInfo( null, "000001", "World Seed: " + instance.WORLD_SEED);
+            LoggerBase.logInfo( null, "000002", "World Spawn: " + instance.WORLD_SPAWN);
         }
 
         //Call all registered functions
@@ -88,7 +88,7 @@ public class GeneralRealTimeConfig {
         for (Consumer<PlayerEvent.PlayerLoggedInEvent> function : ON_PLAYER_LOAD) {
             function.accept(event);
         }
-        LoggerBase.logDebug("006001", "Player Logged In");
+        LoggerBase.logDebug( null,"006001", "Player Logged In");
     }
 
     public void onUnLoadLevel(LevelEvent.Unload event) {

@@ -3,6 +3,7 @@ package com.holybuckets.orecluster.core;
 import com.holybuckets.foundation.GeneralRealTimeConfig;
 import com.holybuckets.foundation.HolyBucketsUtility.*;
 import com.holybuckets.foundation.exception.InvalidId;
+import com.holybuckets.foundation.model.ManagedChunk;
 import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
 import com.holybuckets.orecluster.LoggerProject;
 import com.holybuckets.orecluster.ModRealTimeConfig;
@@ -173,7 +174,7 @@ public class OreClusterManager {
         loadedChunks.put(chunkId, ManagedOreClusterChunk.getInstance( level, chunk) );
         chunksPendingHandling.add(chunkId);
         threadPoolLoadedChunks.submit(this::onNewlyAddedChunk);
-        //LoggerBase.logInfo("002001", "Chunk " + chunkId + " added to queue size " + chunksPendingHandling.size());
+        //LoggerProject.logInfo("002001", "Chunk " + chunkId + " added to queue size " + chunksPendingHandling.size());
 
     }
 
@@ -182,8 +183,6 @@ public class OreClusterManager {
         // Implementation for chunk unload
         ChunkAccess chunk = event.getChunk();
         String chunkId = ChunkUtil.getId(event.getChunk());
-        //LevelChunk levelChunk = level.getChunkSource().getChunk(chunk.getPos().x, chunk.getPos().z, true);
-        //editManagedChunk(chunkId, c -> c.setChunk(null));
 
     }
 
@@ -202,8 +201,8 @@ public class OreClusterManager {
                 long start = System.nanoTime();
                 handleClustersForChunk(chunkId);
                 long end = System.nanoTime();
-                //LoggerBase.logDebug("002002","Chunk " + chunkId + " processed. Queue size: " + chunksPendingHandling.size());
-                //LoggerBase.logDebug("Full process for Chunk " + chunkId + "  took " + LoggerBase.getTime(start, end) + " ms");
+                //LoggerProject.logDebug("002002","Chunk " + chunkId + " processed. Queue size: " + chunksPendingHandling.size());
+                //LoggerProject.logDebug("Full process for Chunk " + chunkId + "  took " + LoggerProject.getTime(start, end) + " ms");
 
                 //Remove duplicates
                 chunksPendingHandling.remove(chunkId);
@@ -234,7 +233,7 @@ public class OreClusterManager {
             //LoggerProject.logDebug("002005","Chunk " + chunkId + " has already been explored");
         } else {
             //LoggerProject.logDebug("002006","Chunk " + chunkId + " has not been explored");
-            //LoggerBase.logInfo("Chunk " + chunkId + " has not been explored");
+            //LoggerProject.logInfo("Chunk " + chunkId + " has not been explored");
 
             chunksPendingDeterminations.add(chunkId);
             this.threadPoolClusterDetermination.submit(this::workerThreadDetermineClusters);
@@ -252,17 +251,18 @@ public class OreClusterManager {
                 if( chunkId == null )
                     break;
 
-                //LoggerBase.logDebug("002017", "workerThreadDetermineClusters for chunkId: " + chunkId);
+                //LoggerProject.logDebug("002017", "workerThreadDetermineClusters for chunkId: " + chunkId);
                 while (!determinedChunks.containsKey(chunkId))
                 {
                     LoggerProject.logDebug("002018", "handleClusterDetermination, starting batch for: " + chunkId);
                     handleClusterDetermination(ModRealTimeConfig.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL, chunkId);
-                   //LoggerBase.logDebug("002019", "handleClusterDetermination, finished batch for: " + chunkId);
+                   //LoggerProject.logDebug("002019", "handleClusterDetermination, finished batch for: " + chunkId);
 
                 }
 
                 //MAX
-                //LoggerBase.logDebug("002020", "workerThreadDetermineClusters, after handleClusterDetermination for chunkId: " + chunkId);
+                LoggerProject.logDebug("002020", "workerThreadDetermineClusters, after handleClusterDetermination for chunkId: " + chunkId);
+
             }
 
         }
@@ -310,17 +310,17 @@ public class OreClusterManager {
         ChunkAccess start = getChunkAccess(chunkId);
         LinkedHashSet<String> chunkIds = getBatchedChunkList(batchSize, start);
         long step1Time = System.nanoTime();
-        //LoggerBase.logDebug("002008", "Queued " + chunkIds.size() + " chunks for cluster determination");
+        //LoggerProject.logDebug("002008", "Queued " + chunkIds.size() + " chunks for cluster determination");
 
 
-        //LoggerBase.logDebug("handlePrepareNewCluster #1  " + LoggerBase.getTime(startTime, step1Time) + " ms");
+        //LoggerProject.logDebug("handlePrepareNewCluster #1  " + LoggerProject.getTime(startTime, step1Time) + " ms");
 
 
         HashMap<String, HashMap<String, Vec3i>> clusters;
         clusters = oreClusterCalculator.calculateClusterLocations(chunkIds.stream().toList() , randSeqClusterPositionGen);
         long step2Time = System.nanoTime();
-        //LoggerBase.logDebug("002009","Determined " + clusters.size() + " clusters in " + chunkIds.size() + " chunks");
-        //LoggerBase.logDebug("handlePrepareNewCluster #3  " + LoggerBase.getTime(step1Time, step2Time) + " ms");
+        //LoggerProject.logDebug("002009","Determined " + clusters.size() + " clusters in " + chunkIds.size() + " chunks");
+        //LoggerProject.logDebug("handlePrepareNewCluster #3  " + LoggerProject.getTime(step1Time, step2Time) + " ms");
 
 
 
@@ -331,11 +331,12 @@ public class OreClusterManager {
             ManagedOreClusterChunk chunk = loadedChunks.getOrDefault(id, ManagedOreClusterChunk.getInstance(level, id) );
             chunk.addClusterTypes(clusters.get(id));
             determinedChunks.put(id, chunk);
+            chunk.setStatus(ManagedOreClusterChunk.ClusterStatus.DETERMINED);
         }
-        //LoggerBase.logDebug("002010","Added " + clusters.size() + " clusters to determinedChunks");
+        LoggerProject.logDebug("002010","Added " + clusters.size() + " clusters to determinedChunks");
 
         long step3Time = System.nanoTime();
-        //        //LoggerBase.logDebug("handlePrepareNewCluster #3  " + LoggerBase.getTime(step2Time, step3Time) + " ms");
+        //        //LoggerProject.logDebug("handlePrepareNewCluster #3  " + LoggerProject.getTime(step2Time, step3Time) + " ms");
 
         for( Map.Entry<String, HashMap<String, Vec3i>> cluster : clusters.entrySet())
         {
@@ -346,12 +347,12 @@ public class OreClusterManager {
                     set.add(cluster.getKey());
             });
 
-           // LoggerBase.logDebug("002012","determined oreTypesInThisCluster: " + oreTypesInThisCluster.size());
+           // LoggerProject.logDebug("002012","determined oreTypesInThisCluster: " + oreTypesInThisCluster.size());
 
 
             if(oreTypesInThisCluster.size() == 0)
             {
-                //LoggerBase.logDebug("002013","No new ore types in this cluster");
+                //LoggerProject.logDebug("002013","No new ore types in this cluster");
                 continue;
             }
 
@@ -363,12 +364,12 @@ public class OreClusterManager {
                 existingClustersByType.put(type, set);
             });
 
-           //LoggerBase.logDebug("002014","Added net new oreTypes to grand list, new size " + existingClustersByType.size());
+           //LoggerProject.logDebug("002014","Added net new oreTypes to grand list, new size " + existingClustersByType.size());
         }
 
 
         long endTime = System.nanoTime();
-        //LoggerBase.logDebug("handlePrepareNewCluster #4  " + LoggerBase.getTime(step3Time, endTime) + " ms");
+        //LoggerProject.logDebug("handlePrepareNewCluster #4  " + LoggerProject.getTime(step3Time, endTime) + " ms");
     }
 
     private void handleClusterCleaning( ManagedOreClusterChunk chunk )
