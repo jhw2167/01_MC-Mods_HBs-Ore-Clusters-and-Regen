@@ -3,9 +3,11 @@ package com.holybuckets.orecluster.model;
 import com.google.gson.Gson;
 import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.foundation.HolyBucketsUtility.ChunkUtil;
+import com.holybuckets.foundation.model.ManagedChunk;
 import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
 import com.holybuckets.foundation.modelInterface.IMangedChunkData;
 import com.holybuckets.foundation.modelInterface.IMangedChunkManager;
+import com.holybuckets.orecluster.LoggerProject;
 import com.holybuckets.orecluster.core.OreClusterManager;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
@@ -41,14 +43,19 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ManagedOreClusterChunk implements IMangedChunkData {
 
+    private static final String CLASS_ID = "003";
     private static final String NBT_KEY_HEADER = "managedOreClusterChunk";
 
     public static enum ClusterStatus {
         NONE,
-        EXPLORED,
+        DETERMINED,
         CLEANED,
         GENERATED,
         MANIFESTED
+    }
+
+    static {
+        ManagedChunk.MANAGED_SUBCLASSES.put(ManagedOreClusterChunk.class, new ManagedOreClusterChunk());
     }
 
     /** Variables **/
@@ -147,7 +154,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     }
 
     public boolean hasClusters() {
-        return clusters.size() > 0;
+        return clusters.size() > 0 || clusterTypes.size() > 0;
     }
 
 
@@ -188,12 +195,13 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
             return;
 
         this.clusterTypes.putAll( clusterMap );
+        //LoggerProject.logDebug("003010", "Adding clusterTypes: " + this.clusterTypes);
     }
 
 
     @Override
     public boolean isInit(String subClass) {
-        return this.id != null;
+        return subClass.equals(ManagedOreClusterChunk.class.getName()) && this.id != null;
     }
 
 
@@ -224,38 +232,28 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         details.putString("id", this.id);
         details.putString("status", this.status.toString());
 
-        CompoundTag clustersWrapper = new CompoundTag();
+        Gson gson = ManagedChunk.GSON_BUILDER;
+        //clusters
         {
-            Gson gson = new Gson();
-            CompoundTag clusters = new CompoundTag();
-            clustersWrapper.putString("clusters", gson.toJson(this.clusters));
-            /*
-            for(Pair<String, Vec3i> cluster : this.clusters)
-            {
-                StringBuilder clusterData = new StringBuilder();
-                clusterData.append(cluster.getLeft());
-                clusterData.append(" ");
-
-                clusters.putInt(cluster.getLeft(), cluster.getRight().hashCode());
-            }
-            */
-
+            String clusters = gson.toJson(this.clusters);
+            //LoggerProject.logDebug("003005", "Serializing clusters: " + this.clusters);
+            details.putString("clusters", clusters);
         }
-        details.put("clusters", clustersWrapper);
 
-        CompoundTag clusterTypes = new CompoundTag();
+        //Cluster Types
         {
-            Gson gson = new Gson();
-            clusterTypes.putString("clusterTypes", gson.toJson(this.clusterTypes));
-
+            String clusterTypes = gson.toJson(this.clusterTypes);
+            //LoggerProject.logDebug("003006", "Serializing clusterTypes: " + this.clusterTypes);
+            //LoggerProject.logDebug("003008", "Serializing clusterTypes 2: " + clusterTypes);
+            details.putString("clusterTypes", clusterTypes);
         }
-        details.put("clusterTypes", clusterTypes);
 
-        //details.put("clusters", OreClustersAndRegenMain.serializeClusters(this.clusters));
-        //details.put("clusterTypes", OreClustersAndRegenMain.serializeClusterTypes(this.clusterTypes));
 
         if(this.id != null)
             wrapper.put(NBT_KEY_HEADER, details);
+
+
+        LoggerProject.logDebug("003007", "Serializing ManagedOreChunk: " + wrapper);
 
         return wrapper;
     }
@@ -274,6 +272,24 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
 
         this.id = wrapper.getString("id");
         this.status = ClusterStatus.valueOf( wrapper.getString("status") );
+
+        Gson gson = ManagedChunk.GSON_BUILDER;
+        //Clusters
+        {
+            String clusters = wrapper.getString("clusters");
+            LoggerProject.logDebug("003007", "Deserializing clusters: " + clusters);
+            this.clusters = gson.fromJson(clusters, List.class);
+        }
+
+        //Cluster Types
+        {
+            String clusterTypes = wrapper.getString("clusterTypes");
+            this.clusterTypes = gson.fromJson(clusterTypes, HashMap.class);
+            LoggerProject.logDebug("003008", "Deserializing clusterTypes: " + clusterTypes);
+        }
+
+
+        LoggerProject.logDebug("003009", "Deserializing clusters: " + clusters);
 
     }
 

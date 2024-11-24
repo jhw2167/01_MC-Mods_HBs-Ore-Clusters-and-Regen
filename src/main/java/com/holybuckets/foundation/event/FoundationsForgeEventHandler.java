@@ -43,7 +43,7 @@ public class FoundationsForgeEventHandler {
     @SubscribeEvent
     public static void onLoadWorld(LevelEvent.Load event)
     {
-        LoggerBase.logDebug("002003", "**** WORLD LOAD EVENT ****");
+        LoggerBase.logDebug( null, "002003", "**** WORLD LOAD EVENT ****");
 
         LevelAccessor world = event.getLevel();
         if( world.isClientSide() )
@@ -54,16 +54,16 @@ public class FoundationsForgeEventHandler {
         {
             config.onLoadLevel( event );
             //start the database
-            LoggerBase.logInfo("002000", "Starting SQLite Database");
+            LoggerBase.logInfo( null,"002000", "Starting SQLite Database");
             HolyBucketsUtility.databaseManager = DatabaseManager.getInstance();
             try {
                 //world.getLevelData().
                 //HolyBucketsUtility.databaseManager.startDatabase( "world" );
             } catch (Exception e) {
-                LoggerBase.logError("002001", "Error starting database, attempting to cancel world load");
+                LoggerBase.logError( null,"002001", "Error starting database, attempting to cancel world load");
                 event.setCanceled(true);
             }
-            LoggerBase.logInfo("002002", "Database started successfully");
+            LoggerBase.logInfo( null,"002002", "Database started successfully");
         }
 
     }
@@ -71,13 +71,13 @@ public class FoundationsForgeEventHandler {
     @SubscribeEvent
     public static void onUnloadWorld(LevelEvent.Unload event) {
         config.onUnLoadLevel( event );
-        LoggerBase.logDebug("002004", "**** WORLD UNLOAD EVENT ****");
+        LoggerBase.logDebug( null,"002004", "**** WORLD UNLOAD EVENT ****");
     }
 
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         config.initPlayerConfigs( event );
-        LoggerBase.logDebug("002005", "Player Logged In");
+        LoggerBase.logDebug( null,"002005", "Player Logged In");
     }
 
 }

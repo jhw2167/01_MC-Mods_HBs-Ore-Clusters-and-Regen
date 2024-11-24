@@ -12,20 +12,20 @@ public class LoggerProject extends LoggerBase {
     public static final Boolean DEBUG_MODE = OreClustersAndRegenMain.DEBUG;
 
     public static void logInfo(String logId, String message) {
-        LOGGER.info(buildBaseConsoleMessage(logId, PREFIX, message));
+        LoggerBase.logInfo(PREFIX, logId, message);
     }
 
     public static void logWarning(String logId, String string) {
-        LOGGER.warn(buildBaseConsoleMessage(logId, PREFIX, string));
+        LoggerBase.logWarning(PREFIX, logId, string);
     }
 
     public static void logError(String logId, String string) {
-        LOGGER.error(buildBaseConsoleMessage(logId, PREFIX, string));
+        LoggerBase.logError(PREFIX, logId, string);
     }
 
     public static void logDebug(String logId, String string) {
         if (DEBUG_MODE)
-            LOGGER.info(buildBaseConsoleMessage(logId, PREFIX, string));
+            LoggerBase.logInfo(PREFIX, logId, string);
     }
 
     public static void logInit(String logId, String string) {
@@ -35,7 +35,7 @@ public class LoggerProject extends LoggerBase {
 
     //Client side logging
     public static void logClientInfo(String message) {
-        LOGGER.info(buildBaseClientMessage(PREFIX, message));
+        LoggerBase.logClientInfo(message);
     }
 
 

@@ -29,7 +29,7 @@ public class ConfigModelBase {
         if( f.test(value) )
             return true;
         else {
-            LoggerBase.logWarning("001001",error.toString());
+            LoggerBase.logWarning( null, "001001",error.toString());
             return false;
         }
     }
@@ -45,7 +45,7 @@ public class ConfigModelBase {
         if( i.test(value) )
             return true;
         else {
-            LoggerBase.logWarning("001002",error.toString());
+            LoggerBase.logWarning( null, "001002",error.toString());
             return false;
         }
     }
