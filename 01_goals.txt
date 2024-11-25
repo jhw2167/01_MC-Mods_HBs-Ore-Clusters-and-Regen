@@ -114,6 +114,20 @@ jarJar {
     }
 }
 
+18.
+---
+
+	- Test if chunkloading works in the nether
+	- Test if chunkloading works in the end
+
+	- Ore cleaning
+	- Cluster point determination
+	- Cluster building (shape, point)
+	- Cluster generating (in world)
+	- Cluster Re-generating
+	- Cluster
+
+
 
 determinedChunks.keySet()
 1566727526
