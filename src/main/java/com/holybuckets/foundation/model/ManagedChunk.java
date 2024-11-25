@@ -160,17 +160,13 @@ public class ManagedChunk implements IMangedChunkData {
         details.putInt("level", this.level.hashCode());
         details.putInt("tickLastLoaded", GENERAL_CONFIG.getSERVER().getTickCount());
 
-        for(IMangedChunkData data : MANAGED_SUBCLASSES.values()) {
-            if( !managedChunkData.containsKey(data.getClass()) );
-            {
-                managedChunkData.put(data.getClass(), data.getStaticInstance(level, id));
-                LoggerBase.logDebug( null,"003001", "Adding subclass: " + this.id +
-                " and has clusters " + ((ManagedOreClusterChunk) managedChunkData.get(data.getClass())).hasClusters() );
-            }
-
-        }
+        this.initSubclassesFromMemory(level, id);
 
         for(IMangedChunkData data : managedChunkData.values()) {
+            if( data == null )
+                continue;
+            //TO DO: Thread this operation and lock until data object is done with current operation
+            //to ensure write is most recent info
             details.put(data.getClass().getName(), data.serializeNBT());
         }
 
