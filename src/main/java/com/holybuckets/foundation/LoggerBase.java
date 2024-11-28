@@ -3,10 +3,8 @@ package com.holybuckets.foundation;
 import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
 
-import java.util.HashMap;
+import java.util.*;
 import java.util.function.Predicate;
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class LoggerBase {
@@ -20,7 +18,6 @@ public class LoggerBase {
     private static String FILTER_ID = null; // Only log messages with this ID if set
     private static String FILTER_PREFIX = null; // Only log messages with this prefix if set
     private static String FILTER_CONTENT = null; // Only log messages containing this content if set
-    private static boolean SAMPLING_ENABLED = false;
 
     // Log entry class to store log information
     protected static class LogEntry {
@@ -48,7 +45,7 @@ public class LoggerBase {
 
 
     public static final Logger LOGGER = LogUtils.getLogger();
-    public static final String PREFIX = "[" + HolyBucketsUtility.NAME + "]";
+    public static final String PREFIX =  HolyBucketsUtility.NAME;
     public static final Boolean DEBUG_MODE = true;
 
     /*
@@ -58,31 +55,11 @@ public class LoggerBase {
      */
 
     protected static String buildBaseConsoleMessage(String id, String prefix, String message) {
-        return prefix + " " + "(" + id + "): " + message;
+        return "[" + prefix + "] " + "(" + id + "): " + message;
     }
 
     protected static String buildBaseConsoleMessage(LogEntry entry) {
-        return entry.prefix + " " + "(" + entry.id + "): " + entry.message;
-    }
-
-    public static void setSamplingEnabled(boolean enabled) {
-        SAMPLING_ENABLED = enabled;
-    }
-
-    public static void setTypeFilter(String type) {
-        FILTER_TYPE = type;
-    }
-
-    public static void setIdFilter(String id) {
-        FILTER_ID = id;
-    }
-
-    public static void setPrefixFilter(String prefix) {
-        FILTER_PREFIX = prefix;
-    }
-
-    public static void setContentFilter(String content) {
-        FILTER_CONTENT = content;
+        return "[" + entry.prefix + "] " + "(" + entry.id + "): " + entry.message;
     }
 
     //create a statatic final hashmap called FILTER_RULES that holds log entries
@@ -101,7 +78,9 @@ public class LoggerBase {
 
     }
 
-    private static LogEntry applySamplingRate(LogEntry entry) {
+
+    private static LogEntry applySamplingRate(LogEntry entry)
+    {
         boolean containsFilterableType = FILTER_RULES.containsKey(entry.type);
         boolean containsFilterableId = FILTER_RULES.containsKey(entry.id);
 
@@ -117,7 +96,50 @@ public class LoggerBase {
         return null;
     }
 
-    private static boolean shouldSampleLog(LogEntry entry) {
+    /** EXCLUDE PROJECTS **/
+    private static final HashSet<String> EXCLUDE_PROJECTS = new HashSet<>(
+        Arrays.asList(
+            //OreClustersAndRegenMain.NAME,
+            HolyBucketsUtility.NAME,
+            ""
+        )
+    );
+
+    /** EXCLUDE CLASS CODES **/
+    private static final HashSet<String> EXCLUDE_CLASS = new HashSet<>(
+        Arrays.asList(
+            "003",
+            ""
+        )
+    );
+
+    /** EXCLUDE PARTICULAR LOGGERS BY ID **/
+    private static final HashSet<String> EXCLUDE_ID = new HashSet<>(
+        Arrays.asList(
+            "003007",
+            "002004",
+            ""
+        )
+    );
+
+
+    private static boolean shouldPrintLog(LogEntry entry)
+    {
+        //Test against the 3 hashsets
+        //log the entry's prefix
+
+        if (EXCLUDE_PROJECTS.contains(entry.prefix)) {
+            return false;
+        }
+
+        if (EXCLUDE_CLASS.contains(entry.id.substring(0,3))) {
+            return false;
+        }
+
+        if (EXCLUDE_ID.contains(entry.id)) {
+            return false;
+        }
+
         LogEntry filterRule = applySamplingRate(entry);
         if ( filterRule != null )
         {
@@ -170,7 +192,7 @@ public class LoggerBase {
             prefix = PREFIX;
 
         LogEntry entry = new LogEntry("INFO", logId, prefix, message);
-        if (shouldSampleLog(entry)) {
+        if (shouldPrintLog(entry)) {
             addToHistory(entry);
             LOGGER.info(buildBaseConsoleMessage(entry));
         }
@@ -182,7 +204,7 @@ public class LoggerBase {
             prefix = PREFIX;
 
         LogEntry entry = new LogEntry("WARN", logId, prefix, string);
-        if (shouldSampleLog(entry)) {
+        if (shouldPrintLog(entry)) {
             addToHistory(entry);
             LOGGER.warn(buildBaseConsoleMessage(entry));
         }
@@ -194,7 +216,7 @@ public class LoggerBase {
             prefix = PREFIX;
 
         LogEntry entry = new LogEntry("ERROR", logId, PREFIX, string);
-        if (shouldSampleLog(entry)) {
+        if (shouldPrintLog(entry)) {
             addToHistory(entry);
             LOGGER.error(buildBaseConsoleMessage(entry));
         }
@@ -204,7 +226,7 @@ public class LoggerBase {
     {
         if (DEBUG_MODE) {
             LogEntry entry = new LogEntry("DEBUG", logId, PREFIX, string);
-            if (shouldSampleLog(entry)) {
+            if (shouldPrintLog(entry)) {
                 addToHistory(entry);
                 LOGGER.info(buildBaseConsoleMessage(entry));
             }

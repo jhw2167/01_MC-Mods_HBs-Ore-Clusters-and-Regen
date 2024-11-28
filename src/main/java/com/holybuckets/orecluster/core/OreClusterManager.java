@@ -1,6 +1,7 @@
 package com.holybuckets.orecluster.core;
 
 import com.holybuckets.foundation.GeneralRealTimeConfig;
+import com.holybuckets.foundation.HolyBucketsUtility;
 import com.holybuckets.foundation.HolyBucketsUtility.*;
 import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.foundation.model.ManagedChunk;
@@ -8,11 +9,14 @@ import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
 import com.holybuckets.orecluster.LoggerProject;
 import com.holybuckets.orecluster.ModRealTimeConfig;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraftforge.event.level.ChunkEvent;
 import org.apache.commons.lang3.tuple.Pair;
 import oshi.annotation.concurrent.ThreadSafe;
@@ -378,6 +382,20 @@ public class OreClusterManager {
         //2. Clean clusters in world
         //3. Write data to chunk NBT data
         //4. Release hold on resource
+
+        LevelChunk levelChunk = ChunkUtil.getLevelChunk(level, chunk);
+        if(levelChunk == null)
+            return;
+
+        ChunkAccess chunkAccess = chunk.getChunk();
+
+        levelChunk.getBlockEntities();
+        Map< BlockPos, BlockEntity> chunkBlocks = levelChunk.getBlockEntities();
+
+       LevelChunkSection[] chunkSections = chunkAccess.getSections();
+        //Print block entities
+        LoggerProject.logDebug("002021", "Block Entities for chunk " + chunk.getId());
+
     }
 
 
