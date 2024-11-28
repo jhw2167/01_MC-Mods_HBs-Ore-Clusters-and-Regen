@@ -117,10 +117,26 @@ jarJar {
 18.
 ---
 
-	- Test if chunkloading works in the nether
-	- Test if chunkloading works in the end
+	- Test if chunkloading works in the nether		X Works
+	- Test if chunkloading works in the end			X Works
+	- handleChunkCleaning checks every block and adds potential cluster blocks to a map
+	- Add lastBlockChecked field to ManagedOreClusterChunk - NO, we can just keep it in RAM and re-clean it if it exceeds max time
+	- Added special HashSets to loggerbase to configure logging appropriately
+
+
+	Touchups:
+	- Determine Max Size/Lifetime of Managed Chunk in RAM
+	- Add level distinguisher in TOML
+	- Add level JSON property to ore configuration
+	- Alter ManagedOreClusterChunk sourcing algorithm to select valid Regenerating ores by cluster
+	- Move Particular Ore configuration JSON to its own config file and folder
+	- Set TOML config file to read file name where JSON config is stored
+
+			
 
 	- Ore cleaning
+
+	Cluster Building
 	- Cluster point determination
 	- Cluster building (shape, point)
 	- Cluster generating (in world)
