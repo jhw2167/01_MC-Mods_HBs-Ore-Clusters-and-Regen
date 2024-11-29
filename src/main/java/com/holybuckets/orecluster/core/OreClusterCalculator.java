@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import com.holybuckets.orecluster.ModRealTimeConfig;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
@@ -37,7 +38,7 @@ public class OreClusterCalculator {
         this.existingClustersByType = manager.getExistingClustersByType();
     }
 
-    public HashMap<String, HashMap<Block, Vec3i>> calculateClusterLocations(List<String> chunks, Random rng)
+    public HashMap<String, HashMap<Block, BlockPos>> calculateClusterLocations(List<String> chunks, Random rng)
     {
         long startTime = System.nanoTime();
 
@@ -214,8 +215,8 @@ public class OreClusterCalculator {
 
         //4. Using the Map of aggregate clusters, pick chunks for each cluster type
 
-        // Maps <ChunkId, <OreType, Vec3i>>
-        HashMap<String, HashMap<Block, Vec3i>> clusterPositions = new HashMap<>();
+        // Maps <ChunkId, <OreType, BlockPos>>
+        HashMap<String, HashMap<Block, BlockPos>> clusterPositions = new HashMap<>();
 
         //Order OreCluster types by spawnRate ascending
         oreClusterTypes.sort(Comparator.comparingInt( o -> -1*clusterConfigs.get(o).oreClusterSpawnRate ));
@@ -319,7 +320,7 @@ public class OreClusterCalculator {
                          }
                          else
                          {
-                             HashMap<Block, Vec3i> clusterMap = new HashMap<>();
+                             HashMap<Block, BlockPos> clusterMap = new HashMap<>();
                              clusterMap.put(oreType, null);
                              clusterPositions.put(candidateChunkId, clusterMap);
                          }

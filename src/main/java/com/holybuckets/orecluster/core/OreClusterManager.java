@@ -7,7 +7,6 @@ import com.holybuckets.orecluster.ModRealTimeConfig;
 import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
@@ -17,7 +16,6 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraftforge.event.level.ChunkEvent;
-import org.apache.commons.lang3.tuple.Pair;
 import oshi.annotation.concurrent.ThreadSafe;
 
 //Java Imports
@@ -76,6 +74,7 @@ public class OreClusterManager {
     private final LevelAccessor level;
     private final ModRealTimeConfig config;
     private Random randSeqClusterPositionGen;
+    private Random randSeqClusterBuildGen;
     //private Random randSeqClusterShapeGen;
 
 
@@ -102,6 +101,7 @@ public class OreClusterManager {
     private final ThreadPoolExecutor threadPoolClusterCleaning;
     private final ThreadPoolExecutor threadPoolClusterGenerating;
     private final ExecutorService threadPoolChunkProcessing;
+
 
 
     /** Constructor **/
@@ -138,7 +138,7 @@ public class OreClusterManager {
         //Thread pool with unlimited buffer, 3 threads max
         this.threadPoolChunkProcessing = Executors.newFixedThreadPool(8);
 
-        init();
+        init(level);
         LoggerProject.logInit("002000", this.getClass().getName());
     }
 
@@ -160,12 +160,14 @@ public class OreClusterManager {
 
 
     /** Behavior **/
-    public void init()
+    public void init(LevelAccessor level)
     {
 
         if (ModRealTimeConfig.CLUSTER_SEED == null)
             ModRealTimeConfig.CLUSTER_SEED = GENERAL_CONFIG.getWORLD_SEED();
-        this.randSeqClusterPositionGen = new Random(ModRealTimeConfig.CLUSTER_SEED);
+        long seed = ModRealTimeConfig.CLUSTER_SEED * level.hashCode();
+        this.randSeqClusterPositionGen = new Random(seed);
+        this.randSeqClusterBuildGen = new Random(seed);
 
         this.oreClusterCalculator = new OreClusterCalculator( this );
 
@@ -394,7 +396,7 @@ public class OreClusterManager {
         //LoggerProject.logDebug("handlePrepareNewCluster #1  " + LoggerProject.getTime(startTime, step1Time) + " ms");
 
 
-        HashMap<String, HashMap<Block, Vec3i>> clusters;
+        HashMap<String, HashMap<Block, BlockPos>> clusters;
         clusters = oreClusterCalculator.calculateClusterLocations(chunkIds.stream().toList() , randSeqClusterPositionGen);
         long step2Time = System.nanoTime();
         //LoggerProject.logDebug("002009","Determined " + clusters.size() + " clusters in " + chunkIds.size() + " chunks");
@@ -416,7 +418,7 @@ public class OreClusterManager {
         long step3Time = System.nanoTime();
         //        //LoggerProject.logDebug("handlePrepareNewCluster #3  " + LoggerProject.getTime(step2Time, step3Time) + " ms");
 
-        for( Map.Entry<String, HashMap<Block, Vec3i>> cluster : clusters.entrySet())
+        for( Map.Entry<String, HashMap<Block, BlockPos>> cluster : clusters.entrySet())
         {
             //Add chunkId to existingClustersByType Map
             LinkedHashSet<Block> oreTypesInThisCluster = new LinkedHashSet<>(cluster.getValue().keySet());
@@ -452,8 +454,8 @@ public class OreClusterManager {
 
     private void handleClusterCleaning( ManagedOreClusterChunk chunk )
     {
-        //1. Get clusters for chunk
-        //2. Clean clusters in world
+        //1. Get CLUSTER_TYPES for chunk
+        //2. Clean CLUSTER_TYPES in world
         //3. Write data to chunk NBT data
         //4. Release hold on resource
 
@@ -462,15 +464,18 @@ public class OreClusterManager {
             return ORE_CONFIGS.get(oreName).oreVeinModifier < 1.0f;
         }).collect(Collectors.toSet());
         //Add all ores from ManagedOreClusterChunk.getClusterTypes
-        final Map<Block, Vec3i> clusters = chunk.getClusterTypes();
-        clusters.keySet().stream().forEach( oreType -> {
+        final Map<Block, BlockPos> CLUSTER_TYPES = chunk.getClusterTypes();
+        CLUSTER_TYPES.keySet().stream().forEach( oreType -> {
             CLEANABLE_ORES.add( oreType );
         });
 
         LevelChunk levelChunk = chunk.getChunk();
         LevelChunkSection[] sections = levelChunk.getSections();
 
-        final Map<Block, BlockPos[]> spawnedOres = new HashMap<>();
+        Map<Block, BlockPos[]> spawnedOres = chunk.getOriginalOres();
+        if( spawnedOres == null )
+            spawnedOres = new HashMap<>();
+
         final int SECTION_SZ = 16;
         final int MAX_ORES = 512;
 
@@ -496,6 +501,10 @@ public class OreClusterManager {
                         {
                             BlockPos[] ores = spawnedOres.getOrDefault(block, new BlockPos[MAX_ORES]);
                             ores[ores.length] = new BlockPos(x, y, z);
+                            if( spawnedOres.containsKey(block) )
+                             continue;
+
+                            spawnedOres.put(block, ores);
                         }
                         //Else nothing
                     }
@@ -503,12 +512,43 @@ public class OreClusterManager {
             }
             //END 3D iteration
 
+            //Save BlockPos to generate CLUSTER_TYPES on to ManagedOreClusterChunk
+            for( Block b : chunk.getClusterTypes().keySet())
+            {
+                BlockPos[] ores = spawnedOres.get(b);
+                OreClusterConfigModel oreConfig = ORE_CONFIGS.get(b);
+                //filter by max and min height of valid cluster spawns
+                List<BlockPos> validPos = Arrays.stream(ores).filter( pos -> {
+                    return pos.getY() < oreConfig.oreClusterMaxYLevelSpawn;
+                }).collect(Collectors.toList());
+
+                int randPos = this.randSeqClusterBuildGen.nextInt(validPos.size());
+                CLUSTER_TYPES.put(b, validPos.get(randPos));
+            }
+
+            /* END CHOSING CLUSTER SPAWNPOINTS */
+
             //Iterate over ores and clean
 
-            //Save BlockPos to generate clusters on to ManagedOreClusterChunk
+            for( Block b : spawnedOres.keySet() )
+            {
+                BlockPos[] ores = spawnedOres.remove(b);
+                //Block[] replacements = ORE_CONFIGS.get(b).oreClusterReplaceableEmptyBlocks;
+                //need to replace 1-f blocks in the ores list with a random replacement block
+                for( int j = 0; j < ores.length; j++)
+                {
+                    if( ores[j] == null )
+                        continue;
+
+                    //Block replacement = replacements[randSeqClusterBuildGen.nextInt(replacements.length)];
+                    //states.set(ores[j].getX(), ores[j].getY(), ores[j].getZ(), replacement.defaultBlockState());
+                }
+            }
+
+
 
         }
-        
+
 
     }
 
@@ -521,8 +561,7 @@ public class OreClusterManager {
         LoggerProject.logDebug("002015","Generating clusters for chunk: " + chunk.getId());
 
 
-        HashMap<Block, Vec3i> clusters = chunk.getClusterTypes();
-        List<Pair<String, Vec3i>> cluster = chunk.getClusters();
+        HashMap<Block, BlockPos> clusters = chunk.getClusterTypes();
 
         chunk.setStatus(ManagedOreClusterChunk.ClusterStatus.GENERATED);
 
