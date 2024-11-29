@@ -3,6 +3,7 @@ package com.holybuckets.orecluster.config;
 import com.holybuckets.foundation.ConfigBase;
 import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,11 +52,14 @@ public class COreClusters extends ConfigBase {
     public final ConfigString regenerateOreClusterPeriodLengths = s(REGENERATE_ORE_CLUSTER_PERIOD_LENGTHS, "regenerateOreClusterPeriodLengths", Comments.REGENERATE_ORE_CLUSTER_PERIOD_LENGTHS);
     public final ConfigString regenerateOreClusterUpgradeItems = s(REGENERATE_ORE_CLUSTER_UPGRDADE_ITEMS, "regenerateOreClusterUpgradeItems", Comments.REGENERATE_ORE_CLUSTER_UPGRADE_ITEMS);
 
-            public final OreClusterConfigModel ironOre = new OreClusterConfigModel(Blocks.IRON_ORE );
-            public final OreClusterConfigModel diamondOre = new OreClusterConfigModel(Blocks.DIAMOND_ORE);
+            BlockState b = Blocks.IRON_ORE.defaultBlockState();
+            public final OreClusterConfigModel defaultIronOreClusterConfig = new OreClusterConfigModel(Blocks.IRON_ORE );
+            public final OreClusterConfigModel defaultDiamondOreClusterConfig = new OreClusterConfigModel(Blocks.DIAMOND_ORE);
 
-        public final ConfigList oreClusters = list(new ArrayList<String>( Arrays.asList(ironOre.serialize(), diamondOre.serialize())),
-                "oreClusters", Comments.ORE_CLUSTERS);
+        public final ConfigList oreClusters = list(new ArrayList<String>(Arrays.asList(
+        defaultIronOreClusterConfig.serialize(),
+         defaultDiamondOreClusterConfig.serialize()
+         )), "oreClusters", Comments.ORE_CLUSTERS);
 
 
     @Override

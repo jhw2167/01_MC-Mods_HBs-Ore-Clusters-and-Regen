@@ -119,10 +119,50 @@ jarJar {
 
 	- Test if chunkloading works in the nether		X Works
 	- Test if chunkloading works in the end			X Works
-	- handleChunkCleaning checks every block and adds potential cluster blocks to a map
 	- Add lastBlockChecked field to ManagedOreClusterChunk - NO, we can just keep it in RAM and re-clean it if it exceeds max time
-	- Added special HashSets to loggerbase to configure logging appropriately
+	- Added special exclude HashSets to loggerbase to deal with logging message overflow
 
+19.
+---
+
+	- handleChunkCleaning checks every block and adds potential cluster blocks to a map
+	- added workerThreadCleanClusters that cleans determined clusters
+	- Need to set reference to ManagedOreChunkCluster in ManagedChunk after determining the cluster
+
+
+20.
+---
+
+	- 
+
+
+21.
+---
+
+22.
+---
+
+23.
+---
+
+24.
+---
+
+
+25.
+---
+
+
+26.
+---
+
+
+27.
+---
+
+
+28.
+---
 
 	Touchups:
 	- Determine Max Size/Lifetime of Managed Chunk in RAM
