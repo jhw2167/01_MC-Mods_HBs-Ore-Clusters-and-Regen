@@ -7,14 +7,13 @@ import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
 import com.holybuckets.foundation.modelInterface.IMangedChunkData;
 import com.holybuckets.orecluster.LoggerProject;
 import com.holybuckets.orecluster.core.OreClusterManager;
-import net.minecraft.core.Vec3i;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.chunk.LevelChunk;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -61,8 +60,11 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     private LevelChunk chunk;
     private ChunkPos pos;
     private ClusterStatus status;
-    private HashMap<Block, Vec3i> clusterTypes;
-    private List<Pair<String, Vec3i>> clusters;
+    private HashMap<Block, BlockPos> clusterTypes;
+    private Map<Block, BlockPos[]> originalOres;
+
+
+    //private List<Pair<String, Vec3i>> clusters;
 
     /** Constructors **/
     /**
@@ -81,8 +83,8 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.id = null;
         this.pos = null;
         this.status = ClusterStatus.NONE;
-        this.clusterTypes = new HashMap<Block, Vec3i>();
-        this.clusters = new LinkedList<>();
+        this.clusterTypes = new HashMap<Block, BlockPos>();
+
     }
 
     //One for building with chunk
@@ -158,17 +160,18 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         return status;
     }
 
-    public List<Pair<String, Vec3i>> getClusters() {
-        return clusters;
+
+    public HashMap<Block, BlockPos> getClusterTypes() {
+        return clusterTypes;
     }
+
+    public Map<Block, BlockPos[]> getOriginalOres() {
+        return originalOres;
+    }
+
 
     public boolean hasClusters() {
-        return clusters.size() > 0 || clusterTypes.size() > 0;
-    }
-
-
-    public HashMap<Block, Vec3i> getClusterTypes() {
-        return clusterTypes;
+        return this.clusterTypes.size() > 0;
     }
 
 
@@ -190,12 +193,11 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.status = status;
     }
 
-    public void setClusters(HashMap<Block, Vec3i> clusters) {
+    public void setClusters(HashMap<Block, BlockPos> clusters) {
         this.clusterTypes = clusters;
     }
 
-
-    public void addClusterTypes(HashMap<Block, Vec3i> clusterMap)
+    public void addClusterTypes(HashMap<Block, BlockPos> clusterMap)
     {
         if( clusterMap == null )
             return;
@@ -205,6 +207,10 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
 
         this.clusterTypes.putAll( clusterMap );
         //LoggerProject.logDebug("003010", "Adding clusterTypes: " + this.clusterTypes);
+    }
+
+    public void setOriginalOres(Map<Block, BlockPos[]> originalOres) {
+        this.originalOres = originalOres;
     }
 
 
@@ -244,9 +250,9 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         Gson gson = ManagedChunk.GSON_BUILDER;
         //clusters
         {
-            String clusters = gson.toJson(this.clusters);
+            //String clusters = gson.toJson(this.clusters);
             //LoggerProject.logDebug("003005", "Serializing clusters: " + this.clusters);
-            details.putString("clusters", clusters);
+            //details.putString("clusters", clusters);
         }
 
         //Cluster Types
@@ -287,7 +293,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         {
             String clusters = wrapper.getString("clusters");
             LoggerProject.logDebug("003007", "Deserializing clusters: " + clusters);
-            this.clusters = gson.fromJson(clusters, List.class);
+            //this.clusters = gson.fromJson(clusters, List.class);
         }
 
         //Cluster Types
@@ -297,8 +303,6 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
             LoggerProject.logDebug("003008", "Deserializing clusterTypes: " + clusterTypes);
         }
 
-
-        LoggerProject.logDebug("003009", "Deserializing clusters: " + clusters);
 
     }
 
