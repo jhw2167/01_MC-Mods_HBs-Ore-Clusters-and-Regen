@@ -8,6 +8,7 @@ import com.holybuckets.orecluster.ModRealTimeConfig;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.chunk.ChunkAccess;
 
 import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
@@ -23,7 +24,7 @@ public class OreClusterCalculator {
     private OreClusterManager manager;
     private ModRealTimeConfig C;
     private ConcurrentHashMap<String, ManagedOreClusterChunk> determinedChunks;
-    private ConcurrentHashMap<String, HashSet<String>> existingClustersByType;
+    private ConcurrentHashMap<Block, HashSet<String>> existingClustersByType;
 
 
 
@@ -36,21 +37,21 @@ public class OreClusterCalculator {
         this.existingClustersByType = manager.getExistingClustersByType();
     }
 
-    public HashMap<String, HashMap<String, Vec3i>> calculateClusterLocations(List<String> chunks, Random rng)
+    public HashMap<String, HashMap<Block, Vec3i>> calculateClusterLocations(List<String> chunks, Random rng)
     {
         long startTime = System.nanoTime();
 
         // Get list of all ore cluster types
-        Map<String, OreClusterConfigModel> clusterConfigs = C.getOreConfigs();
-        List<String> oreClusterTypes = new ArrayList<>(clusterConfigs.keySet());
+        Map<Block, OreClusterConfigModel> clusterConfigs = C.getOreConfigs();
+        List<Block> oreClusterTypes = new ArrayList<>(clusterConfigs.keySet());
 
-        HashMap<String, Integer> clusterCounts = new HashMap<>();
+        HashMap<Block, Integer> clusterCounts = new HashMap<>();
         //LoggerBase.logDebug("1. Obtained cluster configs for ores: ");
         //LoggerBase.logDebug(clusterConfigs.toString());
 
         //Determine the expected total for each cluster type for this MAX_CLUSTERS batch
         // Use a normal distribution to determine the number of clusters for each type
-        for (String oreType : oreClusterTypes)
+        for (Block oreType : oreClusterTypes)
         {
             int normalizedSpawnRate = clusterConfigs.get(oreType).oreClusterSpawnRate;
             double sigma = ModRealTimeConfig.CHUNK_DISTRIBUTION_STDV_FUNC.apply(normalizedSpawnRate);
@@ -214,7 +215,7 @@ public class OreClusterCalculator {
         //4. Using the Map of aggregate clusters, pick chunks for each cluster type
 
         // Maps <ChunkId, <OreType, Vec3i>>
-        HashMap<String, HashMap<String, Vec3i>> clusterPositions = new HashMap<>();
+        HashMap<String, HashMap<Block, Vec3i>> clusterPositions = new HashMap<>();
 
         //Order OreCluster types by spawnRate ascending
         oreClusterTypes.sort(Comparator.comparingInt( o -> -1*clusterConfigs.get(o).oreClusterSpawnRate ));
@@ -240,7 +241,7 @@ public class OreClusterCalculator {
          try {
 
 
-             for (String oreType : oreClusterTypes)
+             for (Block oreType : oreClusterTypes)
              {
                  OreClusterConfigModel config = clusterConfigs.get(oreType);
                  HashSet<String> allChunksWithClusterType = existingClustersByType.get(oreType).stream().collect(Collectors.toCollection(HashSet::new));
@@ -318,7 +319,7 @@ public class OreClusterCalculator {
                          }
                          else
                          {
-                             HashMap<String, Vec3i> clusterMap = new HashMap<>();
+                             HashMap<Block, Vec3i> clusterMap = new HashMap<>();
                              clusterMap.put(oreType, null);
                              clusterPositions.put(candidateChunkId, clusterMap);
                          }
@@ -382,7 +383,7 @@ public class OreClusterCalculator {
 
     /**
      * Determine the source position of a cluster
-     * @param position
+     * @param oreType
      * @param chunk
      * @return
      */

@@ -1,12 +1,10 @@
 package com.holybuckets.orecluster.model;
 
 import com.google.gson.Gson;
-import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.foundation.HolyBucketsUtility.ChunkUtil;
 import com.holybuckets.foundation.model.ManagedChunk;
 import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
 import com.holybuckets.foundation.modelInterface.IMangedChunkData;
-import com.holybuckets.foundation.modelInterface.IMangedChunkManager;
 import com.holybuckets.orecluster.LoggerProject;
 import com.holybuckets.orecluster.core.OreClusterManager;
 import net.minecraft.core.Vec3i;
@@ -14,11 +12,10 @@ import net.minecraft.nbt.CompoundTag;
 
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.chunk.LevelChunk;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.security.Provider;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -27,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Description: Dedicating a class to hold the many manged states of a chunk preparing for cluster generation
  *
  *  #Variables
- *  - ChunkAccess chunk: The chunk object
+ *  - LevelChunk chunk: The chunk object
  *  - ChunkPos pos: The 2D position of the chunk in the world
  *  - String id: The unique id of the chunk
  *  - String status: The status of the chunk in the cluster generation process
@@ -61,10 +58,10 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     /** Variables **/
     private LevelAccessor level;
     private String id;
-    private ChunkAccess chunk;
+    private LevelChunk chunk;
     private ChunkPos pos;
     private ClusterStatus status;
-    private HashMap<String, Vec3i> clusterTypes;
+    private HashMap<Block, Vec3i> clusterTypes;
     private List<Pair<String, Vec3i>> clusters;
 
     /** Constructors **/
@@ -84,12 +81,12 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.id = null;
         this.pos = null;
         this.status = ClusterStatus.NONE;
-        this.clusterTypes = new HashMap<>();
+        this.clusterTypes = new HashMap<Block, Vec3i>();
         this.clusters = new LinkedList<>();
     }
 
     //One for building with chunk
-    private ManagedOreClusterChunk(LevelAccessor level, ChunkAccess chunk)
+    private ManagedOreClusterChunk(LevelAccessor level, LevelChunk chunk)
     {
         this(level);
         this.chunk = chunk;
@@ -117,7 +114,11 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
      * @param chunk
      * @return
      */
-    public static ManagedOreClusterChunk getInstance(LevelAccessor level, ChunkAccess chunk) {
+    public static ManagedOreClusterChunk getInstance(LevelAccessor level, LevelChunk chunk)
+    {
+        ManagedOreClusterChunk c = getOreClusterChunkByID(level, ChunkUtil.getId( chunk ));
+        if( c != null)
+            return c;
         return new ManagedOreClusterChunk(level, chunk);
     }
 
@@ -129,11 +130,19 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
      */
     public static ManagedOreClusterChunk getInstance(LevelAccessor level, String id)
     {
+        ManagedOreClusterChunk c = getOreClusterChunkByID(level, id);
+        if( c != null)
+            return c;
+
         return new ManagedOreClusterChunk(level, id);
     }
 
+    public static ManagedOreClusterChunk getOreClusterChunkByID(LevelAccessor level, String id) {
+        return   OreClusterManager.oreClusterManagers.getOrDefault(level, null).getDeterminedChunks().getOrDefault(id, null);
+    }
+
     /** Getters **/
-    public ChunkAccess getChunk() {
+    public LevelChunk getChunk() {
         return chunk;
     }
 
@@ -158,14 +167,14 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     }
 
 
-    public HashMap<String, Vec3i> getClusterTypes() {
+    public HashMap<Block, Vec3i> getClusterTypes() {
         return clusterTypes;
     }
 
 
     /** Setters **/
 
-    public void setChunk(ChunkAccess chunk) {
+    public void setChunk(LevelChunk chunk) {
         this.chunk = chunk;
     }
 
@@ -181,12 +190,12 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.status = status;
     }
 
-    public void setClusters(HashMap<String, Vec3i> clusters) {
+    public void setClusters(HashMap<Block, Vec3i> clusters) {
         this.clusterTypes = clusters;
     }
 
 
-    public void addClusterTypes(HashMap<String, Vec3i> clusterMap)
+    public void addClusterTypes(HashMap<Block, Vec3i> clusterMap)
     {
         if( clusterMap == null )
             return;

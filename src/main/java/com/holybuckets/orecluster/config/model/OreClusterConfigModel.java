@@ -2,8 +2,11 @@ package com.holybuckets.orecluster.config.model;
 
 import com.holybuckets.foundation.ConfigBase;
 import com.holybuckets.foundation.ConfigModelBase;
+import com.holybuckets.foundation.HolyBucketsUtility.*;
 import com.holybuckets.orecluster.LoggerProject;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import org.antlr.v4.runtime.misc.Triple;
 
 //Java
@@ -22,8 +25,8 @@ public class OreClusterConfigModel extends ConfigModelBase {
     public static final String CLASS_ID = "004";
 
     public Long subSeed = null;
-    public String oreClusterType = "default";
-    public HashSet<String> validOreClusterOreBlocks;
+    public Block oreClusterType = null;
+    public HashSet<Block> validOreClusterOreBlocks;
     public Integer oreClusterSpawnRate = COreClusters.DEF_ORE_CLUSTER_SPAWN_RATE;
     public Triple<Integer, Integer, Integer> oreClusterVolume = processVolume( COreClusters.DEF_ORE_CLUSTER_VOLUME);
     public Float oreClusterDensity = COreClusters.DEF_ORE_CLUSTER_DENSITY;
@@ -40,10 +43,11 @@ public class OreClusterConfigModel extends ConfigModelBase {
     private static final Gson gson = new GsonBuilder().create();
     private static final COreClusters oreClusterDefaultConfigs = new COreClusters(); //Used for default values
 
-
+    /**
+        Creates a cluster for the given type of block with the default settings
+     */
     public OreClusterConfigModel(Block oreClusterBlock ) {
-        this.oreClusterType = oreClusterBlock.toString();
-        this.oreClusterType = processMinecraftBlockTypeSyntax(oreClusterType);
+        this.oreClusterType = oreClusterBlock;
     }
 
     public OreClusterConfigModel(String oreClusterJson) {
@@ -60,7 +64,7 @@ public class OreClusterConfigModel extends ConfigModelBase {
         else
             this.subSeed = null;
 
-        this.validOreClusterOreBlocks = new HashSet<>(
+        this.validOreClusterOreBlocks = new HashSet<Block>(
             processValidOreClusterOreBlocks(cOreClusters.validOreClusterOreBlocks.get()));
         this.oreClusterSpawnRate = cOreClusters.defaultOreClusterSpawnRate.get();
         this.oreClusterVolume = processVolume(cOreClusters.defaultOreClusterVolume.get());
@@ -83,20 +87,10 @@ public class OreClusterConfigModel extends ConfigModelBase {
         }
     //END CONSTRUCTOR
 
-    /*
-        @javadoc
-        Utility classes that read string properties into proper formats
-     */
 
-    public static String processMinecraftBlockTypeSyntax(String blockType) {
-        if( blockType == null || blockType.isEmpty() )
-            return null;
-
-        return blockType.replace("Block{", "").replace("}", "");
-    }
-
-    public static List<String> processValidOreClusterOreBlocks(String validOreClusterOreBlocks) {
-        return new ArrayList<>(Arrays.asList(validOreClusterOreBlocks.split(",")));
+    public static List<Block> processValidOreClusterOreBlocks(String validOreClusterOreBlocks) {
+        List<String> ores = Arrays.asList(validOreClusterOreBlocks.split(","));
+        return ores.stream().map(BlockUtil::blockNameToBlock).collect(Collectors.toList());
     }
 
     //Setup static methods to process oreClusterReplaceableBlocks and oreClusterReplaceableEmptyBlock
@@ -194,9 +188,13 @@ public class OreClusterConfigModel extends ConfigModelBase {
         Setter Functions
      */
 
-     public void setOreClusterType(String oreClusterType) {
-        this.oreClusterType = processMinecraftBlockTypeSyntax(oreClusterType);
+     public void setOreClusterType(Block oreClusterType) {
+        this.oreClusterType = oreClusterType;
      }
+
+    public void setOreClusterType(String oreClusterTypeString) {
+        this.oreClusterType = BlockUtil.blockNameToBlock(oreClusterTypeString);
+    }
 
     public void setOreClusterSpawnRate(Integer oreClusterSpawnRate) {
         Boolean validConfig = validateInteger(oreClusterSpawnRate, oreClusterDefaultConfigs.defaultOreClusterSpawnRate,
@@ -332,7 +330,7 @@ public class OreClusterConfigModel extends ConfigModelBase {
     }
 
 
-    private static void logPropertyWarning(String message, String ore, String defaultMessage, String defaultValue)
+    private static void logPropertyWarning(String message, Block ore, String defaultMessage, String defaultValue)
     {
         if( defaultMessage == null )
             defaultMessage = " Using default value of ";
@@ -357,7 +355,8 @@ public class OreClusterConfigModel extends ConfigModelBase {
 
     public String serialize() {
         JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("oreClusterType", oreClusterType);
+        String oreClusterTypeString = BlockUtil.blockToString(oreClusterType);
+        jsonObject.addProperty("oreClusterType", oreClusterTypeString);
         jsonObject.addProperty("oreClusterSpawnRate", oreClusterSpawnRate);
         jsonObject.addProperty("oreClusterVolume", oreClusterVolume.a
                 + "x" + oreClusterVolume.b
@@ -386,7 +385,9 @@ public class OreClusterConfigModel extends ConfigModelBase {
         JsonObject jsonObject = JsonParser.parseString(jsonString.replace("'".toCharArray()[0], '"')).getAsJsonObject();
 
         try {
-            setOreClusterType(jsonObject.get("oreClusterType").getAsString());
+            String oreType = jsonObject.get("oreClusterType").getAsString();
+            LoggerProject.logDebug("004000", "Deserealizing OreClusterType: " + oreType);
+            setOreClusterType(oreType);
         } catch (Exception e) {
             LoggerProject.logError("004002","Error parsing oreClusterType for an undefined ore" + e.getMessage());
         }
@@ -470,7 +471,7 @@ public class OreClusterConfigModel extends ConfigModelBase {
 
         StringBuilder complete = new StringBuilder();
         complete.append("OreClusterConfigModel for ");
-        complete.append(oreClusterType);
+        complete.append(this.oreClusterType);
         complete.append(" has been created with the following properties: \n");
         complete.append(serialize());
         complete.append("\n\n");

@@ -1,22 +1,21 @@
 package com.holybuckets.orecluster.core;
 
 import com.holybuckets.foundation.GeneralRealTimeConfig;
-import com.holybuckets.foundation.HolyBucketsUtility;
 import com.holybuckets.foundation.HolyBucketsUtility.*;
-import com.holybuckets.foundation.exception.InvalidId;
-import com.holybuckets.foundation.model.ManagedChunk;
-import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
 import com.holybuckets.orecluster.LoggerProject;
 import com.holybuckets.orecluster.ModRealTimeConfig;
+import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraftforge.event.level.ChunkEvent;
 import org.apache.commons.lang3.tuple.Pair;
 import oshi.annotation.concurrent.ThreadSafe;
@@ -90,7 +89,7 @@ public class OreClusterManager {
     private final ConcurrentHashMap<String, ManagedOreClusterChunk> determinedChunks;
     private final ConcurrentHashMap<String, ManagedOreClusterChunk> loadedChunks;
     //<oreType, <chunkIds>>
-    private final ConcurrentHashMap<String, HashSet<String>> existingClustersByType;
+    private final ConcurrentHashMap<Block, HashSet<String>> existingClustersByType;
 
     private final ChunkGenerationOrderHandler mainSpiral;
 
@@ -100,7 +99,9 @@ public class OreClusterManager {
     private boolean managerRunning = true;
     private final ExecutorService threadPoolLoadedChunks;
     private final ExecutorService threadPoolClusterDetermination;
-    private final ExecutorService threadPoolClusterGeneration;
+    private final ThreadPoolExecutor threadPoolClusterCleaning;
+    private final ThreadPoolExecutor threadPoolClusterGenerating;
+    private final ExecutorService threadPoolChunkProcessing;
 
 
     /** Constructor **/
@@ -112,7 +113,7 @@ public class OreClusterManager {
         this.config = config;
 
         this.determinedChunks = new ConcurrentHashMap<>();
-        this.existingClustersByType = new ConcurrentHashMap<>();
+        this.existingClustersByType = new ConcurrentHashMap<Block, HashSet<String>>();
         this.loadedChunks = new ConcurrentHashMap<>();
 
         this.chunksPendingDeterminations = new LinkedBlockingQueue<>();
@@ -127,8 +128,15 @@ public class OreClusterManager {
         //Thread pool
         this.threadPoolClusterDetermination = new ThreadPoolExecutor(1, 1,
          30L, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.DiscardPolicy());
+
+        this.threadPoolClusterCleaning = new ThreadPoolExecutor(1, 1,
+            30L, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.DiscardPolicy());
+
+        this.threadPoolClusterGenerating = new ThreadPoolExecutor(1, 1,
+            30L, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.DiscardPolicy());
+
         //Thread pool with unlimited buffer, 3 threads max
-        this.threadPoolClusterGeneration = Executors.newFixedThreadPool(3);
+        this.threadPoolChunkProcessing = Executors.newFixedThreadPool(8);
 
         init();
         LoggerProject.logInit("002000", this.getClass().getName());
@@ -143,7 +151,7 @@ public class OreClusterManager {
         return determinedChunks;
     }
 
-    public ConcurrentHashMap<String, HashSet<String>> getExistingClustersByType() {
+    public ConcurrentHashMap<Block, HashSet<String>> getExistingClustersByType() {
         return existingClustersByType;
     }
 
@@ -162,7 +170,8 @@ public class OreClusterManager {
         this.oreClusterCalculator = new OreClusterCalculator( this );
 
         config.getOreConfigs().forEach((oreType, oreConfig) ->
-            existingClustersByType.put(oreType, new HashSet<>()));
+            existingClustersByType.put(oreType, new HashSet<>())
+        );
 
     }
 
@@ -173,9 +182,10 @@ public class OreClusterManager {
     public void onChunkLoad(ChunkEvent.Load chunkEvent)
     {
         String chunkId = ChunkUtil.getId(chunkEvent.getChunk());
-        ChunkAccess chunk = chunkEvent.getChunk();
+        LevelChunk chunk = ChunkUtil.getLevelChunk(level, chunkEvent.getChunk());
 
         loadedChunks.put(chunkId, ManagedOreClusterChunk.getInstance( level, chunk) );
+        loadedChunks.get(chunkId).setChunk(chunk);
         chunksPendingHandling.add(chunkId);
         threadPoolLoadedChunks.submit(this::onNewlyAddedChunk);
         //LoggerProject.logInfo("002001", "Chunk " + chunkId + " added to queue size " + chunksPendingHandling.size());
@@ -187,6 +197,7 @@ public class OreClusterManager {
         // Implementation for chunk unload
         ChunkAccess chunk = event.getChunk();
         String chunkId = ChunkUtil.getId(event.getChunk());
+        loadedChunks.remove(chunkId);
 
     }
 
@@ -242,6 +253,10 @@ public class OreClusterManager {
             chunksPendingDeterminations.add(chunkId);
             this.threadPoolClusterDetermination.submit(this::workerThreadDetermineClusters);
         }
+
+        this.threadPoolClusterCleaning.submit(this::workerThreadCleanClusters);
+        //this.threadPoolClusterGenerating.submit(this::workerThreadGenerateClusters);
+
     }
 
     private void workerThreadDetermineClusters()
@@ -253,20 +268,20 @@ public class OreClusterManager {
             {
                 String chunkId = chunksPendingDeterminations.poll();
                 if( chunkId == null )
-                    break;
+                    break;  //queue empty
 
                 //LoggerProject.logDebug("002017", "workerThreadDetermineClusters for chunkId: " + chunkId);
                 while (!determinedChunks.containsKey(chunkId))
                 {
                     LoggerProject.logDebug("002018", "handleClusterDetermination, starting batch for: " + chunkId);
                     handleClusterDetermination(ModRealTimeConfig.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL, chunkId);
+                    this.threadPoolClusterCleaning.submit(this::workerThreadCleanClusters);
                    //LoggerProject.logDebug("002019", "handleClusterDetermination, finished batch for: " + chunkId);
 
                 }
 
                 //MAX
                 LoggerProject.logDebug("002020", "workerThreadDetermineClusters, after handleClusterDetermination for chunkId: " + chunkId);
-
             }
 
         }
@@ -278,6 +293,65 @@ public class OreClusterManager {
         }
     }
 
+    /**
+     * Description: Polls determinedChunks attempts to clean any chunk and
+     * adds any cluster chunk to the chunksPendingGeneration queue. If chunk
+     * is not loaded at the time it is polled, it is skipped and re-added to the queue.
+     *
+     * 0. Get iterable list of all determined chunks, filter by status == Determined
+     * 1. Get next determined chunkId
+     * 2. Determine cluster is loaded
+     *
+     * 3. Thread the chunk cleaning process, low priority, same executor as cluster generation
+     * 4. handleChunkCleaning will add the chunk to chunksPendingGeneration once finished
+     */
+    private void workerThreadCleanClusters()
+    {
+        LoggerProject.logDebug("002022", "workerThreadCleanClusters started");
+        Throwable thrown = null;
+        try
+        {
+            while( managerRunning )
+            {
+
+                List<ManagedOreClusterChunk> chunksToClean = loadedChunks.values().stream().filter(
+                    chunk -> chunk.getStatus() == ManagedOreClusterChunk.ClusterStatus.DETERMINED).toList();
+
+                if( chunksToClean.size() == 0 ) {
+                    sleep(1000);
+                    LoggerProject.logDebug("002023", "workerThreadCleanClusters sleeping");
+                    continue;
+                }
+
+                for( ManagedOreClusterChunk chunk : chunksToClean)
+                {
+                    ChunkPos pos = ChunkUtil.getPos(chunk.getId());
+                    if( pos == null )
+                        continue;
+
+                    if( (pos.x < 2 && pos.x > -2) && (pos.z < 2 && pos.z > -2) )
+                    {
+                        int i = 0;
+                    }
+
+                    handleClusterCleaning(chunk);
+                    //threadPoolChunkProcessing.submit(() -> handleClusterCleaning(chunk));
+                }
+            }
+
+        }
+        catch (Exception e) {
+            thrown = e;
+        }
+        finally {
+            LoggerProject.threadExited("002011",this, thrown);
+        }
+    }
+
+
+    /**
+     * Description: Polls prepared chunks from chunksPendingGenerationQueue
+     */
     private  void workerThreadGenerateClusters()
     {
         Throwable thrown = null;
@@ -320,7 +394,7 @@ public class OreClusterManager {
         //LoggerProject.logDebug("handlePrepareNewCluster #1  " + LoggerProject.getTime(startTime, step1Time) + " ms");
 
 
-        HashMap<String, HashMap<String, Vec3i>> clusters;
+        HashMap<String, HashMap<Block, Vec3i>> clusters;
         clusters = oreClusterCalculator.calculateClusterLocations(chunkIds.stream().toList() , randSeqClusterPositionGen);
         long step2Time = System.nanoTime();
         //LoggerProject.logDebug("002009","Determined " + clusters.size() + " clusters in " + chunkIds.size() + " chunks");
@@ -342,10 +416,10 @@ public class OreClusterManager {
         long step3Time = System.nanoTime();
         //        //LoggerProject.logDebug("handlePrepareNewCluster #3  " + LoggerProject.getTime(step2Time, step3Time) + " ms");
 
-        for( Map.Entry<String, HashMap<String, Vec3i>> cluster : clusters.entrySet())
+        for( Map.Entry<String, HashMap<Block, Vec3i>> cluster : clusters.entrySet())
         {
             //Add chunkId to existingClustersByType Map
-            LinkedHashSet<String> oreTypesInThisCluster = new LinkedHashSet<>(cluster.getValue().keySet());
+            LinkedHashSet<Block> oreTypesInThisCluster = new LinkedHashSet<>(cluster.getValue().keySet());
             existingClustersByType.forEach((type, set) -> {
                 if (oreTypesInThisCluster.remove(type))
                     set.add(cluster.getKey());
@@ -383,18 +457,58 @@ public class OreClusterManager {
         //3. Write data to chunk NBT data
         //4. Release hold on resource
 
-        LevelChunk levelChunk = ChunkUtil.getLevelChunk(level, chunk);
-        if(levelChunk == null)
-            return;
+        final Map<Block, OreClusterConfigModel> ORE_CONFIGS = config.getOreConfigs();
+        final Set<Block> CLEANABLE_ORES = ORE_CONFIGS.keySet().stream().filter( oreName -> {
+            return ORE_CONFIGS.get(oreName).oreVeinModifier < 1.0f;
+        }).collect(Collectors.toSet());
+        //Add all ores from ManagedOreClusterChunk.getClusterTypes
+        final Map<Block, Vec3i> clusters = chunk.getClusterTypes();
+        clusters.keySet().stream().forEach( oreType -> {
+            CLEANABLE_ORES.add( oreType );
+        });
 
-        ChunkAccess chunkAccess = chunk.getChunk();
+        LevelChunk levelChunk = chunk.getChunk();
+        LevelChunkSection[] sections = levelChunk.getSections();
 
-        levelChunk.getBlockEntities();
-        Map< BlockPos, BlockEntity> chunkBlocks = levelChunk.getBlockEntities();
+        final Map<Block, BlockPos[]> spawnedOres = new HashMap<>();
+        final int SECTION_SZ = 16;
+        final int MAX_ORES = 512;
 
-       LevelChunkSection[] chunkSections = chunkAccess.getSections();
-        //Print block entities
-        LoggerProject.logDebug("002021", "Block Entities for chunk " + chunk.getId());
+        //loop in reverse, top, down
+        for (int i = sections.length - 1; i >= 0; i--)
+        {
+            LevelChunkSection section = sections[i];
+            if (section == null || section.hasOnlyAir() )
+                continue;
+
+            //Maybehas check for ores here, maybe
+
+            //iterate over x, y, z
+            PalettedContainer<BlockState> states = section.getStates();
+            for (int x = 0; x < SECTION_SZ; x++)
+            {
+                for (int y = 0; y < SECTION_SZ; y++)
+                {
+                    for (int z = 0; z < SECTION_SZ; z++)
+                    {
+                        Block block = states.get(x, y, z).getBlock();
+                        if (CLEANABLE_ORES.contains(block))
+                        {
+                            BlockPos[] ores = spawnedOres.getOrDefault(block, new BlockPos[MAX_ORES]);
+                            ores[ores.length] = new BlockPos(x, y, z);
+                        }
+                        //Else nothing
+                    }
+                }
+            }
+            //END 3D iteration
+
+            //Iterate over ores and clean
+
+            //Save BlockPos to generate clusters on to ManagedOreClusterChunk
+
+        }
+        
 
     }
 
@@ -407,12 +521,8 @@ public class OreClusterManager {
         LoggerProject.logDebug("002015","Generating clusters for chunk: " + chunk.getId());
 
 
-        HashMap<String, Vec3i> clusters = chunk.getClusterTypes();
+        HashMap<Block, Vec3i> clusters = chunk.getClusterTypes();
         List<Pair<String, Vec3i>> cluster = chunk.getClusters();
-        clusters.forEach((oreType, position) -> {
-            position = oreClusterCalculator.determineSourcePosition(oreType, chunk.getChunk());
-            cluster.addAll( oreClusterCalculator.generateCluster(oreType, position, chunk.getChunk()) );
-        });
 
         chunk.setStatus(ManagedOreClusterChunk.ClusterStatus.GENERATED);
 

@@ -2,12 +2,15 @@ package com.holybuckets.foundation;
 
 
 import com.holybuckets.foundation.database.DatabaseManager;
+import com.holybuckets.orecluster.LoggerProject;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
@@ -20,6 +23,8 @@ import java.util.Iterator;
  */
 public class HolyBucketsUtility {
 
+    public static final String CLASS_ID = "004";
+
     /*
     * General variables
      */
@@ -28,6 +33,60 @@ public class HolyBucketsUtility {
     public static final String RESOURCE_NAMESPACE = "hb";
 
     public static DatabaseManager databaseManager = null;
+
+    public static class BlockUtil {
+
+        /**
+         * Convert a block to its string name for formatting
+         * @param blockType
+         * @return
+         */
+        public static String blockToString(Block blockType)
+        {
+            if( blockType == null)
+            {
+                LoggerProject.logError("004000", "Error parsing blockType to string, blockType is null");
+                return null;
+            }
+
+            return blockType.toString().replace("Block{", "").replace("}", "");
+        }
+
+        /**
+         * Convert a block name as a string to a Minecraft Block Object: eg. "minecraft:iron_ore" to Blocks.IRON_ORE
+         * @param blockStringName
+         * @return
+         */
+        public static Block blockNameToBlock(String blockStringName)
+        {
+            if( blockStringName == null || blockStringName.isEmpty() )
+            {
+                LoggerProject.logError("004001", "Error parsing block name as string into a Minecraft Block type, " +
+                    "type provided was null or provided as empty string");
+                return null;
+            }
+
+            String formattedBlockString = "Block{";
+            if( blockStringName.contains(":"))
+                formattedBlockString += blockStringName + "}";
+            else
+                formattedBlockString += "minecraft:" + blockStringName + "}";
+
+            final String formattedBlockStringFinal = formattedBlockString;
+            Block b = ForgeRegistries.BLOCKS.getValues().stream()
+                .filter(block -> block.toString().equals(formattedBlockStringFinal))
+                .findFirst()
+                .orElse(null);
+
+            if( b == null )
+            {
+                LoggerProject.logError("004002", "Error parsing block name as string into a Minecraft Block type, " +
+                    "block name provided was not found in Minecraft/Forge registry: " + formattedBlockStringFinal);
+            }
+
+            return b;
+        }
+    }
 
     public static class ChunkUtil {
 
