@@ -13,7 +13,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -63,6 +65,8 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     private HashMap<Block, BlockPos> clusterTypes;
     private Map<Block, BlockPos[]> originalOres;
 
+    private Queue<Pair<BlockState, BlockPos>> blockStateUpdates;
+
 
     //private List<Pair<String, Vec3i>> clusters;
 
@@ -84,6 +88,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.pos = null;
         this.status = ClusterStatus.NONE;
         this.clusterTypes = new HashMap<Block, BlockPos>();
+        this.blockStateUpdates = new LinkedList<>();
 
     }
 
@@ -169,9 +174,12 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         return originalOres;
     }
 
-
     public boolean hasClusters() {
         return this.clusterTypes.size() > 0;
+    }
+
+    public Queue<Pair<BlockState, BlockPos>> getBlockStateUpdates() {
+        return blockStateUpdates;
     }
 
 
