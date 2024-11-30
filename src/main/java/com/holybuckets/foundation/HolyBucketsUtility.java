@@ -167,6 +167,7 @@ public class HolyBucketsUtility {
         public static LevelChunk getLevelChunk(LevelAccessor level, int x, int z) {
             return level.getChunkSource().getChunkNow(x, z);
         }
+
     }
 
     public static class SerializeUtil {

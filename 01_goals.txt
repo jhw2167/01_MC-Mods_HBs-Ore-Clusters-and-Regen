@@ -133,7 +133,11 @@ jarJar {
 20.
 ---
 
-	- 
+	- Test code still compiles
+        - Convert Section Pos to correct world pos for block state replacement
+        - Convert replacement blocks to actual blocks
+        - Find way to check if chunk gets unloaded
+        - Check error handling if block state setting fails
 
 
 21.
