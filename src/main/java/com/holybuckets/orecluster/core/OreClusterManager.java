@@ -482,6 +482,7 @@ public class OreClusterManager {
 
         final int SECTION_SZ = 16;
         final int MAX_ORES = 512;
+        final int NEGATIVE_Y_RANGE = 64;
 
         //loop in reverse, top, down
         BlockPos chunkWorldPos = levelChunk.getPos().getWorldPosition();
@@ -489,9 +490,6 @@ public class OreClusterManager {
         {
             LevelChunkSection section = sections[i];
             if (section == null || section.hasOnlyAir() )
-                continue;
-
-            if( i < 9 ) //no deep ores for now
                 continue;
 
             //Maybehas check for ores here, maybe
@@ -511,7 +509,7 @@ public class OreClusterManager {
                             BlockPos[] ores = spawnedOres.getOrDefault(block, new BlockPos[MAX_ORES]);
                             ores[count++] = new BlockPos(
                              chunkWorldPos.getX() + x,
-                                 y + (SECTION_SZ * (i - 8) ),
+                                 y + ( (SECTION_SZ * i) - NEGATIVE_Y_RANGE),
                                 chunkWorldPos.getZ() + z);
 
                             if( spawnedOres.containsKey(block) )
