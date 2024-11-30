@@ -10,12 +10,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraftforge.event.level.ChunkEvent;
+import org.antlr.v4.runtime.atn.BlockEndState;
 import oshi.annotation.concurrent.ThreadSafe;
 
 //Java Imports
@@ -327,15 +329,7 @@ public class OreClusterManager {
 
                 for( ManagedOreClusterChunk chunk : chunksToClean)
                 {
-                    ChunkPos pos = ChunkUtil.getPos(chunk.getId());
-                    if( pos == null )
-                        continue;
-
-                    if( (pos.x < 2 && pos.x > -2) && (pos.z < 2 && pos.z > -2) )
-                    {
-                        int i = 0;
-                    }
-
+                    LoggerProject.logDebug("002026", "workerThreadCleanClusters cleaning chunk: " + chunk.getId());
                     handleClusterCleaning(chunk);
                     //threadPoolChunkProcessing.submit(() -> handleClusterCleaning(chunk));
                 }
@@ -459,6 +453,13 @@ public class OreClusterManager {
         //3. Write data to chunk NBT data
         //4. Release hold on resource
 
+        chunk.setStatus(ManagedOreClusterChunk.ClusterStatus.CLEANED);
+        if( chunk.getPos().x > 2 || chunk.getPos().z > 2 )
+        {
+            return;
+        }
+
+
         final Map<Block, OreClusterConfigModel> ORE_CONFIGS = config.getOreConfigs();
         final Set<Block> CLEANABLE_ORES = ORE_CONFIGS.keySet().stream().filter( oreName -> {
             return ORE_CONFIGS.get(oreName).oreVeinModifier < 1.0f;
@@ -472,24 +473,32 @@ public class OreClusterManager {
         LevelChunk levelChunk = chunk.getChunk();
         LevelChunkSection[] sections = levelChunk.getSections();
 
+        LoggerProject.logDebug("002025","Cleaning clusters for: " + levelChunk.getPos().getWorldPosition());
+
         Map<Block, BlockPos[]> spawnedOres = chunk.getOriginalOres();
         if( spawnedOres == null )
             spawnedOres = new HashMap<>();
+        chunk.setOriginalOres(spawnedOres);
 
         final int SECTION_SZ = 16;
         final int MAX_ORES = 512;
 
         //loop in reverse, top, down
+        BlockPos chunkWorldPos = levelChunk.getPos().getWorldPosition();
         for (int i = sections.length - 1; i >= 0; i--)
         {
             LevelChunkSection section = sections[i];
             if (section == null || section.hasOnlyAir() )
                 continue;
 
+            if( i < 9 ) //no deep ores for now
+                continue;
+
             //Maybehas check for ores here, maybe
 
             //iterate over x, y, z
             PalettedContainer<BlockState> states = section.getStates();
+            int count = 0;
             for (int x = 0; x < SECTION_SZ; x++)
             {
                 for (int y = 0; y < SECTION_SZ; y++)
@@ -500,7 +509,11 @@ public class OreClusterManager {
                         if (CLEANABLE_ORES.contains(block))
                         {
                             BlockPos[] ores = spawnedOres.getOrDefault(block, new BlockPos[MAX_ORES]);
-                            ores[ores.length] = new BlockPos(x, y, z);
+                            ores[count++] = new BlockPos(
+                             chunkWorldPos.getX() + x,
+                                 y + (SECTION_SZ * (i - 8) ),
+                                chunkWorldPos.getZ() + z);
+
                             if( spawnedOres.containsKey(block) )
                              continue;
 
@@ -512,45 +525,55 @@ public class OreClusterManager {
             }
             //END 3D iteration
 
-            //Save BlockPos to generate CLUSTER_TYPES on to ManagedOreClusterChunk
-            for( Block b : chunk.getClusterTypes().keySet())
-            {
-                BlockPos[] ores = spawnedOres.get(b);
-                OreClusterConfigModel oreConfig = ORE_CONFIGS.get(b);
-                //filter by max and min height of valid cluster spawns
-                List<BlockPos> validPos = Arrays.stream(ores).filter( pos -> {
-                    return pos.getY() < oreConfig.oreClusterMaxYLevelSpawn;
-                }).collect(Collectors.toList());
+        }
+        //END SECTIONS LOOP
 
-                int randPos = this.randSeqClusterBuildGen.nextInt(validPos.size());
-                CLUSTER_TYPES.put(b, validPos.get(randPos));
-            }
+        //Save BlockPos to generate CLUSTER_TYPES on to ManagedOreClusterChunk
+        for( Block b : chunk.getClusterTypes().keySet())
+        {
+            BlockPos[] ores = spawnedOres.get(b);
+            OreClusterConfigModel oreConfig = ORE_CONFIGS.get(b);
 
-            /* END CHOSING CLUSTER SPAWNPOINTS */
+            if( ores == null || ores.length == 0 )
+                continue;
 
-            //Iterate over ores and clean
+            //filter by max and min height of valid cluster spawns
+            List<BlockPos> validPos = Arrays.stream(ores).filter( pos -> pos.getY() < oreConfig.oreClusterMaxYLevelSpawn)
+                .collect(Collectors.toList());
 
-            for( Block b : spawnedOres.keySet() )
-            {
-                BlockPos[] ores = spawnedOres.remove(b);
-                //Block[] replacements = ORE_CONFIGS.get(b).oreClusterReplaceableEmptyBlocks;
-                //need to replace 1-f blocks in the ores list with a random replacement block
-                for( int j = 0; j < ores.length; j++)
-                {
-                    if( ores[j] == null )
-                        continue;
-
-                    //Block replacement = replacements[randSeqClusterBuildGen.nextInt(replacements.length)];
-                    //states.set(ores[j].getX(), ores[j].getY(), ores[j].getZ(), replacement.defaultBlockState());
-                }
-            }
-
-
-
+            int randPos = this.randSeqClusterBuildGen.nextInt(validPos.size());
+            CLUSTER_TYPES.put(b, validPos.get(randPos));
         }
 
+        /* END CHOSING CLUSTER SPAWNPOINTS */
+
+        //Iterate over ores and clean
+
+        Block[] blocksToReplace = spawnedOres.keySet().toArray(new Block[0]);
+        for( Block b : blocksToReplace )
+        {
+            //BlockPos[] ores = spawnedOres.remove(b);
+            BlockPos[] ores = spawnedOres.get(b); //debugging
+            Block[] replacements = ORE_CONFIGS.get(b).oreClusterReplaceableEmptyBlocks.toArray(new Block[0]);
+            Float modifier = ORE_CONFIGS.get(b).oreVeinModifier;
+            //need to replace 1-f blocks in the ores list with a random replacement block
+            for( int j = 0; j < ores.length; j++)
+            {
+                if( ores[j] == null )
+                    continue;
+
+                if( randSeqClusterBuildGen.nextFloat() < modifier )
+                    continue;
+
+                Block replacement = replacements[ j % replacements.length ];
+                levelChunk.setBlockState(ores[j], replacement.defaultBlockState(), false);
+            }
+        }
+
+        LoggerProject.logDebug("002024","Finished cleaning clusters for: " + chunk.getId());
 
     }
+    //END handleCleanClusters
 
 
     /**

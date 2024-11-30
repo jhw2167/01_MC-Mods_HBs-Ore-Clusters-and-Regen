@@ -118,6 +118,7 @@ public class LoggerBase {
         Arrays.asList(
             "003007",
             "002004",
+            "002022",
             ""
         )
     );

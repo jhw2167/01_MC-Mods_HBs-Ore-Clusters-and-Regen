@@ -71,7 +71,8 @@ public class ModRealTimeConfig
 
             //Create new oreConfig for each element in cOreClusters list
             oreConfigs = new HashMap<Block, OreClusterConfigModel>();
-            List<String> jsonOreConfigs = AllConfigs.server().cOreClusters.oreClusters.get();
+            //List<String> jsonOreConfigs = AllConfigs.server().cOreClusters.oreClusters.get();
+            List<String> jsonOreConfigs = new ArrayList<>();
 
             //Default configs will be used for all valid ore clusters unless overwritten
             for( Block validOreClusterBlock : defaultConfig.validOreClusterOreBlocks.stream().toList() )

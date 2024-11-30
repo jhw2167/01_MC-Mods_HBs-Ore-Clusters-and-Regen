@@ -5,8 +5,6 @@ import com.holybuckets.foundation.ConfigModelBase;
 import com.holybuckets.foundation.HolyBucketsUtility.*;
 import com.holybuckets.orecluster.LoggerProject;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 import org.antlr.v4.runtime.misc.Triple;
 
 //Java
@@ -35,8 +33,8 @@ public class OreClusterConfigModel extends ConfigModelBase {
     public Integer minChunksBetweenOreClusters = COreClusters.MIN_CHUNKS_BETWEEN_ORE_CLUSTERS;
     public Integer maxChunksBetweenOreClusters = COreClusters.MAX_CHUNKS_BETWEEN_ORE_CLUSTERS;
     public Float oreVeinModifier = COreClusters.DEF_ORE_VEIN_MODIFIER;
-    public HashSet<String> oreClusterNonReplaceableBlocks = processReplaceableBlocks(COreClusters.ORE_CLUSTER_NONREPLACEABLE_BLOCKS);
-    public HashSet<String> oreClusterReplaceableEmptyBlocks = processReplaceableBlocks(COreClusters.ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS);
+    public HashSet<Block> oreClusterNonReplaceableBlocks = processReplaceableBlocks(COreClusters.ORE_CLUSTER_NONREPLACEABLE_BLOCKS);
+    public HashSet<Block> oreClusterReplaceableEmptyBlocks = processReplaceableBlocks(COreClusters.ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS);
     public Boolean oreClusterDoesRegenerate = COreClusters.REGENERATE_ORE_CLUSTERS;
     public Map<String, Integer> oreClusterRegenPeriods = null;
 
@@ -94,10 +92,10 @@ public class OreClusterConfigModel extends ConfigModelBase {
     }
 
     //Setup static methods to process oreClusterReplaceableBlocks and oreClusterReplaceableEmptyBlock
-    public static HashSet<String> processReplaceableBlocks(String replaceableBlocks) {
+    public static HashSet<Block> processReplaceableBlocks(String replaceableBlocks) {
 
         return Arrays.stream(replaceableBlocks.split(",")) //Split the string by commas
-                .map(String::trim) //Trim each element
+                .map(BlockUtil::blockNameToBlock)
                 .collect(Collectors.toCollection(HashSet::new));
     }
 
@@ -318,11 +316,6 @@ public class OreClusterConfigModel extends ConfigModelBase {
 
     public void setOreClusterReplaceableEmptyBlocks(String oreClusterReplaceableEmptyBlocks) {
         this.oreClusterReplaceableEmptyBlocks = processReplaceableBlocks(oreClusterReplaceableEmptyBlocks);
-        //If an entry does not contain ':' add the minecraft namespace
-        this.oreClusterReplaceableEmptyBlocks = this.oreClusterReplaceableEmptyBlocks.stream()
-                .map(block -> block.contains(":") ? block : "minecraft:" + block)
-                .collect(Collectors.toCollection(HashSet::new));
-
     }
 
     public void setOreClusterDoesRegenerate(String oreClusterDoesRegenerate) {
@@ -370,9 +363,9 @@ public class OreClusterConfigModel extends ConfigModelBase {
 
         jsonObject.addProperty("oreVeinModifier", oreVeinModifier);
         jsonObject.addProperty("oreClusterNonReplaceableBlocks",
-            oreClusterNonReplaceableBlocks.stream().collect(Collectors.joining(", ")));
+            oreClusterNonReplaceableBlocks.stream().map(BlockUtil::blockToString).collect(Collectors.joining(", ")));
         jsonObject.addProperty("oreClusterReplaceableEmptyBlocks",
-            oreClusterReplaceableEmptyBlocks.stream().collect(Collectors.joining(", ")));
+            oreClusterReplaceableEmptyBlocks.stream().map(BlockUtil::blockToString).collect(Collectors.joining(", ")));
         jsonObject.addProperty("oreClusterDoesRegenerate", oreClusterDoesRegenerate);
 
         //System.err.println("jsonObject: " + jsonObject);

@@ -52,7 +52,6 @@ public class COreClusters extends ConfigBase {
     public final ConfigString regenerateOreClusterPeriodLengths = s(REGENERATE_ORE_CLUSTER_PERIOD_LENGTHS, "regenerateOreClusterPeriodLengths", Comments.REGENERATE_ORE_CLUSTER_PERIOD_LENGTHS);
     public final ConfigString regenerateOreClusterUpgradeItems = s(REGENERATE_ORE_CLUSTER_UPGRDADE_ITEMS, "regenerateOreClusterUpgradeItems", Comments.REGENERATE_ORE_CLUSTER_UPGRADE_ITEMS);
 
-            BlockState b = Blocks.IRON_ORE.defaultBlockState();
             public final OreClusterConfigModel defaultIronOreClusterConfig = new OreClusterConfigModel(Blocks.IRON_ORE );
             public final OreClusterConfigModel defaultDiamondOreClusterConfig = new OreClusterConfigModel(Blocks.DIAMOND_ORE);
 
