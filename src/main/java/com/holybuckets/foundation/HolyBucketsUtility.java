@@ -195,4 +195,55 @@ public class HolyBucketsUtility {
 
     }
 
+    /**
+    * Class: Fast3DArray
+    * Description: A 3D array that is optimized for fast access by avoiding new calls
+     */
+    public static class Fast3DArray {
+
+        private int[] X;
+        private int[] Y;
+        private int[] Z;
+
+        public int size;
+
+        public Fast3DArray(int size) {
+            this.size = size;
+            X = new int[size];
+            Y = new int[size];
+            Z = new int[size];
+        }
+
+        public void add(int x, int y, int z) {
+            X[size] = x;
+            Y[size] = y;
+            Z[size] = z;
+            size++;
+        }
+
+        /**
+         * Returns a new 3D array of all
+         * @param index
+         * @return null if index is out of bounds
+         */
+        public int[][] get(int index) {
+
+            if( index >= size || index < 0)
+                return null;
+            return new int[][] { { X[index], Y[index], Z[index] } };
+        }
+
+        public int getX(int index) {
+            return X[index];
+        }
+
+        public int getY(int index) {
+            return Y[index];
+        }
+
+        public int getZ(int index) {
+            return Z[index];
+        }
+
+    }
 }
