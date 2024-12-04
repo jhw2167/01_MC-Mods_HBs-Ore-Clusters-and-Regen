@@ -214,7 +214,11 @@ public class HolyBucketsUtility {
             Z = new int[size];
         }
 
-        public void add(int x, int y, int z) {
+        public void add(int x, int y, int z)
+        {
+            if( size >= X.length)
+                return;
+
             X[size] = x;
             Y[size] = y;
             Z[size] = z;
