@@ -154,6 +154,8 @@ jarJar {
 		- Will need to load adjacent chunks when building cluster to feel natural
 		- Or just add them to the other cchunks queue, that may be tough
 
+		- create not terrible JSON defaultConfig for multiple ores
+
 		- Determine "ticksLastRefreshed" parameter on ManagedOreClusterChunk
 		- tickLastRefreshed < LAST_REGEN_TICK then do a refresh, set tickLastRefreshed to LAST_REGEN_TICK
 		- when currentGameTick > NEXT_REGEN_TICK, set LAST_REGEN_TICK == NEXT_REGEN_TICK
