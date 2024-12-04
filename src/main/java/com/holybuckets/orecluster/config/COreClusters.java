@@ -79,22 +79,22 @@ public class COreClusters extends ConfigBase {
          "The true cluster will always be smaller than this box because it will choose a shape that roughly fits inside it," +
           " max 64x64x64 else it will revert to the default 16x16x16";
         public static final String DEF_ORE_CLUSTER_DENSITY = "Determines the density of ore within a cluster. To reduce density" +
-         " ore blocks within the cluster will be replaced with blocks from 'ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS' below";
-        public static final String DEF_ORE_CLUSTER_SHAPE = "Defines the shape of the ore cluster. Options are 'bowl', 'anvil', 'shale' or 'any'. " +
-         "Defaults to any, which takes a random shape. Please use double quotes when you set the property!!";
+         " ore blocks within the cluster will be replaced with blocks from 'defaultOreClusterReplaceableEmptyBlock' below";
+        public static final String DEF_ORE_CLUSTER_SHAPE = "Defines the shape of the ore cluster. Options are 'bowl', 'anvil', 'shale', 'flat' or 'any'. " +
+         "Defaults to any, which takes a random shape";
         public static final String ORE_CLUSTER_MAX_Y_LEVEL_SPAWN = "Maximum Y-level at which clusters can spawn";
         public static final String MIN_CHUNKS_BETWEEN_ORE_CLUSTERS = "Minimum number of chunks between ore any clusters - AFFECTS ALL ORE CLUSTERS"+
             "- this is a rough guideline, the random generation is not perfect";
         public static final String MAX_CHUNKS_BETWEEN_ORE_CLUSTERS = "Maximum number of chunks between ore any clusters - AFFECTS ALL ORE CLUSTERS " +
             "- this is a rough guideline, the random generation is not perfect";
         public static final String DEF_ORE_VEIN_MODIFIER = "Scales the presence of normal (small) ore veins between 0 and 1. This mod " +
-         "replaces existing ore veins in real time with the specified first block in 'ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS' block so can only" +
+         "replaces existing ore veins in real time with the specified first block in 'defaultOreClusterReplaceableEmptyBlock' block so can only" +
           " reduce the frequency of ore veins, not increase it";
         public static final String ORE_CLUSTER_NONREPLACEABLE_BLOCKS = "List of blocks that should not be replaced by the specified ore during cluster generation. " +
          "For example, if you don't want ore clusters to replace bedrock - which is very reasonable - you would add 'minecraft:bedrock' to this list";
-        public static final String ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS = "Block used to fill in the ore cluster shape when we want the cluster to be more sparse" +
+        public static final String ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS = "Block used to fill in the ore cluster shape when we want the cluster to be more sparse " +
          "this field can take multiple comma seperated blocks; but only the first block will be used to replace ore veins if ORE_VEIN_MODIFIER is below 1";
-        public static final String REGENERATE_ORE_CLUSTERS = "Flag indicating if ore clusters should regenerate by default";
+        public static final String REGENERATE_ORE_CLUSTERS = "Flag indicating if ore clusters should regenerate by default. Overriden by specific ore settings";
         public static final String ORE_CLUSTERS = " The formatting for this property sucks unfortunately, but it all MUST be on one line or" +
          " it will crash your game, edit it elsewhere and paste it back as a single line." +
          " Array Pseudo JSON structures that allow you to override the default values" +

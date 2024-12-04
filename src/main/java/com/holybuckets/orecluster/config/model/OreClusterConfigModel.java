@@ -33,8 +33,8 @@ public class OreClusterConfigModel extends ConfigModelBase {
     public Integer minChunksBetweenOreClusters = COreClusters.MIN_CHUNKS_BETWEEN_ORE_CLUSTERS;
     public Integer maxChunksBetweenOreClusters = COreClusters.MAX_CHUNKS_BETWEEN_ORE_CLUSTERS;
     public Float oreVeinModifier = COreClusters.DEF_ORE_VEIN_MODIFIER;
-    public HashSet<Block> oreClusterNonReplaceableBlocks = processReplaceableBlocks(COreClusters.ORE_CLUSTER_NONREPLACEABLE_BLOCKS);
-    public HashSet<Block> oreClusterReplaceableEmptyBlocks = processReplaceableBlocks(COreClusters.ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS);
+    public HashSet<Block> oreClusterNonReplaceableBlocks = processStringIntoBlockHashSet(COreClusters.ORE_CLUSTER_NONREPLACEABLE_BLOCKS);
+    public HashSet<Block> oreClusterReplaceableEmptyBlocks = processStringIntoBlockHashSet(COreClusters.ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS);
     public Boolean oreClusterDoesRegenerate = COreClusters.REGENERATE_ORE_CLUSTERS;
     public Map<String, Integer> oreClusterRegenPeriods = null;
 
@@ -72,8 +72,8 @@ public class OreClusterConfigModel extends ConfigModelBase {
         this.minChunksBetweenOreClusters = cOreClusters.minChunksBetweenOreClusters.get();
         //this.maxChunksBetweenOreClusters = cOreClusters.maxChunksBetweenOreClusters.get();
         this.oreVeinModifier = cOreClusters.defaultOreVeinModifier.getF();
-        this.oreClusterNonReplaceableBlocks = processReplaceableBlocks(cOreClusters.defaultOreClusterNonReplaceableBlocks.get());
-        this.oreClusterReplaceableEmptyBlocks = processReplaceableBlocks(cOreClusters.defaultOreClusterReplaceableEmptyBlocks.get());
+        this.oreClusterNonReplaceableBlocks = processStringIntoBlockHashSet(cOreClusters.defaultOreClusterNonReplaceableBlocks.get());
+        this.oreClusterReplaceableEmptyBlocks = processReplaceableEmptyBlocks(cOreClusters.defaultOreClusterReplaceableEmptyBlocks.get());
         this.oreClusterDoesRegenerate = cOreClusters.regenerateOreClusters.get();
 
         //Iterate through the oreClusterRegenPeriods and add them to the map
@@ -92,12 +92,20 @@ public class OreClusterConfigModel extends ConfigModelBase {
     }
 
     //Setup static methods to process oreClusterReplaceableBlocks and oreClusterReplaceableEmptyBlock
-    public static HashSet<Block> processReplaceableBlocks(String replaceableBlocks) {
+    public static HashSet<Block> processStringIntoBlockHashSet(String replaceableBlocks) {
 
         return Arrays.stream(replaceableBlocks.split(",")) //Split the string by commas
                 .map(BlockUtil::blockNameToBlock)
                 .collect(Collectors.toCollection(HashSet::new));
     }
+
+    public static HashSet<Block> processReplaceableEmptyBlocks(String replaceableBlocks) {
+        HashSet<Block> blocks = processStringIntoBlockHashSet(replaceableBlocks);
+        if( blocks.isEmpty() )
+            blocks.add(BlockUtil.blockNameToBlock("minecraft:air"));
+        return blocks;
+    }
+
 
     public Triple<Integer, Integer, Integer> processVolume(String volume)
     {
@@ -311,11 +319,11 @@ public class OreClusterConfigModel extends ConfigModelBase {
     }
 
     public void setOreClusterNonReplaceableBlocks(String oreClusterNonReplaceableBlocks) {
-        this.oreClusterNonReplaceableBlocks = processReplaceableBlocks(oreClusterNonReplaceableBlocks);
+        this.oreClusterNonReplaceableBlocks = processStringIntoBlockHashSet(oreClusterNonReplaceableBlocks);
     }
 
     public void setOreClusterReplaceableEmptyBlocks(String oreClusterReplaceableEmptyBlocks) {
-        this.oreClusterReplaceableEmptyBlocks = processReplaceableBlocks(oreClusterReplaceableEmptyBlocks);
+        this.oreClusterReplaceableEmptyBlocks = processStringIntoBlockHashSet(oreClusterReplaceableEmptyBlocks);
     }
 
     public void setOreClusterDoesRegenerate(String oreClusterDoesRegenerate) {

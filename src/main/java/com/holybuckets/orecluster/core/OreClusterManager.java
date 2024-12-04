@@ -325,7 +325,7 @@ public class OreClusterManager {
                 List<ManagedOreClusterChunk> chunksToClean = loadedChunks.values().stream().filter(
                     chunk -> chunk.getStatus() == ManagedOreClusterChunk.ClusterStatus.DETERMINED).toList();
 
-                LoggerProject.logDebug("002030","workerThreadCleanClusters cleaning chunks: " + chunksToClean.size());
+                //LoggerProject.logDebug("002030","workerThreadCleanClusters cleaning chunks: " + chunksToClean.size());
 
                 if( chunksToClean.size() == 0 ) {
                     sleep(1000);
@@ -334,30 +334,23 @@ public class OreClusterManager {
                 }
 
                 //LoggerProject.logDebug("002026", "workerThreadCleanClusters cleaning chunks: " + chunksToClean.size());
-                int count = 0;
+
                 for( ManagedOreClusterChunk chunk : chunksToClean)
                 {
-                    LoggerProject.logDebug("002025.1","Start Cleaning chunk: " + chunk.getId()
-                        + " with status: " + chunk.getStatus().toString()
-                        + " count: " + count
-                        + " blockStateUpdates: " + chunk.getBlockStateUpdates()
-                        );
                         try {
                             handleClusterCleaning(chunk);
                         }
-                        catch (Exception e) {
+                        catch (Exception e)
+                        {
                             e.printStackTrace();
-                            LoggerProject.logError("002025.4","Error cleaning chunk: " + chunk.getId() + " message: "  );
+                            LoggerProject.logError("002030","Error cleaning chunk: " + chunk.getId() + " message: "  );
                         }
 
-                    //LoggerProject.logDebug("002025.2","Count: " + count++);
                     //threadPoolChunkProcessing.submit(() -> handleClusterCleaning(chunk));
-
                 }
 
-                LoggerProject.logDebug("002025.3","Finished cleaning chunks: " + chunksToClean.size());
-
             }
+            //END WHILE MANAGER RUNNING
 
         }
         catch (Exception e) {
@@ -473,7 +466,7 @@ public class OreClusterManager {
     private void handleClusterCleaning( ManagedOreClusterChunk chunk )
     {
 
-        LoggerProject.logDebug("002025.2","Cleaning chunk: " + chunk.getId());
+        //LoggerProject.logDebug("002025.2","Cleaning chunk: " + chunk.getId());
 
         final Map<Block, OreClusterConfigModel> ORE_CONFIGS = config.getOreConfigs();
         final Set<Block> CLEANABLE_ORES = ORE_CONFIGS.keySet().stream().filter( oreName -> {
@@ -506,7 +499,6 @@ public class OreClusterManager {
             //Maybehas check for ores here, maybe
 
             //iterate over x, y, z
-            //LoggerProject.logDebug("002028.1","Starting sections: " + i);
             PalettedContainer<BlockState> states = section.getStates();
 
             for (int x = 0; x < SECTION_SZ; x++)
@@ -543,7 +535,8 @@ public class OreClusterManager {
         }
         //END SECTIONS LOOP
 
-        LoggerProject.logDebug("002030.1","Finished iterating chunk for: " + chunk.getId());
+        //LoggerProject.logDebug("002030.1","Finished iterating chunk for: " + chunk.getId()
+        //+ " with total ores: " + count );
 
         //Save BlockPos to generate CLUSTER_TYPES on to ManagedOreClusterChunk
         for( Block b : CLUSTER_TYPES.keySet())
@@ -566,7 +559,7 @@ public class OreClusterManager {
         }
 
         /* END CHOSING CLUSTER SPAWNPOINTS */
-        LoggerProject.logDebug("002030.2","Finished iterating chunk for: " + chunk.getId());
+        //LoggerProject.logDebug("002030.2","Finished iterating chunk for: " + chunk.getId());
 
         /**
          * Now its time to clean out the cluster and make real time changes
@@ -586,13 +579,13 @@ public class OreClusterManager {
             Block[] replacements = ORE_CONFIGS.get(b).oreClusterReplaceableEmptyBlocks.toArray(new Block[0]);
             Float modifier = ORE_CONFIGS.get(b).oreVeinModifier;
 
-            //need to replace 1-f blocks in the ores list with a random replacement block
+            //need to replace 1-f blocks in the ores list with the first replacement block in the array
             for( int j = 0; j < oreVertices.size; j++)
             {
                 if( randSeqClusterBuildGen.nextFloat() < modifier )
                     continue;
 
-                Block replacement = replacements[ j % replacements.length ];
+                Block replacement = replacements[0];
                 BlockPos bp = new BlockPos(oreVertices.getX(j), oreVertices.getY(j), oreVertices.getZ(j));
                 blockStateUpdates.add(Pair.of(replacement, bp));
             }
@@ -602,7 +595,7 @@ public class OreClusterManager {
         //levelChunk.setBlockState(ores[j], replacement.defaultBlockState(), false);
         chunk.setStatus(ManagedOreClusterChunk.ClusterStatus.CLEANED);
 
-        LoggerProject.logDebug("002024","Finished cleaning clusters for: " + chunk.getId());
+        //LoggerProject.logDebug("002024","Finished cleaning clusters for: " + chunk.getId());
 
     }
     //END handleCleanClusters
