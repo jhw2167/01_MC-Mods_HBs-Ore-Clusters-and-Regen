@@ -34,7 +34,7 @@ public class OreClusterConfigModel extends ConfigModelBase {
     public Integer maxChunksBetweenOreClusters = COreClusters.MAX_CHUNKS_BETWEEN_ORE_CLUSTERS;
     public Float oreVeinModifier = COreClusters.DEF_ORE_VEIN_MODIFIER;
     public HashSet<Block> oreClusterNonReplaceableBlocks = processStringIntoBlockHashSet(COreClusters.ORE_CLUSTER_NONREPLACEABLE_BLOCKS);
-    public HashSet<Block> oreClusterReplaceableEmptyBlocks = processStringIntoBlockHashSet(COreClusters.ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS);
+    public HashSet<Block> oreClusterReplaceableEmptyBlocks = processReplaceableEmptyBlocks(COreClusters.ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS);
     public Boolean oreClusterDoesRegenerate = COreClusters.REGENERATE_ORE_CLUSTERS;
     public Map<String, Integer> oreClusterRegenPeriods = null;
 
@@ -101,8 +101,16 @@ public class OreClusterConfigModel extends ConfigModelBase {
 
     public static HashSet<Block> processReplaceableEmptyBlocks(String replaceableBlocks) {
         HashSet<Block> blocks = processStringIntoBlockHashSet(replaceableBlocks);
+        LoggerProject.logDebug("004000", "Blocks: " + blocks);
+        if( blocks == null )
+            blocks = new HashSet<>();
+
+        if( blocks.isEmpty() || blocks.contains(null))
+            blocks.remove(null);
+
         if( blocks.isEmpty() )
             blocks.add(BlockUtil.blockNameToBlock("minecraft:air"));
+
         return blocks;
     }
 
@@ -323,7 +331,7 @@ public class OreClusterConfigModel extends ConfigModelBase {
     }
 
     public void setOreClusterReplaceableEmptyBlocks(String oreClusterReplaceableEmptyBlocks) {
-        this.oreClusterReplaceableEmptyBlocks = processStringIntoBlockHashSet(oreClusterReplaceableEmptyBlocks);
+        this.oreClusterReplaceableEmptyBlocks = processReplaceableEmptyBlocks(oreClusterReplaceableEmptyBlocks);
     }
 
     public void setOreClusterDoesRegenerate(String oreClusterDoesRegenerate) {

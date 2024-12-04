@@ -3,6 +3,7 @@ package com.holybuckets.orecluster.core;
 import com.holybuckets.foundation.GeneralRealTimeConfig;
 import com.holybuckets.foundation.HolyBucketsUtility;
 import com.holybuckets.foundation.HolyBucketsUtility.*;
+import com.holybuckets.foundation.model.ManagedChunk;
 import com.holybuckets.orecluster.LoggerProject;
 import com.holybuckets.orecluster.ModRealTimeConfig;
 import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
@@ -102,7 +103,8 @@ public class OreClusterManager {
     private final ExecutorService threadPoolClusterDetermination;
     private final ThreadPoolExecutor threadPoolClusterCleaning;
     private final ThreadPoolExecutor threadPoolClusterGenerating;
-    private final ExecutorService threadPoolChunkProcessing;
+    private final ThreadPoolExecutor threadPoolChunkProcessing;
+    private final ThreadPoolExecutor threadPoolChunkEditing;
 
 
 
@@ -142,6 +144,9 @@ public class OreClusterManager {
 
         //I want a fixed threadpool with a blocking queue
         this.threadPoolChunkProcessing = new ThreadPoolExecutor(1, 1,
+            300L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadPoolExecutor.DiscardPolicy());
+
+        this.threadPoolChunkEditing = new ThreadPoolExecutor(1, 1,
             300L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadPoolExecutor.DiscardPolicy());
 
         init(level);
@@ -195,7 +200,8 @@ public class OreClusterManager {
         loadedChunks.put(chunkId, ManagedOreClusterChunk.getInstance( level, chunk) );
         loadedChunks.get(chunkId).setChunk(chunk);
         chunksPendingHandling.add(chunkId);
-        threadPoolLoadedChunks.submit(this::onNewlyAddedChunk);
+        threadPoolLoadedChunks.submit(this::workerThreadLoadedChunk);
+        threadPoolChunkEditing.submit(this::workerThreadEditChunk);
         //LoggerProject.logInfo("002001", "Chunk " + chunkId + " added to queue size " + chunksPendingHandling.size());
 
     }
@@ -213,7 +219,7 @@ public class OreClusterManager {
      * Newly loaded chunks are polled in a queue awaiting batch handling
      * If the chunk has already been processed it is skipped
      */
-    private void onNewlyAddedChunk()
+    private void workerThreadLoadedChunk()
     {
 
         try
@@ -329,7 +335,7 @@ public class OreClusterManager {
 
                 if( chunksToClean.size() == 0 ) {
                     sleep(1000);
-                    LoggerProject.logDebug("002023", "workerThreadCleanClusters sleeping");
+                    //LoggerProject.logDebug("002023", "workerThreadCleanClusters sleeping");
                     continue;
                 }
 
@@ -338,7 +344,7 @@ public class OreClusterManager {
                 for( ManagedOreClusterChunk chunk : chunksToClean)
                 {
                         try {
-                            handleClusterCleaning(chunk);
+                            editManagedChunk(chunk.getId(), this::handleClusterCleaning);
                         }
                         catch (Exception e)
                         {
@@ -365,7 +371,7 @@ public class OreClusterManager {
     /**
      * Description: Polls prepared chunks from chunksPendingGenerationQueue
      */
-    private  void workerThreadGenerateClusters()
+    private void workerThreadGenerateClusters()
     {
         Throwable thrown = null;
         try
@@ -386,6 +392,49 @@ public class OreClusterManager {
         }
         finally {
             LoggerProject.threadExited("002007",this, thrown);
+        }
+    }
+    //END workerThreadGenerateClusters
+
+    private void workerThreadEditChunk()
+    {
+        Throwable thrown = null;
+        try
+        {
+            while( managerRunning )
+            {
+                //Sleep if loaded chunks is empty, else iterate over them
+                if( loadedChunks.isEmpty() )
+                {
+                    sleep(1000);
+                    continue;
+                }
+
+                for( ManagedOreClusterChunk chunk : loadedChunks.values())
+                {
+                    Queue<Pair<Block, BlockPos>> blockUpdates = chunk.getBlockStateUpdates();
+                    if( blockUpdates == null || blockUpdates.size() == 0 )
+                        continue;
+                    LoggerProject.logDebug("002029.1","Editing chunk: " + chunk.getId() + " with " + blockUpdates.size() + " updates");
+                    editManagedChunk(chunk.getId(), c -> {
+                        Queue<Pair<Block, BlockPos>> updates = c.getBlockStateUpdates();
+                        LoggerProject.logDebug("002029.2","Editing inner chunk: " + c.getId() + " with " + updates.size() + " updates");
+                        boolean res = ManagedChunk.updateChunkBlocks(c.getChunk(), updates);
+                        LoggerProject.logDebug("002029.3","Result inner chunk: " + c.getId() + " with " + res);
+
+                        if( res )
+                            updates.clear();
+                    });
+
+                }
+            }
+
+        }
+        catch (Exception e) {
+            thrown = e;
+        }
+        finally {
+            LoggerProject.threadExited("002031",this, thrown);
         }
     }
 
@@ -466,7 +515,7 @@ public class OreClusterManager {
     private void handleClusterCleaning( ManagedOreClusterChunk chunk )
     {
 
-        //LoggerProject.logDebug("002025.2","Cleaning chunk: " + chunk.getId());
+        LoggerProject.logDebug("002025","Cleaning chunk: " + chunk.getId());
 
         final Map<Block, OreClusterConfigModel> ORE_CONFIGS = config.getOreConfigs();
         final Set<Block> CLEANABLE_ORES = ORE_CONFIGS.keySet().stream().filter( oreName -> {
@@ -582,12 +631,18 @@ public class OreClusterManager {
             //need to replace 1-f blocks in the ores list with the first replacement block in the array
             for( int j = 0; j < oreVertices.size; j++)
             {
-                if( randSeqClusterBuildGen.nextFloat() < modifier )
-                    continue;
+                //If we want mod ~ 0.8 (80% of ore to spawn) then 20% of the time we will replace the block
+                if( randSeqClusterBuildGen.nextFloat() > modifier )
+                {
 
-                Block replacement = replacements[0];
-                BlockPos bp = new BlockPos(oreVertices.getX(j), oreVertices.getY(j), oreVertices.getZ(j));
-                blockStateUpdates.add(Pair.of(replacement, bp));
+                    Block replacement = replacements[0];
+                    BlockPos bp = new BlockPos(oreVertices.getX(j), oreVertices.getY(j), oreVertices.getZ(j));
+                    blockStateUpdates.add(Pair.of(replacement, bp));
+
+                    LoggerProject.logDebug("002032","Replacing block at: " + oreVertices.getX(j) + "," + oreVertices.getY(j) + "," + oreVertices.getZ(j));
+                    //levelChunk.setBlockState(bp, replacement.defaultBlockState(), false);
+                }
+
             }
         }
 

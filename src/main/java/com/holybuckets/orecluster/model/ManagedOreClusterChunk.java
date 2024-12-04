@@ -21,6 +21,7 @@ import org.joml.Vector3d;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Class: ManagedChunk
@@ -67,7 +68,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     private HashMap<Block, BlockPos> clusterTypes;
     private Map<Block, BlockPos[]> originalOres;
 
-    private Queue<Pair<Block, BlockPos>> blockStateUpdates;
+    private ConcurrentLinkedQueue<Pair<Block, BlockPos>> blockStateUpdates;
 
 
     //private List<Pair<String, Vec3i>> clusters;
@@ -90,7 +91,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.pos = null;
         this.status = ClusterStatus.NONE;
         this.clusterTypes = new HashMap<Block, BlockPos>();
-        this.blockStateUpdates = new LinkedList<Pair<Block, BlockPos>>();
+        this.blockStateUpdates = new ConcurrentLinkedQueue<>();
 
     }
 
