@@ -10,15 +10,22 @@ import com.holybuckets.foundation.modelInterface.IMangedChunkData;
 import com.holybuckets.foundation.modelInterface.IMangedChunkManager;
 import com.holybuckets.orecluster.core.OreClusterManager;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.event.level.ChunkEvent;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class ManagedChunk implements IMangedChunkData {
 
@@ -230,6 +237,48 @@ public class ManagedChunk implements IMangedChunkData {
 
         //loadedChunks.remove(chunkId);
 
+    }
+
+    /**
+     * Update the block states of a chunk. It is important that it is synchronized to prevent
+     * concurrent modifications to the chunk. The block at the given position is updated to the requisite
+     * block state.
+     * @param chunk
+     * @param updates
+     * @return true if successful, false if some element was null
+     */
+    public static synchronized boolean updateChunkBlockStates(LevelChunk chunk, Queue<Pair<BlockState, BlockPos>> updates)
+    {
+        if( chunk == null || updates == null || updates.size() == 0 )
+            return false;
+
+        LoggerBase.logDebug(null, "002022", "Updating chunk block states: " + HolyBucketsUtility.ChunkUtil.getId( chunk));
+
+        for(Pair<BlockState, BlockPos> update : updates) {
+            chunk.setBlockState(update.getRight(), update.getLeft(), false);
+        }
+
+        return true;
+    }
+
+    /**
+     * Update the blocks of a chunk. Calls updateChunkBlockStates with the default block state of the block.
+     * @param chunk
+     * @param updates
+     * @return
+     */
+    public static synchronized boolean updateChunkBlocks(LevelChunk chunk, Queue<Pair<Block, BlockPos>> updates)
+    {
+        if( chunk == null || updates == null || updates.size() == 0 )
+            return false;
+
+        Queue<Pair<BlockState, BlockPos>> blockStates = new LinkedList<>();
+
+        for(Pair<Block, BlockPos> update : updates) {
+            blockStates.add( Pair.of(update.getLeft().defaultBlockState(), update.getRight()) );
+        }
+
+        return updateChunkBlockStates(chunk, blockStates);
     }
 
 

@@ -13,7 +13,7 @@ public class LoggerBase {
     private static final int MAX_LOG_HISTORY = 10000; // Limit the history size
 
     // Sampling configuration
-    private static final float SAMPLE_RATE = 0.4f; // Sample 10% of messages by default
+    private static final float SAMPLE_RATE = 0.2f; // Sample 10% of messages by default
     private static String FILTER_TYPE = null; // Only log messages of this type if set
     private static String FILTER_ID = null; // Only log messages with this ID if set
     private static String FILTER_PREFIX = null; // Only log messages with this prefix if set
@@ -55,11 +55,11 @@ public class LoggerBase {
      */
 
     protected static String buildBaseConsoleMessage(String id, String prefix, String message) {
-        return "[" + prefix + "] " + "(" + id + "): " + message;
+        return "[" + prefix + "] " + "( " + id + " ): " + message;
     }
 
     protected static String buildBaseConsoleMessage(LogEntry entry) {
-        return "[" + entry.prefix + "] " + "(" + entry.id + "): " + entry.message;
+        return buildBaseConsoleMessage(entry.id, entry.prefix, entry.message);
     }
 
     //create a statatic final hashmap called FILTER_RULES that holds log entries
@@ -75,6 +75,8 @@ public class LoggerBase {
         FILTER_RULES.put("003006", new LogEntry(null, null, null, "minecraft"));
         FILTER_RULES.put("002020", new LogEntry(null, null, null, null));
         FILTER_RULES.put("002004", new LogEntry(null, null, null, null));
+        FILTER_RULES.put("002025", new LogEntry(null, null, null, null));
+        FILTER_RULES.put("002032", new LogEntry(null, null, null, null));
 
     }
 
@@ -100,7 +102,7 @@ public class LoggerBase {
     private static final HashSet<String> EXCLUDE_PROJECTS = new HashSet<>(
         Arrays.asList(
             //OreClustersAndRegenMain.NAME,
-            HolyBucketsUtility.NAME,
+            //HolyBucketsUtility.NAME,
             ""
         )
     );

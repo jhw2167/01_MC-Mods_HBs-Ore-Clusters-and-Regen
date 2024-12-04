@@ -67,6 +67,7 @@ public class HolyBucketsUtility {
             }
 
             String formattedBlockString = "Block{";
+            blockStringName = blockStringName.trim();
             if( blockStringName.contains(":"))
                 formattedBlockString += blockStringName + "}";
             else
@@ -206,9 +207,11 @@ public class HolyBucketsUtility {
         private int[] Z;
 
         public int size;
+        public final int MAX_SIZE;
 
         public Fast3DArray(int size) {
-            this.size = size;
+            this.size = 0;
+            this.MAX_SIZE = size;
             X = new int[size];
             Y = new int[size];
             Z = new int[size];
@@ -216,7 +219,7 @@ public class HolyBucketsUtility {
 
         public void add(int x, int y, int z)
         {
-            if( size >= X.length)
+            if( size >= MAX_SIZE)
                 return;
 
             X[size] = x;
@@ -232,7 +235,7 @@ public class HolyBucketsUtility {
          */
         public int[][] get(int index) {
 
-            if( index >= size || index < 0)
+            if( index >= MAX_SIZE || index < 0)
                 return null;
             return new int[][] { { X[index], Y[index], Z[index] } };
         }
