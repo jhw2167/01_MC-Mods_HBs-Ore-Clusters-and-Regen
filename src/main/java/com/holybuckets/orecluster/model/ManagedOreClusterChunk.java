@@ -1,6 +1,7 @@
 package com.holybuckets.orecluster.model;
 
 import com.google.gson.Gson;
+import com.holybuckets.foundation.HolyBucketsUtility;
 import com.holybuckets.foundation.HolyBucketsUtility.ChunkUtil;
 import com.holybuckets.foundation.model.ManagedChunk;
 import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
@@ -13,9 +14,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3d;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -65,7 +67,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     private HashMap<Block, BlockPos> clusterTypes;
     private Map<Block, BlockPos[]> originalOres;
 
-    private Queue<Pair<BlockState, BlockPos>> blockStateUpdates;
+    private Queue<Pair<Block, BlockPos>> blockStateUpdates;
 
 
     //private List<Pair<String, Vec3i>> clusters;
@@ -88,7 +90,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.pos = null;
         this.status = ClusterStatus.NONE;
         this.clusterTypes = new HashMap<Block, BlockPos>();
-        this.blockStateUpdates = new LinkedList<>();
+        this.blockStateUpdates = new LinkedList<Pair<Block, BlockPos>>();
 
     }
 
@@ -165,7 +167,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         return status;
     }
 
-
+    @NotNull
     public HashMap<Block, BlockPos> getClusterTypes() {
         return clusterTypes;
     }
@@ -178,7 +180,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         return this.clusterTypes.size() > 0;
     }
 
-    public Queue<Pair<BlockState, BlockPos>> getBlockStateUpdates() {
+    public Queue<Pair<Block, BlockPos>> getBlockStateUpdates() {
         return blockStateUpdates;
     }
 
@@ -271,6 +273,23 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
             details.putString("clusterTypes", clusterTypes);
         }
 
+        //blockStateUpdates
+        {
+            StringBuilder blockStateUpdates = new StringBuilder();
+            //blockPos andBlockState are private and cant be accesed by gson, do manually
+            for(Pair<Block, BlockPos> pair : this.blockStateUpdates)
+            {
+                String block = HolyBucketsUtility.BlockUtil.blockToString(pair.getLeft());
+                BlockPos pos = pair.getRight();
+                Vector3d vec = new Vector3d(pos.getX(), pos.getY(), pos.getZ());
+                blockStateUpdates.append(block + ":");
+                blockStateUpdates.append(gson.toJson(vec));
+            }
+            LoggerProject.logDebug("003009", "Serializing blockStateUpdates: " + blockStateUpdates);
+            details.putString("blockStateUpdates", blockStateUpdates.toString());
+
+        }
+
 
         if(this.id != null)
             wrapper.put(NBT_KEY_HEADER, details);
@@ -309,6 +328,12 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
             String clusterTypes = wrapper.getString("clusterTypes");
             this.clusterTypes = gson.fromJson(clusterTypes, HashMap.class);
             LoggerProject.logDebug("003008", "Deserializing clusterTypes: " + clusterTypes);
+        }
+
+        //Block State Updates
+        {
+            String blockStateUpdates = wrapper.getString("blockStateUpdates");
+            String[] pairs = blockStateUpdates.split(",");
         }
 
 

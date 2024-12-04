@@ -136,12 +136,30 @@ jarJar {
 	- Test code still compiles
         - Convert Section Pos to correct world pos for block state replacement
         - Convert replacement blocks to actual blocks
-        - Find way to check if chunk gets unloaded
         - Check error handling if block state setting fails
 
 
 21.
 ---
+
+		- Determine what exception is being thrown that prevents chunks from completing cleaning
+		- Maybe put safeguard in if exception is thrown multiple times, surround handleClusterCleaning
+		- Ensure cleaning calculations are performant in the background
+		
+		- Write method where loaded chunks are repeated checked for updates to "updateBlockStates" array
+		- The singular method that will actually edit chunks
+		- 
+
+		- write chunkBuildingAlgorithm, just build a big cube
+		- Will need to load adjacent chunks when building cluster to feel natural
+		- Or just add them to the other cchunks queue, that may be tough
+
+		- Determine "ticksLastRefreshed" parameter on ManagedOreClusterChunk
+		- tickLastRefreshed < LAST_REGEN_TICK then do a refresh, set tickLastRefreshed to LAST_REGEN_TICK
+		- when currentGameTick > NEXT_REGEN_TICK, set LAST_REGEN_TICK == NEXT_REGEN_TICK
+			- calculate NEXT_REGEN_TICK += PERIOD_LENGTH_TICKS
+
+	      - Find way to check if chunk gets unloaded
 
 22.
 ---
