@@ -52,8 +52,8 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         NONE,
         DETERMINED,
         CLEANED,
-        GENERATED,
-        MANIFESTED
+        PENDING_GENERATION,
+        GENERATED
     }
 
     static {

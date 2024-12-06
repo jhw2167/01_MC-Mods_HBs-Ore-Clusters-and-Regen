@@ -55,10 +55,7 @@ public class COreClusters extends ConfigBase {
             public final OreClusterConfigModel defaultIronOreClusterConfig = new OreClusterConfigModel(Blocks.IRON_ORE );
             public final OreClusterConfigModel defaultDiamondOreClusterConfig = new OreClusterConfigModel(Blocks.DIAMOND_ORE);
 
-        public final ConfigList oreClusters = list(new ArrayList<String>(Arrays.asList(
-        defaultIronOreClusterConfig.serialize(),
-         defaultDiamondOreClusterConfig.serialize()
-         )), "oreClusters", Comments.ORE_CLUSTERS);
+        public final ConfigString oreClusters = s("", "HBOreClustersAndRegenConfigs.json", Comments.ORE_CLUSTERS);
 
 
     @Override
@@ -95,12 +92,7 @@ public class COreClusters extends ConfigBase {
         public static final String ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS = "Block used to fill in the ore cluster shape when we want the cluster to be more sparse " +
          "this field can take multiple comma seperated blocks; but only the first block will be used to replace ore veins if ORE_VEIN_MODIFIER is below 1";
         public static final String REGENERATE_ORE_CLUSTERS = "Flag indicating if ore clusters should regenerate by default. Overriden by specific ore settings";
-        public static final String ORE_CLUSTERS = " The formatting for this property sucks unfortunately, but it all MUST be on one line or" +
-         " it will crash your game, edit it elsewhere and paste it back as a single line." +
-         " Array Pseudo JSON structures that allow you to override the default values" +
-         " above for a particular ore block. Any ore, or really any block at all can be added to this config and " +
-          "clusters will be created from it as long as it exists naturally in the terrain generation." +
-           " Use the examples to help set appropriate configurations ";
+        public static final String ORE_CLUSTERS = "File path to .json file where the properties of one or more specific ore clusters are listed in a JSON array";
 
 
         public static final String REGENERATE_ORE_CLUSTER_PERIOD_LENGTHS = "Comma separated list of integer days it takes for clusters to regenerate their ores." +
