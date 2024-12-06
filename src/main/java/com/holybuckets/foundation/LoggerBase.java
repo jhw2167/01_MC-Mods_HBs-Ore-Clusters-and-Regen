@@ -12,6 +12,7 @@ public class LoggerBase {
     private static List<LogEntry> logHistory = new ArrayList<>();
     private static final int MAX_LOG_HISTORY = 10000; // Limit the history size
 
+
     // Sampling configuration
     private static final float SAMPLE_RATE = 0.2f; // Sample 10% of messages by default
     private static String FILTER_TYPE = null; // Only log messages of this type if set
@@ -46,7 +47,7 @@ public class LoggerBase {
 
     public static final Logger LOGGER = LogUtils.getLogger();
     public static final String PREFIX =  HolyBucketsUtility.NAME;
-    public static final Boolean DEBUG_MODE = true;
+    public static final Boolean DEBUG_MODE = false;
 
     /*
      *  1. We want to have static methods for logging info, warnings, and errors to server console.
