@@ -18,6 +18,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraftforge.event.level.ChunkEvent;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -254,9 +255,19 @@ public class ManagedChunk implements IMangedChunkData {
 
         LoggerBase.logDebug(null, "002022", "Updating chunk block states: " + HolyBucketsUtility.ChunkUtil.getId( chunk));
 
-        for(Pair<BlockState, BlockPos> update : updates) {
-            chunk.setBlockState(update.getRight(), update.getLeft(), false);
+        try
+        {
+            for(Pair<BlockState, BlockPos> update : updates) {
+                chunk.setBlockState(update.getRight(), update.getLeft(), false);
+            }
         }
+        catch (IllegalStateException e)
+        {
+            LoggerBase.logWarning(null, "002023", "Illegal state exception " +
+             "updating chunk block states. Updates may be replayed later. At Chunk: " + HolyBucketsUtility.ChunkUtil.getId( chunk));
+            return false;
+        }
+
 
         return true;
     }
