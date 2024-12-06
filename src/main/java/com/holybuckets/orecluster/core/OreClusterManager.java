@@ -335,7 +335,7 @@ public class OreClusterManager {
                 //LoggerProject.logDebug("002030","workerThreadCleanClusters cleaning chunks: " + chunksToClean.size());
 
                 if( chunksToClean.size() == 0 ) {
-                    sleep(1000);
+                    sleep(10);
                     //LoggerProject.logDebug("002023", "workerThreadCleanClusters sleeping");
                     continue;
                 }
@@ -407,7 +407,7 @@ public class OreClusterManager {
                 //Sleep if loaded chunks is empty, else iterate over them
                 if( loadedChunks.isEmpty() )
                 {
-                    sleep(1000);
+                    sleep(10);
                     continue;
                 }
 
@@ -416,10 +416,7 @@ public class OreClusterManager {
                     Queue<Pair<Block, BlockPos>> blockUpdates = chunk.getBlockStateUpdates();
                     if( blockUpdates == null || blockUpdates.size() == 0 )
                         continue;
-                    if( chunk.getId() == "1,-5")
-                    {
-                        int i = 0;
-                    }
+
                     //LoggerProject.logDebug("002029.1","Editing chunk: " + chunk.getId() + " with " + blockUpdates.size() + " updates");
                     editManagedChunk(chunk, c -> {
                         boolean isSuccessful = ManagedChunk.updateChunkBlocks(c.getChunk(), c.getBlockStateUpdates());
@@ -516,11 +513,6 @@ public class OreClusterManager {
     private void handleClusterCleaning( ManagedOreClusterChunk chunk )
     {
         try {
-            if(chunk.getId().equals("185,-27") || chunk.getId().equals("184,-27"))
-            {
-                int i = 0;
-            }
-
         //LoggerProject.logDebug("002025", "Cleaning chunk: " + chunk.getId());
 
         final Map<Block, OreClusterConfigModel> ORE_CONFIGS = config.getOreConfigs();
@@ -589,7 +581,8 @@ public class OreClusterManager {
         //+ " with total ores: " + count );
 
         //Save BlockPos to generate CLUSTER_TYPES on to ManagedOreClusterChunk
-        for (Block b : CLUSTER_TYPES.keySet()) {
+        for (Block b : CLUSTER_TYPES.keySet())
+        {
             HolyBucketsUtility.Fast3DArray oreVertices = oreVerticesByBlock.get(b);
             if (oreVertices == null)
                 continue;
@@ -745,6 +738,7 @@ public class OreClusterManager {
 
     /**
      * Edits a ManagedChunk object from determinedChunks with a consumer, ensuring each object is edited atomically
+     * Returns an empty optional if the chunk is locked or null is passed
      * @param chunk
      * @param consumer
      * @return

@@ -25,7 +25,7 @@ public class LoggerProject extends LoggerBase {
 
     public static void logDebug(String logId, String string) {
         if (DEBUG_MODE)
-            LoggerBase.logInfo(PREFIX, logId, string);
+            LoggerBase.logDebug(PREFIX, logId, string);
     }
 
     public static void logInit(String logId, String string) {
