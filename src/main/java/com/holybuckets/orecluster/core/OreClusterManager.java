@@ -411,7 +411,18 @@ public class OreClusterManager {
                     continue;
                 }
 
-                for( ManagedOreClusterChunk chunk : loadedChunks.values())
+                //filter out chunks with status none or determined
+                final Set<ManagedOreClusterChunk.ClusterStatus> BAD_STATUS = new HashSet<>(
+                    Arrays.asList(
+                    ManagedOreClusterChunk.ClusterStatus.NONE,
+                    ManagedOreClusterChunk.ClusterStatus.DETERMINED,
+                    ManagedOreClusterChunk.ClusterStatus.GENERATED
+                    ));
+
+                List<ManagedOreClusterChunk> readyChunks = loadedChunks.values().stream().filter(
+                    chunk -> !BAD_STATUS.contains(chunk.getStatus())).toList();
+
+                for( ManagedOreClusterChunk chunk : readyChunks )
                 {
                     Queue<Pair<Block, BlockPos>> blockUpdates = chunk.getBlockStateUpdates();
                     if( blockUpdates == null || blockUpdates.size() == 0 )
@@ -420,8 +431,10 @@ public class OreClusterManager {
                     //LoggerProject.logDebug("002029.1","Editing chunk: " + chunk.getId() + " with " + blockUpdates.size() + " updates");
                     editManagedChunk(chunk, c -> {
                         boolean isSuccessful = ManagedChunk.updateChunkBlocks(c.getChunk(), c.getBlockStateUpdates());
-                        if( isSuccessful )
+                        if( isSuccessful ) {
                             c.getBlockStateUpdates().clear();
+                            c.setStatus(ManagedOreClusterChunk.ClusterStatus.GENERATED);
+                        }
                     });
 
                 }
