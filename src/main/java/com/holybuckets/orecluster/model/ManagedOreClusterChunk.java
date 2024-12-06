@@ -22,6 +22,7 @@ import org.joml.Vector3d;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Class: ManagedChunk
@@ -66,10 +67,11 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     private ChunkPos pos;
     private ClusterStatus status;
     private HashMap<Block, BlockPos> clusterTypes;
-    private Map<Block, BlockPos[]> originalOres;
+    private Map<Block, List<BlockPos>> originalOres;
 
     private ConcurrentLinkedQueue<Pair<Block, BlockPos>> blockStateUpdates;
 
+    private ReentrantLock lock = new ReentrantLock();
 
     //private List<Pair<String, Vec3i>> clusters;
 
@@ -77,7 +79,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     /**
         Dummy Constructor for using getInstance, should only have local scope
      */
-    public ManagedOreClusterChunk() {
+    private ManagedOreClusterChunk() {
         super();
     }
 
@@ -90,8 +92,9 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.id = null;
         this.pos = null;
         this.status = ClusterStatus.NONE;
-        this.clusterTypes = new HashMap<Block, BlockPos>();
+        this.clusterTypes = null;
         this.blockStateUpdates = new ConcurrentLinkedQueue<>();
+        this.originalOres = new HashMap<>();
 
     }
 
@@ -170,11 +173,9 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
 
     @NotNull
     public HashMap<Block, BlockPos> getClusterTypes() {
+    if(this.clusterTypes == null)
+        return new HashMap<>();
         return clusterTypes;
-    }
-
-    public Map<Block, BlockPos[]> getOriginalOres() {
-        return originalOres;
     }
 
     public boolean hasClusters() {
@@ -185,6 +186,13 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         return blockStateUpdates;
     }
 
+    public Map<Block, List<BlockPos>> getOriginalOres() {
+        return originalOres;
+    }
+
+    public synchronized ReentrantLock getLock() {
+        return lock;
+    }
 
     /** Setters **/
 
@@ -216,14 +224,18 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         if( clusterMap.size() == 0 )
             return;
 
+        if( this.clusterTypes == null )
+            this.clusterTypes = new HashMap<>();
+
         this.clusterTypes.putAll( clusterMap );
         //LoggerProject.logDebug("003010", "Adding clusterTypes: " + this.clusterTypes);
     }
 
-    public void setOriginalOres(Map<Block, BlockPos[]> originalOres) {
-        this.originalOres = originalOres;
+    public void addBlockStateUpdate(Block block, BlockPos pos) {
+        List<BlockPos> ores = this.originalOres.getOrDefault(block, new LinkedList<>(Arrays.asList(pos)));
+        ores.add(pos);
+        this.blockStateUpdates.add( Pair.of(block, pos) );
     }
-
 
     @Override
     public boolean isInit(String subClass) {

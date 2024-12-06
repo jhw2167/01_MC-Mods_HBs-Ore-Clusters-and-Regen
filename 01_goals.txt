@@ -162,6 +162,16 @@ jarJar {
 			- calculate NEXT_REGEN_TICK += PERIOD_LENGTH_TICKS
 
 	      - Find way to check if chunk gets unloaded
+		-  THREADS CONTINUE TO RUN AFTER WORLD IS SHUTDOWN, NEEDS TO QUIT
+
+		
+-17 100 10
+49 100 -63
+141 100 -42
+-203 100 -59
+ 100
+ 100
+ 100	
 
 22.
 ---
