@@ -2,6 +2,7 @@ package com.holybuckets.foundation;
 
 
 import com.holybuckets.foundation.database.DatabaseManager;
+import com.holybuckets.foundation.modelInterface.IStringSerializable;
 import com.holybuckets.orecluster.LoggerProject;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
 import net.minecraft.nbt.CompoundTag;
@@ -13,6 +14,10 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Iterator;
 
 /**
@@ -195,6 +200,113 @@ public class HolyBucketsUtility {
 
 
     }
+
+    public class FileIO {
+
+        /**
+         * - Attempts to load the HBOreClustersAndRegenConfigs.json file from the config directory
+         * - First checks if a config file exists in the <serverDirectory>/config
+         * - Provided string may be a relative path or a full path from the root directory.
+         * -
+         * @param level
+         * @param jsonFilePathConfig
+         * @param defaultData
+         * @return String
+         */
+        public static String loadJsonConfig(LevelAccessor level, ConfigBase.ConfigString jsonFilePathConfig,  IStringSerializable defaultData)
+        {
+            final String providedFileName = jsonFilePathConfig.get();
+            final String defaultFileName = jsonFilePathConfig.getDefault();
+            final File serverDirectory = level.getServer().getServerDirectory();
+
+            File configFile = new File(serverDirectory, providedFileName);
+
+            //Use gson to serialize the default values and write to the file
+            final String DEFAULT_DATA = defaultData.serialize();
+
+            if( !configFile.exists() )  //User set file
+            {
+                final StringBuilder warnNoUserFile = new StringBuilder();
+                warnNoUserFile.append("Could not find the provided ore cluster config file at path: ");
+                warnNoUserFile.append(configFile.getAbsolutePath());
+                warnNoUserFile.append(". Provided file name from serverConfig/hbs_ore_clusters_and_regen-server.toml: ");
+                warnNoUserFile.append(providedFileName);
+                warnNoUserFile.append(". Attempting to load the default file at: ");
+                warnNoUserFile.append(defaultFileName);
+                LoggerProject.logWarning("000001",  warnNoUserFile.toString() );
+
+                configFile = new File(serverDirectory, defaultFileName);
+                if( !configFile.exists() )  //default file
+                {
+                    final StringBuilder warnNoDefaultFile = new StringBuilder();
+                    warnNoDefaultFile.append("Could not find the default ore cluster JSON config file at path: ");
+                    warnNoDefaultFile.append(configFile.getAbsolutePath());
+                    warnNoDefaultFile.append(". A default file will be created for future reference.");
+                    LoggerProject.logError("000002", warnNoDefaultFile.toString());
+
+                    try {
+                        configFile.createNewFile();
+                    }
+                    catch (Exception e)
+                    {
+                        final StringBuilder error = new StringBuilder();
+                        error.append("Could not create the default ore cluster JSON config file at path: ");
+                        error.append(configFile.getAbsolutePath());
+                        error.append(" due to an unknown exception. The game will still run using default values from memory.");
+                        error.append("  You can try running the game as an administrator or update the file permissions to fix this issue.");
+                        LoggerProject.logError("000003", error.toString());
+
+                        return DEFAULT_DATA;
+                    }
+
+                    writeDefaultJsonOreConfigsToFile(configFile, DEFAULT_DATA);
+                }
+
+            }
+
+            /**
+             * At this point, configFile exists in some capacity, lets check
+             * if its valid JSON or not by reading it in.
+             */
+            String jsonOreConfigs = "";
+            try {
+                //Read line by line into a single string
+                jsonOreConfigs = Files.readString(Paths.get(configFile.getAbsolutePath()));
+            } catch (IOException e) {
+                final StringBuilder error = new StringBuilder();
+                error.append("Could not read the ore cluster JSON config file at path: ");
+                error.append(configFile.getAbsolutePath());
+                error.append(" due to an unknown exception. The game will still run using default values from memory.");
+                LoggerProject.logError("000004", error.toString());
+
+                return DEFAULT_DATA;
+            }
+
+            return jsonOreConfigs;
+
+        }
+        //END loadJsonOreConfigs
+
+        private static boolean writeDefaultJsonOreConfigsToFile(File configFile, String jsonData)
+        {
+            try {
+                Files.write(Paths.get(configFile.getAbsolutePath()), jsonData.getBytes());
+            } catch (IOException e) {
+                final StringBuilder error = new StringBuilder();
+                error.append("Could not write the default ore cluster JSON config file at path: ");
+                error.append(configFile.getAbsolutePath());
+                error.append(" due to an unknown exception. The game will still run using default values from memory.");
+                error.append("  You can try running the game as an administrator or check the file permissions.");
+                LoggerProject.logError("000004", error.toString());
+                return false;
+            }
+
+            return true;
+        }
+
+    }
+
+
 
     /**
     * Class: Fast3DArray

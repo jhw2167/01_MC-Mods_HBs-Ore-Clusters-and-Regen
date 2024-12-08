@@ -4,8 +4,14 @@ package com.holybuckets.orecluster;
 
 //Forge Imports
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.holybuckets.foundation.ConfigBase;
 import com.holybuckets.foundation.GeneralRealTimeConfig;
+import com.holybuckets.foundation.HolyBucketsUtility;
+import com.holybuckets.foundation.modelInterface.IStringSerializable;
 import com.holybuckets.orecluster.config.COreClusters;
+import com.holybuckets.orecluster.config.model.OreClusterJsonConfig;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.fml.common.Mod;
@@ -13,6 +19,7 @@ import net.minecraftforge.fml.common.Mod;
 //Java Imports
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -21,9 +28,10 @@ import java.util.function.Function;
 //Project imports
 import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
 import com.holybuckets.orecluster.config.AllConfigs;
+import org.openjdk.nashorn.internal.parser.JSONParser;
 
 
-/*
+/**
     * Class: RealTimeConfig
     *
     * Description: The majority of fundamental mod config is in the config package.
@@ -76,22 +84,24 @@ public class ModRealTimeConfig
 
             //Create new oreConfig for each element in cOreClusters list
             oreConfigs = new HashMap<Block, OreClusterConfigModel>();
-            List<String> jsonOreConfigs = loadJsonOreConfigs( level, clusterConfig );
+            String jsonOreConfigData = HolyBucketsUtility.FileIO.loadJsonConfig( level,
+                 clusterConfig.oreClusters , OreClusterJsonConfig.DEFAULT_CONFIG );
+            OreClusterJsonConfig jsonOreConfigs = new OreClusterJsonConfig(jsonOreConfigData);
+
 
             //Default configs will be used for all valid ore clusters unless overwritten
             for( Block validOreClusterBlock : defaultConfig.validOreClusterOreBlocks.stream().toList() )
             {
                 defaultConfig.setOreClusterType(validOreClusterBlock);
-                OreClusterConfigModel oreConfig = new OreClusterConfigModel(defaultConfig.serialize());
+                OreClusterConfigModel oreConfig = new OreClusterConfigModel( OreClusterConfigModel.serialize(defaultConfig) );
                 oreConfigs.put(validOreClusterBlock, oreConfig );
             }
             defaultConfig.setOreClusterType((Block) null);
 
             //Particular configs will overwrite the default data
-            for (String oreConfig : jsonOreConfigs)
+            for (OreClusterConfigModel oreConfig : jsonOreConfigs.getOreClusterConfigs())
             {
-                OreClusterConfigModel cluster = new OreClusterConfigModel(oreConfig);
-                oreConfigs.put(cluster.oreClusterType, cluster);
+                oreConfigs.put(oreConfig.oreClusterType, oreConfig);
             }
 
             //Validate the defaultConfig minSpacingBetweenClusters
@@ -170,122 +180,6 @@ public class ModRealTimeConfig
          }
      }
 
-
-    /**
-     * - Attempts to load the HBOreClustersAndRegenConfigs.json file from the config directory
-     * - First checks if a config file exists in the <serverDirectory>/config
-     * - Provided string may be a relative path or a full path from the root directory.
-     * -
-     * @param level
-     * @param jsonConfigFile
-     * @return
-     */
-    private List<String> loadJsonOreConfigs(LevelAccessor level, COreClusters configs)
-    {
-        final String providedFileName = configs.oreClusters.get();
-        final String defaultFileName = configs.oreClusters.getDefault();
-        File serverDirectory = level.getServer().getServerDirectory();
-
-        File configFile = new File(serverDirectory, providedFileName);
-
-        if( !configFile.exists() )  //User set file
-        {
-            final StringBuilder warnNoUserFile = new StringBuilder();
-            warnNoUserFile.append("Could not find the provided ore cluster config file at path: ");
-            warnNoUserFile.append(configFile.getAbsolutePath());
-            warnNoUserFile.append(". Provided file name from serverConfig/hbs_ore_clusters_and_regen-server.toml: ");
-            warnNoUserFile.append(providedFileName);
-            warnNoUserFile.append(". Attempting to load the default file at: ");
-            warnNoUserFile.append(defaultFileName);
-            LoggerProject.logWarning("000001",  warnNoUserFile.toString() );
-
-            configFile = new File(serverDirectory, defaultFileName);
-            if( !configFile.exists() )  //default file
-            {
-                final StringBuilder warnNoDefaultFile = new StringBuilder();
-                warnNoDefaultFile.append("Could not find the default ore cluster JSON config file at path: ");
-                warnNoDefaultFile.append(configFile.getAbsolutePath());
-                warnNoDefaultFile.append(". A default file will be created for future reference.");
-                LoggerProject.logError("000002", warnNoDefaultFile.toString());
-
-                try {
-                    configFile.createNewFile();
-                }
-                catch (Exception e)
-                {
-                    final StringBuilder error = new StringBuilder();
-                    error.append("Could not create the default ore cluster JSON config file at path: ");
-                    error.append(configFile.getAbsolutePath());
-                    error.append(" due to an unknown exception. The game will still run using default values from memory.");
-                    error.append("  You can try running the game as an administrator or update the file permissions to fix this issue.");
-                    LoggerProject.logError("000003", error.toString());
-
-                    return DEFAULT_ORE_CONFIG_JSON;
-                }
-
-                writeDefaultJsonOreConfigsToFile(configFile);
-            }
-        }
-        /**
-         * At this point, configFile exists in some capacity, lets check
-         * if its valid JSON or not by reading it in.
-         */
-        String jsonOreConfigs = "";
-        try {
-            //Read line by line into a single string
-            jsonOreConfigs = Files.readString(Paths.get(configFile.getAbsolutePath()));
-        } catch (IOException e) {
-            final StringBuilder error = new StringBuilder();
-            error.append("Could not read the ore cluster JSON config file at path: ");
-            error.append(configFile.getAbsolutePath());
-            error.append(" due to an unknown exception. The game will still run using default values from memory.");
-            LoggerProject.logError("000004", error.toString());
-
-            return DEFAULT_ORE_CONFIG_JSON;
-        }
-
-        /**
-         * Now, use gson to convert the string to a LIST of strings
-         */
-        Gson gson = new Gson();
-
-        try {
-            return gson.fromJson(jsonOreConfigs, List.class);
-        } catch (Exception e) {
-            final StringBuilder error = new StringBuilder();
-            error.append("Could not parse the ore cluster JSON config file at path: ");
-            error.append(configFile.getAbsolutePath());
-            error.append(" due to an unknown exception. The game will still run using default values from memory.");
-            error.append(" And it will write those configs to the default config file for reference");
-            LoggerProject.logError("000005", error.toString());
-
-            return DEFAULT_ORE_CONFIG_JSON;
-        }
-
-    }
-    //END loadJsonOreConfigs
-
-    private boolean writeDefaultJsonOreConfigsToFile(File configFile)
-    {
-        //Use gson to serialize the default values and write to the file
-        Gson gson = new Gson();
-        String json = gson.toJson(DEFAULT_ORE_CONFIG_JSON);
-
-        try {
-            Files.write(Paths.get(configFile.getAbsolutePath()), json.getBytes());
-        } catch (IOException e) {
-            final StringBuilder error = new StringBuilder();
-            error.append("Could not write the default ore cluster JSON config file at path: ");
-            error.append(configFile.getAbsolutePath());
-            error.append(" due to an unknown exception. The game will still run using default values from memory.");
-            error.append("  You can try running the game as an administrator or check the file permissions.");
-            LoggerProject.logError("000004", error.toString());
-        }
-    }
-
-
-    private final List<String> DEFAULT_ORE_CONFIG_JSON = Arrays.asList("{'oreClusterType':'minecraft:iron_ore','oreClusterSpawnRate':16,'oreClusterVolume':'16x16x16','oreClusterDensity':0.8,'oreClusterShape':'any','oreClusterMaxYLevelSpawn':256,'minChunksBetweenOreClusters':0,'oreVeinModifier':0.5,'oreClusterNonReplaceableBlocks':'minecraft:bedrock, minecraft:end_portal_frame','oreClusterReplaceableEmptyBlocks':'minecraft:stone,minecraft:air','oreClusterDoesRegenerate':true}",
-     "{'oreClusterType':'minecraft:deepslate_diamond_ore','oreVeinModifier':0.2,'oreClusterNonReplaceableBlocks':'minecraft:bedrock, minecraft:end_portal_frame','oreClusterReplaceableEmptyBlocks':'minecraft:deepslate'");
 
 }
 //END CLASS

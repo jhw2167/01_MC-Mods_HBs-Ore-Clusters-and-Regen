@@ -3,9 +3,7 @@ package com.holybuckets.orecluster.config;
 import com.holybuckets.foundation.ConfigBase;
 import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -28,8 +26,9 @@ public class COreClusters extends ConfigBase {
 
     public static final boolean REGENERATE_ORE_CLUSTERS = true;
     public static final String REGENERATE_ORE_CLUSTER_PERIOD_LENGTHS = "28,24,16,8";
-    public static final String REGENERATE_ORE_CLUSTER_UPGRDADE_ITEMS = "default,minecraft:blaze_powder," +
+    public static final String REGENERATE_ORE_CLUSTER_UPGRADE_ITEMS = "default,minecraft:blaze_powder," +
      "minecraft:dragon_egg,minecraft:nether_star";
+    public static final String ORE_CLUSTER_FILE_CONFIG_PATH = "config/HBOreClustersAndRegenConfigs.json";
 
      //Ranges
      public static final String MIN_ORE_CLUSTER_VOLUME = "0x0x0";
@@ -50,12 +49,12 @@ public class COreClusters extends ConfigBase {
     public final ConfigString defaultOreClusterReplaceableEmptyBlocks = s(ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS, "defaultOreClusterReplaceableEmptyBlock", Comments.ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS);
     public final ConfigBool regenerateOreClusters = b(REGENERATE_ORE_CLUSTERS, "regenerateOreClusters", Comments.REGENERATE_ORE_CLUSTERS);
     public final ConfigString regenerateOreClusterPeriodLengths = s(REGENERATE_ORE_CLUSTER_PERIOD_LENGTHS, "regenerateOreClusterPeriodLengths", Comments.REGENERATE_ORE_CLUSTER_PERIOD_LENGTHS);
-    public final ConfigString regenerateOreClusterUpgradeItems = s(REGENERATE_ORE_CLUSTER_UPGRDADE_ITEMS, "regenerateOreClusterUpgradeItems", Comments.REGENERATE_ORE_CLUSTER_UPGRADE_ITEMS);
+    public final ConfigString regenerateOreClusterUpgradeItems = s(REGENERATE_ORE_CLUSTER_UPGRADE_ITEMS, "regenerateOreClusterUpgradeItems", Comments.REGENERATE_ORE_CLUSTER_UPGRADE_ITEMS);
 
-            public final OreClusterConfigModel defaultIronOreClusterConfig = new OreClusterConfigModel(Blocks.IRON_ORE );
-            public final OreClusterConfigModel defaultDiamondOreClusterConfig = new OreClusterConfigModel(Blocks.DIAMOND_ORE);
+        public final ConfigString oreClusters = s(ORE_CLUSTER_FILE_CONFIG_PATH, "oreClustersJsonConfigFilePath", Comments.ORE_CLUSTERS);
+        public static final OreClusterConfigModel defaultIronOreClusterConfig = new OreClusterConfigModel(Blocks.IRON_ORE );
+        public static final OreClusterConfigModel defaultDiamondOreClusterConfig = new OreClusterConfigModel(Blocks.DIAMOND_ORE);
 
-        public final ConfigString oreClusters = s("", "HBOreClustersAndRegenConfigs.json", Comments.ORE_CLUSTERS);
 
 
     @Override

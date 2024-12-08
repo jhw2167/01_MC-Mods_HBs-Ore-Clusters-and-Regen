@@ -24,7 +24,7 @@ public class OreClusterConfigModel extends ConfigModelBase {
 
     public Long subSeed = null;
     public Block oreClusterType = null;
-    public HashSet<Block> validOreClusterOreBlocks;
+    public HashSet<Block> validOreClusterOreBlocks; //defaultConfigOnly
     public Integer oreClusterSpawnRate = COreClusters.DEF_ORE_CLUSTER_SPAWN_RATE;
     public Triple<Integer, Integer, Integer> oreClusterVolume = processVolume( COreClusters.DEF_ORE_CLUSTER_VOLUME);
     public Float oreClusterDensity = COreClusters.DEF_ORE_CLUSTER_DENSITY;
@@ -36,7 +36,7 @@ public class OreClusterConfigModel extends ConfigModelBase {
     public HashSet<Block> oreClusterNonReplaceableBlocks = processStringIntoBlockHashSet(COreClusters.ORE_CLUSTER_NONREPLACEABLE_BLOCKS);
     public HashSet<Block> oreClusterReplaceableEmptyBlocks = processReplaceableEmptyBlocks(COreClusters.ORE_CLUSTER_REPLACEABLE_EMPTY_BLOCKS);
     public Boolean oreClusterDoesRegenerate = COreClusters.REGENERATE_ORE_CLUSTERS;
-    public Map<String, Integer> oreClusterRegenPeriods = null;
+    public Map<String, Integer> oreClusterRegenPeriods; //defaultConfigOnly
 
     private static final Gson gson = new GsonBuilder().create();
     private static final COreClusters oreClusterDefaultConfigs = new COreClusters(); //Used for default values
@@ -182,7 +182,7 @@ public class OreClusterConfigModel extends ConfigModelBase {
         catch (NumberFormatException e) {
             //Reset map to default values given error
             oreClusterRegenPeriods = new HashMap<>();
-            upgrades = COreClusters.REGENERATE_ORE_CLUSTER_UPGRDADE_ITEMS.split(",");
+            upgrades = COreClusters.REGENERATE_ORE_CLUSTER_UPGRADE_ITEMS.split(",");
             oreClusterRegenPeriodArray = COreClusters.REGENERATE_ORE_CLUSTER_PERIOD_LENGTHS.split(",");
             i = 0;
             for (String item : upgrades) {
@@ -360,37 +360,41 @@ public class OreClusterConfigModel extends ConfigModelBase {
 
       *************
      */
-
-
     public String serialize() {
-        JsonObject jsonObject = new JsonObject();
-        String oreClusterTypeString = BlockUtil.blockToString(oreClusterType);
-        jsonObject.addProperty("oreClusterType", oreClusterTypeString);
-        jsonObject.addProperty("oreClusterSpawnRate", oreClusterSpawnRate);
-        jsonObject.addProperty("oreClusterVolume", oreClusterVolume.a
-                + "x" + oreClusterVolume.b
-                + "x" + oreClusterVolume.c
-        );
-        jsonObject.addProperty("oreClusterDensity", oreClusterDensity);
-        jsonObject.addProperty("oreClusterShape", oreClusterShape);
-        jsonObject.addProperty("oreClusterMaxYLevelSpawn", oreClusterMaxYLevelSpawn);
-        jsonObject.addProperty("minChunksBetweenOreClusters", minChunksBetweenOreClusters);
-        //jsonObject.addProperty("maxChunksBetweenOreClusters", maxChunksBetweenOreClusters);
-
-        jsonObject.addProperty("oreVeinModifier", oreVeinModifier);
-        jsonObject.addProperty("oreClusterNonReplaceableBlocks",
-            oreClusterNonReplaceableBlocks.stream().map(BlockUtil::blockToString).collect(Collectors.joining(", ")));
-        jsonObject.addProperty("oreClusterReplaceableEmptyBlocks",
-            oreClusterReplaceableEmptyBlocks.stream().map(BlockUtil::blockToString).collect(Collectors.joining(", ")));
-        jsonObject.addProperty("oreClusterDoesRegenerate", oreClusterDoesRegenerate);
-
-        //System.err.println("jsonObject: " + jsonObject);
-        return gson.toJson(jsonObject).
-                //replace("\",", "\"," + System.getProperty("line.separator") ).
-                        replace('"', "'".toCharArray()[0]);
+        return serialize(this);
     }
 
-    public void deserialize(String jsonString) {
+    public static String serialize( OreClusterConfigModel c )
+    {
+        JsonObject jsonObject = new JsonObject();
+        String oreClusterTypeString = BlockUtil.blockToString(c.oreClusterType);
+        jsonObject.addProperty("oreClusterType", oreClusterTypeString);
+        jsonObject.addProperty("oreClusterSpawnRate", c.oreClusterSpawnRate);
+        jsonObject.addProperty("oreClusterVolume", c.oreClusterVolume.a
+                + "x" + c.oreClusterVolume.b
+                + "x" + c.oreClusterVolume.c
+        );
+        jsonObject.addProperty("oreClusterDensity", c.oreClusterDensity);
+        jsonObject.addProperty("oreClusterShape", c.oreClusterShape);
+        jsonObject.addProperty("oreClusterMaxYLevelSpawn", c.oreClusterMaxYLevelSpawn);
+        jsonObject.addProperty("minChunksBetweenOreClusters", c.minChunksBetweenOreClusters);
+        //jsonObject.addProperty("maxChunksBetweenOreClusters", maxChunksBetweenOreClusters);
+
+        jsonObject.addProperty("oreVeinModifier", c.oreVeinModifier);
+        jsonObject.addProperty("oreClusterNonReplaceableBlocks",
+            c.oreClusterNonReplaceableBlocks.stream().map(BlockUtil::blockToString).collect(Collectors.joining(", ")));
+        jsonObject.addProperty("oreClusterReplaceableEmptyBlocks",
+            c.oreClusterReplaceableEmptyBlocks.stream().map(BlockUtil::blockToString).collect(Collectors.joining(", ")));
+        jsonObject.addProperty("oreClusterDoesRegenerate", c.oreClusterDoesRegenerate);
+
+        //System.err.println("jsonObject: " + jsonObject);
+        return gson.toJson(jsonObject);
+                //replace("\",", "\"," + System.getProperty("line.separator") ).
+                        //replace('"', "'".toCharArray()[0]);
+    }
+
+    public void deserialize(String jsonString)
+    {
         JsonObject jsonObject = JsonParser.parseString(jsonString.replace("'".toCharArray()[0], '"')).getAsJsonObject();
 
         try {
@@ -482,7 +486,7 @@ public class OreClusterConfigModel extends ConfigModelBase {
         complete.append("OreClusterConfigModel for ");
         complete.append(this.oreClusterType);
         complete.append(" has been created with the following properties: \n");
-        complete.append(serialize());
+        complete.append(serialize(this));
         complete.append("\n\n");
         LoggerProject.logInfo("004014", complete.toString());
     }
