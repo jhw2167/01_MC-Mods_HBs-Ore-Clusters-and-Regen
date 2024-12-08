@@ -1,3 +1,9 @@
+General
+---
+OreClusters:
+Class_ID:
+OreClusterJsonConfig: 006
+
 Requirements
 ---
 
@@ -146,6 +152,19 @@ jarJar {
 		- create not terrible JSON defaultConfig for multiple ores
 		- test config works for different ores with different configurations
 		- perform speed and accuracy chunk building test by flying with elytra
+
+
+		- file read in/out JSON method should be generalized and moved to foundations
+		- returns List<String>
+		- takes default to use as backup
+		- should default be written out
+		- naming convention for errors
+		- prefix for errors
+		- CLASS_ID for errors
+		- Configure a JSON object for this purpose
+
+		- SERVER_DIRECTORY == .
+		- user.dir == \run directory
 
 		- port mod to remote server and test for accuracy and ability
 		- find out how to get chunkUnload to trigger
