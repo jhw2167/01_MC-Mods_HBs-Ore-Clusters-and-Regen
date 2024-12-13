@@ -1,7 +1,6 @@
 package com.holybuckets.orecluster.core;
 
 import com.holybuckets.foundation.GeneralRealTimeConfig;
-import com.holybuckets.foundation.HolyBucketsUtility;
 import com.holybuckets.foundation.HolyBucketsUtility.*;
 import com.holybuckets.foundation.model.ManagedChunk;
 import com.holybuckets.orecluster.LoggerProject;
@@ -12,11 +11,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.level.chunk.LevelChunkSection;
-import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraftforge.event.level.ChunkEvent;
 import org.apache.commons.lang3.tuple.Pair;
 import oshi.annotation.concurrent.ThreadSafe;
@@ -345,7 +341,7 @@ public class OreClusterManager {
                 for( ManagedOreClusterChunk chunk : chunksToClean)
                 {
                         try {
-                            editManagedChunk(chunk, this::handleClusterCleaning);
+                            editManagedChunk(chunk, this::handleChunkCleaning);
                         }
                         catch (Exception e)
                         {
@@ -523,135 +519,54 @@ public class OreClusterManager {
         //LoggerProject.logDebug("handlePrepareNewCluster #4  " + LoggerProject.getTime(step3Time, endTime) + " ms");
     }
 
-    private void handleClusterCleaning( ManagedOreClusterChunk chunk )
+    /**
+     * Step 2. Cleans the chunk by performing 3 distinct operations
+     * 1. Scan the chunk for all cleanable ores
+     * 2. Determine the cluster position for each ore in the managed chunk
+     * 3. Determine which Ores need to be cleaned based on Ore Config data
+     *
+     * @param chunk
+     */
+    private void handleChunkCleaning(ManagedOreClusterChunk chunk)
     {
-        try {
         //LoggerProject.logDebug("002025", "Cleaning chunk: " + chunk.getId());
+
+        try {
+
 
         final Map<Block, OreClusterConfigModel> ORE_CONFIGS = config.getOreConfigs();
         final Set<Block> CLEANABLE_ORES = ORE_CONFIGS.keySet().stream().filter(oreName -> {
             return ORE_CONFIGS.get(oreName).oreVeinModifier < 1.0f;
         }).collect(Collectors.toSet());
+
         //Add all ores from ManagedOreClusterChunk.getClusterTypes
         final Map<Block, BlockPos> CLUSTER_TYPES = chunk.getClusterTypes();
         CLUSTER_TYPES.keySet().stream().forEach(oreType -> {
             CLEANABLE_ORES.add(oreType);
         });
 
-        LevelChunk levelChunk = chunk.getChunk();
-        LevelChunkSection[] sections = levelChunk.getSections();
+        //1. Scan chunk for all cleanable ores, testing each block
+        oreClusterCalculator.cleanChunkFindAllOres(chunk, CLEANABLE_ORES);
 
-        final int SECTION_SZ = 16;
-        final int MAX_ORES = 2048;
-        final int NEGATIVE_Y_RANGE = 64;
+        //2. Determine the cluster position for each ore in the managed chunk
+        oreClusterCalculator.cleanChunkSelectClusterPosition(chunk);
 
-        //loop in reverse, top, down
-        Map<Block, HolyBucketsUtility.Fast3DArray> oreVerticesByBlock = new HashMap<>();
+        //3. Determine which Ore Vertices need to be cleaned
+        oreClusterCalculator.cleanChunkDetermineBlockPosToClean(chunk, CLEANABLE_ORES);
 
-        BlockPos chunkWorldPos = levelChunk.getPos().getWorldPosition();
-        int count = 0;
-        for (int i = sections.length - 1; i >= 0; i--) {
-            LevelChunkSection section = sections[i];
-            if (section == null || section.hasOnlyAir())
-                continue;
+        //4. Set the originalOres array to null to free up memory
+        chunk.setOriginalOres(null);
 
-            //Maybehas check for ores here, maybe
-
-            //iterate over x, y, z
-            PalettedContainer<BlockState> states = section.getStates();
-
-            for (int x = 0; x < SECTION_SZ; x++) {
-                for (int y = 0; y < SECTION_SZ; y++) {
-                    for (int z = 0; z < SECTION_SZ; z++) {
-                        Block block = states.get(x, y, z).getBlock();
-                        if (CLEANABLE_ORES.contains(block)) {
-                            count++;
-                            HolyBucketsUtility.Fast3DArray vertices = oreVerticesByBlock.getOrDefault(block,
-                                new HolyBucketsUtility.Fast3DArray(MAX_ORES));
-                            vertices.add(
-                                chunkWorldPos.getX() + x,
-                                y + ((SECTION_SZ * i) - NEGATIVE_Y_RANGE),
-                                chunkWorldPos.getZ() + z);
-
-                            if (oreVerticesByBlock.containsKey(block))
-                                continue;
-
-                            oreVerticesByBlock.put(block, vertices);
-                        }
-                        //Else nothing
-                    }
-                    //LoggerProject.logDebug("002027","Finished x,y,z (" + x + "," + y +")");
-                }
-                //LoggerProject.logDebug("002027","Finished x: (" + x + ")");
-            }
-            //END 3D iteration
-
-            //LoggerProject.logDebug("002028.5","Finished section: " + i);
-        }
-        //END SECTIONS LOOP
-
-        //LoggerProject.logDebug("002030.1","Finished iterating chunk for: " + chunk.getId()
-        //+ " with total ores: " + count );
-
-        //Save BlockPos to generate CLUSTER_TYPES on to ManagedOreClusterChunk
-        for (Block b : CLUSTER_TYPES.keySet())
-        {
-            HolyBucketsUtility.Fast3DArray oreVertices = oreVerticesByBlock.get(b);
-            if (oreVertices == null)
-                continue;
-
-            OreClusterConfigModel oreConfig = ORE_CONFIGS.get(b);
-
-            int[] validOreVerticesIndex = new int[oreVertices.size];
-            int j = 0;
-            for (int i = 0; i < oreVertices.size; i++) {
-                if (oreVertices.getY(i) < oreConfig.oreClusterMaxYLevelSpawn)
-                    validOreVerticesIndex[j++] = i;
-            }
-
-            int randPos = this.randSeqClusterBuildGen.nextInt(validOreVerticesIndex.length);
-            CLUSTER_TYPES.put(b, new BlockPos(oreVertices.getX(randPos), oreVertices.getY(randPos), oreVertices.getZ(randPos)));
-        }
-
-        /* END CHOSING CLUSTER SPAWNPOINTS */
-        //LoggerProject.logDebug("002030.2","Finished iterating chunk for: " + chunk.getId());
-
-        /**
-         * Now its time to clean out the cluster and make real time changes
-         * to the chunk. This will be an expensive procedure.
-         *
-         * 1. Convert all oreVertices to BlockPos
-         * 2. Save reference to spawnedOres to ManagedOreClusterChunk
-         */
-
-        for (Block b : CLEANABLE_ORES)
-        {
-            HolyBucketsUtility.Fast3DArray oreVertices = oreVerticesByBlock.get(b);
-            if (oreVertices == null)
-                continue;
-
-            Block[] replacements = ORE_CONFIGS.get(b).oreClusterReplaceableEmptyBlocks.toArray(new Block[0]);
-            Float modifier = ORE_CONFIGS.get(b).oreVeinModifier;
-
-            //need to replace 1-f blocks in the ores list with the first replacement block in the array
-            for (int j = 0; j < oreVertices.size; j++) {
-                //If we want mod ~ 0.8 (80% of ore to spawn) then 20% of the time we will replace the block
-                if (randSeqClusterBuildGen.nextFloat() > modifier) {
-                    BlockPos bp = new BlockPos(oreVertices.getX(j), oreVertices.getY(j), oreVertices.getZ(j));
-                    chunk.addBlockStateUpdate(replacements[0], bp);
-                }
-
-            }
-        }
 
         //HERE
         chunk.setStatus(ManagedOreClusterChunk.ClusterStatus.CLEANED);
 
     }
-        catch(Exception e) {
-        LoggerProject.logDebug("002030.3","Error cleaning chunk: " + chunk.getId() + " message: " + e.getMessage());
-            //LoggerProject.logDebug("002024","Finished cleaning clusters for: " + chunk.getId());
-        }
+    catch(Exception e) {
+    LoggerProject.logDebug("002030.3","Error cleaning chunk: " + chunk.getId() + " message: " + e.getMessage());
+        //LoggerProject.logDebug("002024","Finished cleaning clusters for: " + chunk.getId());
+    }
+
     }
     //END handleCleanClusters
 

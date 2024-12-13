@@ -4,17 +4,22 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.holybuckets.foundation.HolyBucketsUtility;
 import com.holybuckets.orecluster.ModRealTimeConfig;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 
 import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
 import com.holybuckets.foundation.HolyBucketsUtility.*;
 import com.holybuckets.orecluster.LoggerProject;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.chunk.PalettedContainer;
 import org.antlr.v4.runtime.misc.Triple;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -362,25 +367,166 @@ public class OreClusterCalculator {
     }
 
 
-    /**
-     * Get a list of chunk ids within a given radius of a chunk - radius of 0 is itself
-      * @param chunkId
-     * @param radius
-     * @return
-     */
-    private LinkedHashSet<String> getChunkIdsInRadius( String chunkId, int radius )
-    {
-        LinkedHashSet<String> chunks = new LinkedHashSet<>();
-        ChunkPos center = ChunkUtil.getPos(chunkId);
-        for( int x = center.x - radius; x <= center.x + radius; x++ )
+        /**
+         * Get a list of chunk ids within a given radius of a chunk - radius of 0 is itself
+          * @param chunkId
+         * @param radius
+         * @return
+         */
+        private LinkedHashSet<String> getChunkIdsInRadius( String chunkId, int radius )
         {
-            for( int z = center.z - radius; z <= center.z + radius; z++ )
+            LinkedHashSet<String> chunks = new LinkedHashSet<>();
+            ChunkPos center = ChunkUtil.getPos(chunkId);
+            for( int x = center.x - radius; x <= center.x + radius; x++ )
             {
-                chunks.add(ChunkUtil.getId(x, z));
+                for( int z = center.z - radius; z <= center.z + radius; z++ )
+                {
+                    chunks.add(ChunkUtil.getId(x, z));
+                }
+            }
+            return chunks;
+        }
+
+    /** ######################
+     *  END DETERMINE CLUSTERS
+     *  ######################
+     */
+
+    /**
+     * CLEAN CLUSTERS
+     */
+    public void cleanChunkFindAllOres(ManagedOreClusterChunk chunk, Set<Block> CLEANABLE_ORES)
+    {
+        LevelChunk levelChunk = chunk.getChunk();
+        LevelChunkSection[] sections = levelChunk.getSections();
+
+        final int SECTION_SZ = 16;
+        final int MAX_ORES = 2048;
+        final int NEGATIVE_Y_RANGE = 64;
+
+        Map<Block, HolyBucketsUtility.Fast3DArray> oreVerticesByBlock = new HashMap<>();
+        chunk.setOriginalOres(oreVerticesByBlock);
+
+        BlockPos chunkWorldPos = levelChunk.getPos().getWorldPosition();
+        int count = 0;
+        //loop in reverse, top, down
+        for (int i = sections.length - 1; i >= 0; i--) {
+            LevelChunkSection section = sections[i];
+            if (section == null || section.hasOnlyAir())
+                continue;
+
+            //Maybehas check for ores here, maybe
+
+            //iterate over x, y, z
+            PalettedContainer<BlockState> states = section.getStates();
+
+            for (int x = 0; x < SECTION_SZ; x++) {
+                for (int y = 0; y < SECTION_SZ; y++) {
+                    for (int z = 0; z < SECTION_SZ; z++) {
+                        Block block = states.get(x, y, z).getBlock();
+                        if (CLEANABLE_ORES.contains(block)) {
+                            count++;
+                            HolyBucketsUtility.Fast3DArray vertices = oreVerticesByBlock.getOrDefault(block,
+                                new HolyBucketsUtility.Fast3DArray(MAX_ORES));
+                            vertices.add(
+                                chunkWorldPos.getX() + x,
+                                y + ((SECTION_SZ * i) - NEGATIVE_Y_RANGE),
+                                chunkWorldPos.getZ() + z);
+
+                            if (oreVerticesByBlock.containsKey(block))
+                                continue;
+
+                            oreVerticesByBlock.put(block, vertices);
+                        }
+                        //Else nothing
+                    }
+                    //LoggerProject.logDebug("002027","Finished x,y,z (" + x + "," + y +")");
+                }
+                //LoggerProject.logDebug("002027","Finished x: (" + x + ")");
+            }
+            //END 3D iteration
+
+            //LoggerProject.logDebug("002028.5","Finished section: " + i);
+        }
+        //END SECTIONS LOOP
+    }
+
+
+    public void cleanChunkSelectClusterPosition(ManagedOreClusterChunk chunk)
+    {
+
+        final Map<Block, BlockPos> CLUSTER_TYPES = chunk.getClusterTypes();
+        final Map<Block, OreClusterConfigModel> ORE_CONFIGS = C.getOreConfigs();
+        final Map<Block, HolyBucketsUtility.Fast3DArray> oreVerticesByBlock = chunk.getOriginalOres();
+        final Random randSeqClusterBuildGen = chunk.getChunkRandom();
+
+        //Save BlockPos to generate CLUSTER_TYPES on to ManagedOreClusterChunk
+        for (Block b : CLUSTER_TYPES.keySet())
+        {
+            HolyBucketsUtility.Fast3DArray oreVertices = oreVerticesByBlock.get(b);
+            if (oreVertices == null)
+                continue;
+
+            OreClusterConfigModel oreConfig = ORE_CONFIGS.get(b);
+
+            int[] validOreVerticesIndex = new int[oreVertices.size];
+            int j = 0;
+            for (int i = 0; i < oreVertices.size; i++) {
+                if (oreVertices.getY(i) < oreConfig.oreClusterMaxYLevelSpawn)
+                    validOreVerticesIndex[j++] = i;
+            }
+
+            int randPos = randSeqClusterBuildGen.nextInt(validOreVerticesIndex.length);
+            CLUSTER_TYPES.put(b, new BlockPos(oreVertices.getX(randPos), oreVertices.getY(randPos), oreVertices.getZ(randPos)));
+        }
+
+    }
+
+    /**
+     * Clean the necessary ores in the chunk by replacing the blocks at the specified position
+     * with the first ore provided in the oreClusterReplaceableEmptyBlocks array (for the particular ore config)
+     * @param chunk
+     * @param CLEANABLE_ORES
+     */
+    public void cleanChunkDetermineBlockPosToClean(ManagedOreClusterChunk chunk, Set<Block> CLEANABLE_ORES)
+    {
+
+        final Map<Block, OreClusterConfigModel> ORE_CONFIGS = C.getOreConfigs();
+        final Map<Block, HolyBucketsUtility.Fast3DArray> oreVerticesByBlock = chunk.getOriginalOres();
+        final Random randSeqClusterBuildGen = chunk.getChunkRandom();
+
+        for (Block b : CLEANABLE_ORES)
+        {
+            HolyBucketsUtility.Fast3DArray oreVertices = oreVerticesByBlock.get(b);
+            if (oreVertices == null)
+                continue;
+
+            Block[] replacements = ORE_CONFIGS.get(b).oreClusterReplaceableEmptyBlocks.toArray(new Block[0]);
+            Float modifier = ORE_CONFIGS.get(b).oreVeinModifier;
+
+            //need to replace 1-f blocks in the ores list with the first replacement block in the array
+            for (int j = 0; j < oreVertices.size; j++) {
+                //If we want mod ~ 0.8 (80% of ore to spawn) then 20% of the time we will replace the block
+                if (randSeqClusterBuildGen.nextFloat() > modifier) {
+                    BlockPos bp = new BlockPos(oreVertices.getX(j), oreVertices.getY(j), oreVertices.getZ(j));
+                    chunk.addBlockStateUpdate(replacements[0], bp);
+                }
+
             }
         }
-        return chunks;
+
     }
+
+
+    /** ######################
+     *  END CLEAN CLUSTERS
+     *  ######################
+     */
+
+
+
+
+
 
     /**
      * Determine the source position of a cluster

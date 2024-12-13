@@ -1,12 +1,14 @@
 package com.holybuckets.orecluster.model;
 
 import com.google.gson.Gson;
+import com.holybuckets.foundation.GeneralRealTimeConfig;
 import com.holybuckets.foundation.HolyBucketsUtility;
 import com.holybuckets.foundation.HolyBucketsUtility.ChunkUtil;
 import com.holybuckets.foundation.model.ManagedChunk;
 import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
 import com.holybuckets.foundation.modelInterface.IMangedChunkData;
 import com.holybuckets.orecluster.LoggerProject;
+import com.holybuckets.orecluster.config.AllConfigs;
 import com.holybuckets.orecluster.core.OreClusterManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -67,7 +69,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     private ChunkPos pos;
     private ClusterStatus status;
     private HashMap<Block, BlockPos> clusterTypes;
-    private Map<Block, List<BlockPos>> originalOres;
+    private Map<Block, HolyBucketsUtility.Fast3DArray> originalOres;
 
     private ConcurrentLinkedQueue<Pair<Block, BlockPos>> blockStateUpdates;
 
@@ -94,7 +96,6 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.status = ClusterStatus.NONE;
         this.clusterTypes = null;
         this.blockStateUpdates = new ConcurrentLinkedQueue<>();
-        this.originalOres = new HashMap<>();
 
     }
 
@@ -186,8 +187,18 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         return blockStateUpdates;
     }
 
-    public Map<Block, List<BlockPos>> getOriginalOres() {
+    public Map<Block, HolyBucketsUtility.Fast3DArray> getOriginalOres() {
         return originalOres;
+    }
+
+    /**
+     * Multiplies the Object's hashcode by the provided seed to get a random number
+     * to this chunk
+     * @return
+     */
+    public Random getChunkRandom() {
+        GeneralRealTimeConfig config = GeneralRealTimeConfig.getInstance();
+        return new Random( this.hashCode() * config.getWORLD_SEED() );
     }
 
     public synchronized ReentrantLock getLock() {
@@ -216,6 +227,10 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.clusterTypes = clusters;
     }
 
+    public void setOriginalOres(Map<Block, HolyBucketsUtility.Fast3DArray> originalOres) {
+        this.originalOres = originalOres;
+    }
+
     public void addClusterTypes(HashMap<Block, BlockPos> clusterMap)
     {
         if( clusterMap == null )
@@ -232,8 +247,6 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     }
 
     public void addBlockStateUpdate(Block block, BlockPos pos) {
-        List<BlockPos> ores = this.originalOres.getOrDefault(block, new LinkedList<>(Arrays.asList(pos)));
-        ores.add(pos);
         this.blockStateUpdates.add( Pair.of(block, pos) );
     }
 
