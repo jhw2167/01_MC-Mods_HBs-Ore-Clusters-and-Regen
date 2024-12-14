@@ -8,7 +8,7 @@ import com.holybuckets.foundation.model.ManagedChunk;
 import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
 import com.holybuckets.foundation.modelInterface.IMangedChunkData;
 import com.holybuckets.orecluster.LoggerProject;
-import com.holybuckets.orecluster.config.AllConfigs;
+import com.holybuckets.orecluster.OreClustersAndRegenMain;
 import com.holybuckets.orecluster.core.OreClusterManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -19,12 +19,13 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.chunk.LevelChunk;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Vector3d;
+import org.joml.Vector3i;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReentrantLock;
+
 
 /**
  * Class: ManagedChunk
@@ -65,12 +66,11 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     /** Variables **/
     private LevelAccessor level;
     private String id;
-    private LevelChunk chunk;
     private ChunkPos pos;
     private ClusterStatus status;
+
     private HashMap<Block, BlockPos> clusterTypes;
     private Map<Block, HolyBucketsUtility.Fast3DArray> originalOres;
-
     private ConcurrentLinkedQueue<Pair<Block, BlockPos>> blockStateUpdates;
 
     private ReentrantLock lock = new ReentrantLock();
@@ -90,7 +90,6 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     {
         super();
         this.level = level;
-        this.chunk = null;
         this.id = null;
         this.pos = null;
         this.status = ClusterStatus.NONE;
@@ -103,7 +102,6 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     private ManagedOreClusterChunk(LevelAccessor level, LevelChunk chunk)
     {
         this(level);
-        this.chunk = chunk;
         this.pos = chunk.getPos();
         this.id = ChunkUtil.getId( this.pos );
 
@@ -122,42 +120,15 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.pos = ChunkUtil.getPos( id );
     }
 
-    /**
-     * Get an instance of the ManagedOreClusterChunk using a loaded chunk
-     * @param level
-     * @param chunk
-     * @return
-     */
-    public static ManagedOreClusterChunk getInstance(LevelAccessor level, LevelChunk chunk)
-    {
-        ManagedOreClusterChunk c = getOreClusterChunkByID(level, ChunkUtil.getId( chunk ));
-        if( c != null)
-            return c;
-        return new ManagedOreClusterChunk(level, chunk);
-    }
 
-    /**
-     * Get an instance of the ManagedOreClusterChunk using an existing id, for a chunk that may not be loaded yet
-     * @param level
-     * @param id
-     * @return
-     */
-    public static ManagedOreClusterChunk getInstance(LevelAccessor level, String id)
-    {
-        ManagedOreClusterChunk c = getOreClusterChunkByID(level, id);
-        if( c != null)
-            return c;
-
-        return new ManagedOreClusterChunk(level, id);
-    }
-
-    public static ManagedOreClusterChunk getOreClusterChunkByID(LevelAccessor level, String id) {
-        return   OreClusterManager.oreClusterManagers.getOrDefault(level, null).getDeterminedChunks().getOrDefault(id, null);
-    }
 
     /** Getters **/
-    public LevelChunk getChunk() {
-        return chunk;
+    public LevelChunk getChunk()
+    {
+        ManagedChunk parent = getParent(level, id);
+        if(parent == null)
+            return null;
+        return parent.getChunk();
     }
 
     public ChunkPos getPos() {
@@ -180,6 +151,8 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     }
 
     public boolean hasClusters() {
+        if(this.clusterTypes == null)
+            return false;
         return this.clusterTypes.size() > 0;
     }
 
@@ -207,10 +180,6 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
 
     /** Setters **/
 
-    public void setChunk(LevelChunk chunk) {
-        this.chunk = chunk;
-    }
-
     public void setPos(ChunkPos pos) {
         this.pos = pos;
     }
@@ -223,9 +192,6 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.status = status;
     }
 
-    public void setClusters(HashMap<Block, BlockPos> clusters) {
-        this.clusterTypes = clusters;
-    }
 
     public void setOriginalOres(Map<Block, HolyBucketsUtility.Fast3DArray> originalOres) {
         this.originalOres = originalOres;
@@ -258,40 +224,76 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
 
     public ManagedOreClusterChunk getStaticInstance(LevelAccessor level, String id)
     {
-        if(id == null) { return null; }
+        if(id == null || level == null )
+         return null;
 
-        //Reference to OreClusterManager's array of ManagedOreClusterChunks
-        OreClusterManager manager = OreClusterManager.oreClusterManagers.getOrDefault(level, null);
-        if(manager == null) { return null; }
+         ManagedOreClusterChunk chunk = getInstance(level, id);
+        if(chunk != null)
+            return chunk;
 
-        ConcurrentHashMap<String, ManagedOreClusterChunk> loadedChunks = manager.getDeterminedChunks();
-        if(loadedChunks == null) { return null; }
+        OreClusterManager manager = OreClustersAndRegenMain.ORE_CLUSTER_MANAGER_BY_LEVEL.get(level);
+        if(manager == null)
+            return null;
 
-        ManagedOreClusterChunk chunk = loadedChunks.get(id);
-        return chunk;
+        return manager.getLoadedChunk(id);
+
+    }
+
+    /** STATIC METHODS **/
+
+    /**
+     * Get an instance of the ManagedOreClusterChunk using a loaded chunk
+     * @param level
+     * @param chunk
+     * @return
+     */
+    public static ManagedOreClusterChunk getInstance(LevelAccessor level, LevelChunk chunk) {
+        return getInstance(level, ChunkUtil.getId( chunk ));
+    }
+
+    /**
+     * Get an instance of the ManagedOreClusterChunk using an existing id, for a chunk that may not be loaded yet
+     * @param level
+     * @param id
+     * @return
+     */
+    public static ManagedOreClusterChunk getInstance(LevelAccessor level, String id)
+    {
+
+        ManagedChunk parent = getParent(level, id);
+        if(parent == null)
+            return new ManagedOreClusterChunk(level, id);
+
+        ManagedOreClusterChunk c = (ManagedOreClusterChunk) parent.getSubclass(ManagedOreClusterChunk.class);
+        if( c == null)
+            return new ManagedOreClusterChunk(level, id);
+
+        return c;
+    }
+
+    public static ManagedChunk getParent(LevelAccessor level, String id) {
+        return ManagedChunk.getManagedChunk(level, id);
     }
 
 
+    /** SERIALIZERS **/
 
     @Override
     public CompoundTag serializeNBT()
     {
         //LoggerProject.logDebug("003002", "Serializing ManagedOreClusterChunk");
-        CompoundTag wrapper = new CompoundTag();
 
         CompoundTag details = new CompoundTag();
         details.putString("id", this.id);
         details.putString("status", this.status.toString());
 
         Gson gson = ManagedChunk.GSON_BUILDER;
-        //clusters
-        {
-            //String clusters = gson.toJson(this.clusters);
-            //LoggerProject.logDebug("003005", "Serializing clusters: " + this.clusters);
-            //details.putString("clusters", clusters);
-        }
 
         //Cluster Types
+        if(this.clusterTypes == null || this.clusterTypes.size() == 0) {
+            details.putString("clusterTypes", "{}");
+        }
+        else
         {
             String clusterTypes = gson.toJson(this.clusterTypes);
             //LoggerProject.logDebug("003006", "Serializing clusterTypes: " + this.clusterTypes);
@@ -300,66 +302,74 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         }
 
         //blockStateUpdates
+        if(this.blockStateUpdates == null || this.blockStateUpdates.size() == 0) {
+            details.putString("blockStateUpdates", "");
+        }
+        else
         {
             StringBuilder blockStateUpdates = new StringBuilder();
-            //blockPos andBlockState are private and cant be accesed by gson, do manually
             for(Pair<Block, BlockPos> pair : this.blockStateUpdates)
             {
                 String block = HolyBucketsUtility.BlockUtil.blockToString(pair.getLeft());
                 BlockPos pos = pair.getRight();
-                Vector3d vec = new Vector3d(pos.getX(), pos.getY(), pos.getZ());
-                blockStateUpdates.append(block + ":");
+                Vector3i vec = new Vector3i(pos.getX(), pos.getY(), pos.getZ());
+                blockStateUpdates.append(block);
+                blockStateUpdates.append(":");
                 blockStateUpdates.append(gson.toJson(vec));
             }
             LoggerProject.logDebug("003009", "Serializing blockStateUpdates: " + blockStateUpdates);
             details.putString("blockStateUpdates", blockStateUpdates.toString());
-
         }
 
+        LoggerProject.logDebug("003007", "Serializing ManagedOreChunk: " + details);
 
-        if(this.id != null)
-            wrapper.put(NBT_KEY_HEADER, details);
-
-
-        LoggerProject.logDebug("003007", "Serializing ManagedOreChunk: " + wrapper);
-
-        return wrapper;
+        return details;
     }
 
     @Override
-    public void deserializeNBT(CompoundTag compoundTag)
+    public void deserializeNBT(CompoundTag tag)
     {
-        if(compoundTag == null)
+        LoggerProject.logDebug("003003", "Deserializing ManagedOreClusterChunk");
+        if(tag == null || tag.isEmpty())
             return;
 
-        //LoggerProject.logDebug("003003", "Deserializing ManagedOreClusterChunk");
-        CompoundTag wrapper = compoundTag.getCompound(NBT_KEY_HEADER);
-
-        if(wrapper == null)
-            return;
-
-        this.id = wrapper.getString("id");
-        this.status = ClusterStatus.valueOf( wrapper.getString("status") );
+        this.id = tag.getString("id");
+        this.status = ClusterStatus.valueOf( tag.getString("status") );
 
         Gson gson = ManagedChunk.GSON_BUILDER;
-        //Clusters
-        {
-            String clusters = wrapper.getString("clusters");
-            LoggerProject.logDebug("003007", "Deserializing clusters: " + clusters);
-            //this.clusters = gson.fromJson(clusters, List.class);
-        }
 
         //Cluster Types
         {
-            String clusterTypes = wrapper.getString("clusterTypes");
+            String clusterTypes = tag.getString("clusterTypes");
             this.clusterTypes = gson.fromJson(clusterTypes, HashMap.class);
+
+            if(this.clusterTypes != null && this.clusterTypes.size() == 0 )
+                this.clusterTypes = null;
             LoggerProject.logDebug("003008", "Deserializing clusterTypes: " + clusterTypes);
         }
 
         //Block State Updates
         {
-            String blockStateUpdates = wrapper.getString("blockStateUpdates");
-            String[] pairs = blockStateUpdates.split(",");
+            String blockStateUpdates = tag.getString("blockStateUpdates");
+            /**
+             * Read the pairs out from the string
+             *
+             * for(Pair<Block, BlockPos> pair : this.blockStateUpdates)
+             *             {
+             *                 String block = HolyBucketsUtility.BlockUtil.blockToString(pair.getLeft());
+             *                 BlockPos pos = pair.getRight();
+             *                 Vector3i vec = new Vector3i(pos.getX(), pos.getY(), pos.getZ());
+             *                 blockStateUpdates.append(block + ":");
+             *                 blockStateUpdates.append(gson.toJson(vec));
+             *             }
+             *             LoggerProject.logDebug("003009", "Serializing blockStateUpdates: " + blockStateUpdates);
+             */
+
+
+
+            LoggerProject.logDebug("003009", "Deserializing blockStateUpdates: " + blockStateUpdates);
+
+
         }
 
 

@@ -2,6 +2,7 @@ package com.holybuckets.orecluster.core;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
 import com.holybuckets.foundation.HolyBucketsUtility;
@@ -17,7 +18,6 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
 import com.holybuckets.foundation.HolyBucketsUtility.*;
 import com.holybuckets.orecluster.LoggerProject;
-import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import org.antlr.v4.runtime.misc.Triple;
@@ -29,7 +29,7 @@ public class OreClusterCalculator {
 
     private OreClusterManager manager;
     private ModRealTimeConfig C;
-    private ConcurrentHashMap<String, ManagedOreClusterChunk> determinedChunks;
+    private Map<String, ManagedOreClusterChunk> loadedChunks;
     private ConcurrentHashMap<Block, HashSet<String>> existingClustersByType;
 
 
@@ -39,7 +39,7 @@ public class OreClusterCalculator {
     {
         this.manager = manager;
         this.C = manager.getConfig();
-        this.determinedChunks = manager.getDeterminedChunks();
+        this.loadedChunks = manager.getLoadedOreClusterChunks();
         this.existingClustersByType = manager.getExistingClustersByType();
     }
 
@@ -91,7 +91,7 @@ public class OreClusterCalculator {
         *   all existing clusters instead of calculating the area around each chunk
         *   If the spacing is small, we will have many cluster chunks, better to check the radius
          */
-         final int MIN_SPACING_VALIDATOR_CUTOFF_RADIUS = Math.min( determinedChunks.size(), (int) Math.pow(minSpacing, 2) );
+         final int MIN_SPACING_VALIDATOR_CUTOFF_RADIUS = Math.min( loadedChunks.size(), (int) Math.pow(minSpacing, 2) );
          LinkedHashSet<String> chunksInRadiusOfStart = getChunkIdsInRadius(startChunk,
           Math.min( minSpacing, MIN_SPACING_VALIDATOR_CUTOFF_RADIUS ));
          String closestToCenter = chunksInRadiusOfStart.stream().min(Comparator.comparingInt( c ->
@@ -105,15 +105,20 @@ public class OreClusterCalculator {
          int spiralArea = (int) Math.pow( spiralRadius, 2 );
         //LinkedHashSet<String> recentlyLoadedChunks = manager.getRecentChunkIds( ChunkUtil.getPos( chunks.get(0)), spiralArea );
 
-        LinkedHashSet<String> localExistingClusters = determinedChunks.keySet().stream().
-            collect(Collectors.toCollection(LinkedHashSet::new));
+        //Stream loadedOreClusterChunks into a linkedHashSet, filtering for any chunks that have clusters
 
-         if( !determinedChunks.isEmpty() )
+        LinkedHashSet<String> localExistingClusters = loadedChunks.entrySet().stream()
+            .filter( e -> e.getValue().getClusterTypes().size() > 0 )
+            .map( e -> e.getKey() )
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+         
+
+         if( !loadedChunks.isEmpty() )
          {
              int minX, minZ, maxX, maxZ;
              minX = minZ = maxX = maxZ = 0;
 
-             for(String id : determinedChunks.keySet() )
+             for(String id : loadedChunks.keySet() )
              {
                     ChunkPos pos = ChunkUtil.getPos(id);
                     if( pos.x < minX )
@@ -153,6 +158,7 @@ public class OreClusterCalculator {
         while( chunkIndex < chunks.size() )
         {
             chunkIndex = (int) Math.round(rng.nextGaussian() * stdDev + chunksPerCluster) + chunkIndex;
+            chunkIndex = (chunkIndex < 0) ? 0 : chunkIndex;
             boolean openSpaceForCluster = false;
             while ( !openSpaceForCluster && chunkIndex < chunks.size() )
             {
@@ -169,7 +175,7 @@ public class OreClusterCalculator {
                  */
 
                 String chunkId = chunks.get(chunkIndex++);
-                if( determinedChunks.contains(chunkId) )
+                if( loadedChunks.containsKey(chunkId) )
                     continue;
 
                 /**
@@ -194,8 +200,8 @@ public class OreClusterCalculator {
                 else
                 {
                     if( localExistingClusters.stream().anyMatch( c ->
-                        ChunkUtil.chunkDist( c, chunkId ) < minSpacing
-                    )) {
+                            ChunkUtil.chunkDist( c, chunkId ) < minSpacing )
+                            ) {
                         openSpaceForCluster = false;
                     }
 
@@ -290,7 +296,7 @@ public class OreClusterCalculator {
                          candidateChunkId = chunksToBePopulatedSpecificCopy.removeFirst();
 
                         //Tacitly accept any previously determined chunks and discard later
-                         if (determinedChunks.contains(candidateChunkId))
+                         if (loadedChunks.containsKey(candidateChunkId))
                              break;
 
                          //Check if the chunk is within the radius of a chunk with the same cluster type
@@ -353,7 +359,7 @@ public class OreClusterCalculator {
         Iterator<String> clusterPos =  clusterPositions.keySet().iterator();
         while( clusterPos.hasNext() ) {
             String chunkId = clusterPos.next();
-            if( determinedChunks.contains(chunkId) )
+            if( loadedChunks.containsKey(chunkId) )
                 clusterPos.remove();
         }
         long step5Time = System.nanoTime();
@@ -459,7 +465,7 @@ public class OreClusterCalculator {
 
         //Print the oreVertices array
 
-        //LoggerProject.logDebug("002028","Finished all sections, found " + oreVerticesByBlock );
+        LoggerProject.logDebug("002028","Finished all sections for  " + chunk.getId() + " , found " + oreVerticesByBlock );
 
     }
 

@@ -14,7 +14,7 @@ public class LoggerBase {
 
 
     // Sampling configuration
-    private static final float SAMPLE_RATE = 0.2f; // Sample 10% of messages by default
+    private static final float SAMPLE_RATE = 0.1f; // Sample 10% of messages by default
     private static String FILTER_TYPE = null; // Only log messages of this type if set
     private static String FILTER_ID = null; // Only log messages with this ID if set
     private static String FILTER_PREFIX = null; // Only log messages with this prefix if set
@@ -26,14 +26,22 @@ public class LoggerBase {
         String id;
         String prefix;
         String message;
+        Float sampleRate;
         long timestamp;
 
-        LogEntry(String type, String id, String prefix, String message) {
+        LogEntry(String type, String id, String prefix, String message, Float sampleRate)
+        {
+            super();
             this.type = type;
             this.id = id;
             this.prefix = prefix;
             this.message = message;
+            this.sampleRate = sampleRate;
             this.timestamp = System.currentTimeMillis();
+        }
+
+        LogEntry(String type, String id, String prefix, String message) {
+            this(type, id, prefix, message, null);
         }
     }
 
@@ -68,17 +76,17 @@ public class LoggerBase {
 
     static {
         //FILTER_RULES.put("INFO", new LogEntry("INFO", "000", PREFIX, "This is an info message"));
-        FILTER_RULES.put("003002", new LogEntry(null, null, null, "DETERMINED"));
-        FILTER_RULES.put("003007", new LogEntry(null, null, null, "minecraft:"));
-        FILTER_RULES.put("007002", new LogEntry(null, null, null, "1"));
+        FILTER_RULES.put("003002", new LogEntry(null, null, null, "DETERMINED", null));
+        FILTER_RULES.put("003007", new LogEntry(null, null, null, "minecraft:", null));
+        FILTER_RULES.put("007002", new LogEntry(null, null, null, "1", null));
 
-        FILTER_RULES.put("003005", new LogEntry(null, null, null, null));
-        FILTER_RULES.put("003006", new LogEntry(null, null, null, "minecraft"));
-        FILTER_RULES.put("002020", new LogEntry(null, null, null, null));
-        FILTER_RULES.put("002004", new LogEntry(null, null, null, null));
-        FILTER_RULES.put("002025", new LogEntry(null, null, null, null));
-        FILTER_RULES.put("002032", new LogEntry(null, null, null, null));
-        FILTER_RULES.put("002028", new LogEntry(null, null, null, null));
+        FILTER_RULES.put("003005", new LogEntry(null, null, null, null, null));
+        FILTER_RULES.put("003006", new LogEntry(null, null, null, "minecraft", null));
+        FILTER_RULES.put("002020", new LogEntry(null, null, null, null, null));
+        FILTER_RULES.put("002004", new LogEntry(null, null, null, null, null));
+        FILTER_RULES.put("002025", new LogEntry(null, null, null, null, null));
+        FILTER_RULES.put("002032", new LogEntry(null, null, null, null, null));
+        FILTER_RULES.put("002028", new LogEntry(null, null, null, null, 0.01f));
 
     }
 
@@ -125,6 +133,8 @@ public class LoggerBase {
             "002029",
             "002010",
             "002018",
+            "005003",
+            "005002",
             ""
         )
     );
@@ -172,6 +182,9 @@ public class LoggerBase {
             return false;
         }
         if (FILTER_CONTENT != null && !entry.message.contains(FILTER_CONTENT)) {
+            return false;
+        }
+        if (entry.sampleRate != null && Math.random() > entry.sampleRate) {
             return false;
         }
 

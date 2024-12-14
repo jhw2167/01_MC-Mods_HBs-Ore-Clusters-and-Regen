@@ -1,6 +1,7 @@
 package com.holybuckets.foundation.model;
 
 import com.holybuckets.foundation.HolyBucketsUtility;
+import com.holybuckets.foundation.LoggerBase;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.LevelAccessor;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ManagedChunkCapabilityProvider implements ICapabilityProvider, INBTSerializable<CompoundTag> {
 
+    public static final String CLASS_ID = "005";    //unused variable, value will be used for logging messages
     public static Capability<ManagedChunk> MANAGED_CHUNK = CapabilityManager.get(new CapabilityToken<ManagedChunk>() { });
 
     private ManagedChunk managedChunk = null;
@@ -25,35 +27,40 @@ public class ManagedChunkCapabilityProvider implements ICapabilityProvider, INBT
     {
         super();
         String id = HolyBucketsUtility.ChunkUtil.getId(chunk.getPos());
-        this.init(chunk.getLevel(), id);
+        if(this.managedChunk == null)
+            this.managedChunk = new ManagedChunk(chunk.getLevel(), id, chunk);
     }
 
-    public ManagedChunk init(LevelAccessor level, String id) {
-        if(this.managedChunk == null)
-            this.managedChunk = new ManagedChunk(level, id);
-        return this.managedChunk;
-    }
 
     public ManagedChunk getManagedChunk() {
         return this.managedChunk;
     }
 
     @Override
-    public CompoundTag serializeNBT() {
+    public CompoundTag serializeNBT()
+    {
+
         CompoundTag tag = new CompoundTag();
-        if(this.managedChunk == null)
+        if(this.managedChunk == null) {
             return tag;
+        }
 
         tag.put("managedChunk", this.managedChunk.serializeNBT());
+
+        LoggerBase.logDebug(null, "005002", "ManagedChunkCapabilityProvider.serializeNBT() - tag: " + tag.toString());
         return tag;
     }
 
     @Override
-    public void deserializeNBT(CompoundTag nbt) {
-    CompoundTag tag = nbt.getCompound("managedChunk");
+    public void deserializeNBT(CompoundTag nbt)
+    {
+        CompoundTag tag = nbt.getCompound("managedChunk");
+        LoggerBase.logDebug(null, "005003", "ManagedChunkCapabilityProvider.deserializeNBT() - tag: " + tag.toString());
+
         if(this.managedChunk == null)
             this.managedChunk = new ManagedChunk(tag);
-        this.managedChunk.deserializeNBT(tag);
+        else
+            this.managedChunk.deserializeNBT(tag);
     }
 
     @Override
