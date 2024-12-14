@@ -4,10 +4,12 @@ package com.holybuckets.foundation;
 
 //Forge Imports
 
+import com.holybuckets.foundation.model.ManagedChunk;
 import net.minecraft.core.Vec3i;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
 
 import java.util.*;
@@ -38,6 +40,9 @@ public class GeneralRealTimeConfig {
     private final List<Consumer<PlayerEvent.PlayerLoggedInEvent>> ON_PLAYER_LOAD = new ArrayList<>();
     private final List<Consumer<LevelEvent.Unload>> ON_LEVEL_UNLOAD = new ArrayList<>();
 
+    private final List<Consumer<ChunkEvent.Load>> ON_CHUNK_LOAD = new ArrayList<>();
+    private final List<Consumer<ChunkEvent.Unload>> ON_CHUNK_UNLOAD = new ArrayList<>();
+
 
     /**
      * Constructor
@@ -59,8 +64,11 @@ public class GeneralRealTimeConfig {
      * Events
      */
 
-    //Helper
-    public void onLoadLevel(LevelEvent.Load event) {
+
+    /** Level Events **/
+
+    public void onLoadLevel(LevelEvent.Load event)
+    {
         // Capture the world seed, use logical server
         LevelAccessor level = event.getLevel();
         if (!level.isClientSide()) {
@@ -80,7 +88,58 @@ public class GeneralRealTimeConfig {
         }
     }
 
-    public void initPlayerConfigs(PlayerEvent.PlayerLoggedInEvent event) {
+
+    public void onUnLoadLevel(LevelEvent.Unload event)
+    {
+        {
+            //no General Configs
+        }
+        //Call all registered functions
+        for (Consumer<LevelEvent.Unload> function : ON_LEVEL_UNLOAD) {
+            function.accept(event);
+        }
+    }
+
+    /** ############### **/
+
+
+
+    /** Chunk Events **/
+
+    public void onChunkLoad(final ChunkEvent.Load event)
+    {
+        {
+            ManagedChunk.onChunkLoad(event);
+        }
+
+        for (Consumer<ChunkEvent.Load> function : ON_CHUNK_LOAD) {
+            function.accept(event);
+        }
+
+    }
+
+    public void onChunkUnload(final ChunkEvent.Unload event)
+    {
+        {
+            ManagedChunk.onChunkUnload(event);
+        }
+
+        for (Consumer<ChunkEvent.Unload> function : ON_CHUNK_UNLOAD) {
+            function.accept(event);
+        }
+
+    }
+
+
+
+
+    /** ############### **/
+
+
+    /** Player Events **/
+
+    public void initPlayerConfigs(PlayerEvent.PlayerLoggedInEvent event)
+    {
         {
             instance.PLAYER_LOADED = true;
         }
@@ -91,15 +150,7 @@ public class GeneralRealTimeConfig {
         LoggerBase.logDebug( null,"006001", "Player Logged In");
     }
 
-    public void onUnLoadLevel(LevelEvent.Unload event) {
-        {
-            //no General Configs
-        }
-        //Call all registered functions
-        for (Consumer<LevelEvent.Unload> function : ON_LEVEL_UNLOAD) {
-            function.accept(event);
-        }
-    }
+    /** ############### **/
 
 
     /**
@@ -135,13 +186,25 @@ public class GeneralRealTimeConfig {
         ON_LEVEL_LOAD.add(function);
     }
 
+    public void registerOnLevelUnload(Consumer<LevelEvent.Unload> function) {
+        ON_LEVEL_UNLOAD.add(function);
+    }
+
+    public void registerOnChunkLoad(Consumer<ChunkEvent.Load> function) {
+        ON_CHUNK_LOAD.add(function);
+    }
+
+    public void registerOnChunkUnload(Consumer<ChunkEvent.Unload> function) {
+        ON_CHUNK_UNLOAD.add(function);
+    }
+
+
     public void registerOnPlayerLoad(Consumer<PlayerEvent.PlayerLoggedInEvent> function) {
         ON_PLAYER_LOAD.add(function);
     }
 
-    public void registerOnLevelUnload(Consumer<LevelEvent.Unload> function) {
-        ON_LEVEL_UNLOAD.add(function);
-    }
+
+
 
 
 }

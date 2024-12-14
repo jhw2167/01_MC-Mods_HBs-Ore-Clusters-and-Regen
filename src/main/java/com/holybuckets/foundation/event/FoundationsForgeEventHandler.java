@@ -4,14 +4,17 @@ import com.holybuckets.foundation.GeneralRealTimeConfig;
 import com.holybuckets.foundation.HolyBucketsUtility;
 import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.foundation.database.DatabaseManager;
+import com.holybuckets.foundation.model.ManagedChunk;
 import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
 import com.holybuckets.orecluster.OreClustersAndRegenMain;
+import com.holybuckets.orecluster.core.OreClusterManager;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.LevelAccessor;
 
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
@@ -44,27 +47,7 @@ public class FoundationsForgeEventHandler {
     public static void onLoadWorld(LevelEvent.Load event)
     {
         LoggerBase.logDebug( null, "002003", "**** WORLD LOAD EVENT ****");
-
-        LevelAccessor world = event.getLevel();
-        if( world.isClientSide() )
-        {
-
-        }
-        else
-        {
-            config.onLoadLevel( event );
-            //start the database
-            LoggerBase.logInfo( null,"002000", "Starting SQLite Database");
-            HolyBucketsUtility.databaseManager = DatabaseManager.getInstance();
-            try {
-                //world.getLevelData().
-                //HolyBucketsUtility.databaseManager.startDatabase( "world" );
-            } catch (Exception e) {
-                LoggerBase.logError( null,"002001", "Error starting database, attempting to cancel world load");
-                event.setCanceled(true);
-            }
-            LoggerBase.logInfo( null,"002002", "Database started successfully");
-        }
+        config.onLoadLevel( event );
 
     }
 
@@ -74,11 +57,42 @@ public class FoundationsForgeEventHandler {
         LoggerBase.logDebug( null,"002004", "**** WORLD UNLOAD EVENT ****");
     }
 
+
+
+
+
+    /** PLAYER EVENTS **/
+
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         config.initPlayerConfigs( event );
         LoggerBase.logDebug( null,"002005", "Player Logged In");
     }
+
+    /** ################## **/
+    /** END PLAYER EVENTS **/
+    /** ################## **/
+
+
+
+    /** CHUNK EVENTS **/
+
+    @SubscribeEvent
+    public static void onChunkLoad(final ChunkEvent.Load event)
+    {
+        config.onChunkLoad( event );
+    }
+
+
+    @SubscribeEvent
+    public static void onChunkUnLoad(final ChunkEvent.Unload event)
+    {
+        config.onChunkUnload( event );
+    }
+
+    /** ################## **/
+    /** END CHUNK EVENTS **/
+    /** ################## **/
 
 }
 //END CLASS

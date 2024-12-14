@@ -153,18 +153,38 @@ jarJar {
 		- test config works for different ores with different configurations
 		- perform speed and accuracy chunk building test by flying with elytra
 
+22.
+---
 
-		- file read in/out JSON method should be generalized and moved to foundations
-		- returns List<String>
-		- takes default to use as backup
-		- should default be written out
-		- naming convention for errors
-		- prefix for errors
-		- CLASS_ID for errors
-		- Configure a JSON object for this purpose
+	- Moved static OreClustersManager Hashmap to OreClustersAndRegenMain
+	- Registered world unload method to general utility, so OreClusters should shutdown its threads when world unloads
+		- shutdown logic needs to be more thorough, and also with startup
+	- Removed reference to levelChunk from ManagedOreClusterChunk so only reference exists within managed chunk
+	- Gold blocks are not generating anymore, for whatever reason
+	- level.setBlock yielded IllegalAccess exception on level.setBlockState()
+	- reworked getStaticInstance methods in IManagedChunkData
+	- Added sampling to logEntry builder
+	- Fixed null pointer exception in chunkCleaning method regarding clusterTypes
+	- Fixed null pointer error when parent ManagedChunk was returned as null
+	- Fixed Index OOB error when gaussian returned negative value.
+	- reworked determinedClusters into chunkPendingCleaning queue
+
+{managedChunk:{com.holybuckets.orecluster.model.ManagedOreClusterChunk:{blockStateUpdates:"",clusterTypes:'{"Block{minecraft:deepslate_diamond_ore}":{"x":-148,"y":-31,"z":145}}',id:"-10,9",status:"GENERATED"},id:"-10,9",level:600925286,tickWritten:10182}}
+
+--> onChunkLoad should be called by managedChunk, not directly by oreClusterCalculator
+
+
+23.
+---
+
+24.
+---
+
+
 
 		- SERVER_DIRECTORY == .
 		- user.dir == \run directory
+		- Add an indicator to the param to NOT generate clusters
 
 		- port mod to remote server and test for accuracy and ability
 		- find out how to get chunkUnload to trigger
@@ -182,16 +202,6 @@ jarJar {
 		-  THREADS CONTINUE TO RUN AFTER WORLD IS SHUTDOWN, NEEDS TO QUIT
 
 		
-
-22.
----
-
-23.
----
-
-24.
----
-
 
 25.
 ---

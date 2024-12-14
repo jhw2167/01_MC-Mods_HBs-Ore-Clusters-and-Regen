@@ -18,6 +18,8 @@ import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 // The value here should match an entry in the META-INF/mods.toml file
@@ -31,45 +33,22 @@ public class OreClustersAndRegenMain
     public static final String NAME = "HBs Ore Clusters and Regen";
     public static final String VERSION = "1.0.0f";
 
-    public static final Logger LOGGER = LogUtils.getLogger();
-
-    public static final Gson GSON = new GsonBuilder().setPrettyPrinting()
-            .disableHtmlEscaping()
-            .create();
-
     public static GeneralRealTimeConfig generalRealTimeConfig = GeneralRealTimeConfig.getInstance();
     static {
         generalRealTimeConfig.registerOnLevelLoad( OreClustersAndRegenMain::onLoadWorld );
+        generalRealTimeConfig.registerOnLevelUnload( OreClustersAndRegenMain::onUnloadWorld );
 
     }
     public static ModRealTimeConfig modRealTimeConfig = null;
     public static final Boolean DEBUG = true;
 
-    /** Use the {@link Random} of a local {@link Level} or {@link Entity} or create one */
-    @Deprecated
-    public static final Random RANDOM = new Random();
 
-    /**
-     * <b>Other mods should not use this field!</b> If you are an addon developer, create your own instance of
-     *
-     *
-    public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(ID);
+    /** Real Time Variables **/
+    public static final Map<LevelAccessor, OreClusterManager> ORE_CLUSTER_MANAGER_BY_LEVEL = new HashMap<>();
 
-    static {
-        REGISTRATE.setTooltipModifierFactory(item -> {
-            return new ItemDescription.Modifier(item, Palette.STANDARD_CREATE)
-                    .andThen(TooltipModifier.mapNull(KineticStats.create(item)));
-        });
-    }
-
-    public static final ServerSchematicLoader SCHEMATIC_RECEIVER = new ServerSchematicLoader();
-    public static final RedstoneLinkNetworkHandler REDSTONE_LINK_NETWORK_HANDLER = new RedstoneLinkNetworkHandler();
-    public static final TorquePropagator TORQUE_PROPAGATOR = new TorquePropagator();
-    public static final GlobalRailwayManager RAILWAYS = new GlobalRailwayManager();
-    public static final ServerLagger LAGGER = new ServerLagger();
-    */
-
-    public OreClustersAndRegenMain() {
+    public OreClustersAndRegenMain()
+    {
+        super();
         initMod();
         LoggerProject.logInit( "001000", this.getClass().getName() );
     }
@@ -153,15 +132,22 @@ public class OreClustersAndRegenMain
             modRealTimeConfig = new ModRealTimeConfig( level );
         }
 
-        new OreClusterManager(level, modRealTimeConfig);
+        if( !ORE_CLUSTER_MANAGER_BY_LEVEL.containsKey( level ) )
+        {
+            ORE_CLUSTER_MANAGER_BY_LEVEL.put( level, new OreClusterManager( level,  modRealTimeConfig ) );
+        }
+
     }
 
-    public static void onUnloadWorld(LevelAccessor world)
+    public static void onUnloadWorld(LevelEvent.Unload event)
     {
         // Capture the world seed
         LoggerProject.logDebug("001004", "**** WORLD UNLOAD EVENT ****");
+        //for all ore cluster managers
+        for( OreClusterManager manager : ORE_CLUSTER_MANAGER_BY_LEVEL.values() ) {
+            manager.shutdown();
+        }
         /*
-        oreClusterManager.shutdown();
         modRealTimeConfig = null;
         oreClusterManager = null;
         */
