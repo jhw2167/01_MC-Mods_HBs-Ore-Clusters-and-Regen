@@ -16,16 +16,11 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.level.chunk.PalettedContainer;
+import net.minecraft.world.level.chunk.*;
 import net.minecraftforge.event.level.ChunkEvent;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class ManagedChunk implements IMangedChunkData {
@@ -222,7 +217,6 @@ public class ManagedChunk implements IMangedChunkData {
         LevelAccessor level = event.getLevel();
         ChunkAccess chunk = event.getChunk();
         String chunkId = HolyBucketsUtility.ChunkUtil.getId(event.getChunk());
-        //LevelChunk levelChunk = level.getChunkSource().getChunk(chunk.getPos().x, chunk.getPos().z, false);
         LevelChunk levelChunk = level.getChunkSource().getChunkNow(chunk.getPos().x, chunk.getPos().z);
 
         if (levelChunk == null)
@@ -253,12 +247,33 @@ public class ManagedChunk implements IMangedChunkData {
         if( chunk == null || updates == null || updates.size() == 0 )
             return false;
 
-        LoggerBase.logDebug(null, "002022", "Updating chunk block states: " + HolyBucketsUtility.ChunkUtil.getId( chunk));
+        if( chunk.getStatus() != ChunkStatus.FULL )
+            return false;
+
+        //LoggerBase.logDebug(null, "002022", "Updating chunk block states: " + HolyBucketsUtility.ChunkUtil.getId( chunk));
 
         try
         {
-            for(Pair<BlockState, BlockPos> update : updates) {
-                chunk.setBlockState(update.getRight(), update.getLeft(), false);
+            BlockPos worldPos = chunk.getPos().getWorldPosition();
+            Map<Integer, LevelChunkSection> sections = new HashMap<>();
+
+            int i = 0;
+            for(LevelChunkSection s : chunk.getSections()) {
+                sections.put(i++, s);
+            }
+            for(Pair<BlockState, BlockPos> update : updates)
+            {
+                //chunk.setBlockState(update.getRight(), update.getLeft(), false);
+                BlockPos bPos = update.getRight();
+                //HolyBucketsUtility.WorldPos wPos = new HolyBucketsUtility.WorldPos(bPos, chunk);
+                //LevelChunkSection section = sections.get(wPos.getSectionIndex());
+                //HolyBucketsUtility.TripleInt t = wPos.getIndices();
+                //section.acquire();
+                //section.setBlockState(t.x, t.y, t.z, update.getLeft(), true);
+                //section.release();
+
+                Level level = chunk.getLevel();
+                level.setBlock(bPos, update.getLeft(), 0);
             }
         }
         catch (IllegalStateException e)
@@ -266,6 +281,26 @@ public class ManagedChunk implements IMangedChunkData {
             LoggerBase.logWarning(null, "002023", "Illegal state exception " +
              "updating chunk block states. Updates may be replayed later. At Chunk: " + HolyBucketsUtility.ChunkUtil.getId( chunk));
             return false;
+        }
+        catch (Exception e)
+        {
+            StringBuilder error = new StringBuilder();
+            error.append("Error updating chunk block states. At Chunk: ");
+            error.append(HolyBucketsUtility.ChunkUtil.getId( chunk));
+            error.append("\n");
+            error.append("Corresponding exception message: \n");
+            error.append(e.getMessage());
+
+            LoggerBase.logError(null, "002024", error.toString());
+
+            return false;
+        }
+        finally
+        {
+            //Release all locks
+            for(LevelChunkSection s : chunk.getSections()) {
+                s.release();
+            }
         }
 
 

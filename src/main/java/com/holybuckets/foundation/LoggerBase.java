@@ -47,7 +47,7 @@ public class LoggerBase {
 
     public static final Logger LOGGER = LogUtils.getLogger();
     public static final String PREFIX =  HolyBucketsUtility.NAME;
-    public static final Boolean DEBUG_MODE = false;
+    public static final Boolean DEBUG_MODE = true;
 
     /*
      *  1. We want to have static methods for logging info, warnings, and errors to server console.
@@ -78,6 +78,7 @@ public class LoggerBase {
         FILTER_RULES.put("002004", new LogEntry(null, null, null, null));
         FILTER_RULES.put("002025", new LogEntry(null, null, null, null));
         FILTER_RULES.put("002032", new LogEntry(null, null, null, null));
+        FILTER_RULES.put("002028", new LogEntry(null, null, null, null));
 
     }
 
@@ -121,8 +122,9 @@ public class LoggerBase {
         Arrays.asList(
             "003007",
             "002004",
-            "002022",
             "002029",
+            "002010",
+            "002018",
             ""
         )
     );

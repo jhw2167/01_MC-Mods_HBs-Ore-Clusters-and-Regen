@@ -108,7 +108,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.id = ChunkUtil.getId( this.pos );
 
         //Use getChgunkSource to get LevelChunk, then use capability to add this reference to the ManagedChunk
-        LevelChunk c = level.getChunkSource().getChunkNow( this.pos.x, this.pos.z );
+        LevelChunk c = chunk;
         c.getCapability(ManagedChunkCapabilityProvider.MANAGED_CHUNK).ifPresent(cap -> {
             cap.setSubclass(ManagedOreClusterChunk.class, this);
         });
