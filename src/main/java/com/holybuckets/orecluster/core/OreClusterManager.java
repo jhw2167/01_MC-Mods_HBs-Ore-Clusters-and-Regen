@@ -1,6 +1,7 @@
 package com.holybuckets.orecluster.core;
 
 import com.holybuckets.foundation.GeneralRealTimeConfig;
+import com.holybuckets.foundation.HolyBucketsUtility;
 import com.holybuckets.foundation.HolyBucketsUtility.*;
 import com.holybuckets.foundation.model.ManagedChunk;
 import com.holybuckets.orecluster.LoggerProject;
@@ -12,6 +13,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.event.level.ChunkEvent;
 import org.apache.commons.lang3.tuple.Pair;
@@ -454,7 +456,17 @@ public class OreClusterManager {
     private void handleClusterDetermination(int batchSize, String chunkId)
     {
         long startTime = System.nanoTime();
-        ChunkAccess start = getChunkAccess(chunkId);
+        ManagedOreClusterChunk managedChunk = loadedChunks.get(chunkId);
+        if( managedChunk == null || managedChunk.getChunk() == null )
+        {
+            ChunkPos chunkPos = HolyBucketsUtility.ChunkUtil.getPos(chunkId);
+            LevelChunk chunk = level.getChunkSource().getChunk(chunkPos.x, chunkPos.z, true);
+
+            managedChunk = ManagedOreClusterChunk.getInstance(level, chunk);
+            managedChunk.setChunk(chunk);
+            loadedChunks.put(chunkId, managedChunk);
+        }
+        LevelChunk start = managedChunk.getChunk();
         LinkedHashSet<String> chunkIds = getBatchedChunkList(batchSize, start);
         long step1Time = System.nanoTime();
         //LoggerProject.logDebug("002008", "Queued " + chunkIds.size() + " chunks for cluster determination");
@@ -468,7 +480,6 @@ public class OreClusterManager {
         long step2Time = System.nanoTime();
         //LoggerProject.logDebug("002009","Determined " + clusters.size() + " clusters in " + chunkIds.size() + " chunks");
         //LoggerProject.logDebug("handlePrepareNewCluster #3  " + LoggerProject.getTime(step1Time, step2Time) + " ms");
-
 
 
         // #3. Add clusters to determinedClusters
@@ -531,6 +542,12 @@ public class OreClusterManager {
     {
         //LoggerProject.logDebug("002025", "Cleaning chunk: " + chunk.getId());
 
+        if( chunk == null|| chunk.getChunk() == null )
+            return;
+
+        if( chunk.getChunk().getStatus() != ChunkStatus.FULL )
+            return;
+
         try {
 
 
@@ -539,6 +556,8 @@ public class OreClusterManager {
             return ORE_CONFIGS.get(oreName).oreVeinModifier < 1.0f;
         }).collect(Collectors.toSet());
 
+        final Set<Block> COUNTABLE_ORES = ORE_CONFIGS.keySet().stream().collect(Collectors.toSet());
+
         //Add all ores from ManagedOreClusterChunk.getClusterTypes
         final Map<Block, BlockPos> CLUSTER_TYPES = chunk.getClusterTypes();
         CLUSTER_TYPES.keySet().stream().forEach(oreType -> {
@@ -546,7 +565,7 @@ public class OreClusterManager {
         });
 
         //1. Scan chunk for all cleanable ores, testing each block
-        oreClusterCalculator.cleanChunkFindAllOres(chunk, CLEANABLE_ORES);
+        oreClusterCalculator.cleanChunkFindAllOres(chunk, COUNTABLE_ORES);
 
         //2. Determine the cluster position for each ore in the managed chunk
         oreClusterCalculator.cleanChunkSelectClusterPosition(chunk);
@@ -606,9 +625,6 @@ public class OreClusterManager {
      *              UTILITY SECTION
      */
 
-    private ChunkAccess getChunkAccess(String id) {
-        return loadedChunks.get(id).getChunk();
-    }
 
     /**
      * Batch process that determines the location of clusters in the next n chunks

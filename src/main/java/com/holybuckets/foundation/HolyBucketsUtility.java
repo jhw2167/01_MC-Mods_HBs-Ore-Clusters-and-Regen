@@ -5,6 +5,8 @@ import com.holybuckets.foundation.database.DatabaseManager;
 import com.holybuckets.foundation.modelInterface.IStringSerializable;
 import com.holybuckets.orecluster.LoggerProject;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
@@ -12,13 +14,11 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.registries.ForgeRegistries;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Iterator;
 
 /**
 * Class: HolyBucketsUtility
@@ -174,6 +174,7 @@ public class HolyBucketsUtility {
             return level.getChunkSource().getChunkNow(x, z);
         }
 
+
     }
 
     public static class SerializeUtil {
@@ -305,6 +306,110 @@ public class HolyBucketsUtility {
         }
 
     }
+    //END FILE IO
+    public static class TripleInt {
+        public int x;
+        public int y;
+        public int z;
+
+        public TripleInt(int x, int y, int z) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        public TripleInt(Vec3i vec) {
+            this.x = vec.getX();
+            this.y = vec.getY();
+            this.z = vec.getZ();
+        }
+
+        public static TripleInt of(int x, int y, int z) {
+            return new TripleInt(x, y, z);
+        }
+
+    }
+
+
+    public static class WorldPos {
+        public static BlockPos blockPos;
+        public static TripleInt sectionIndicies;
+        public static int sectionIndex;
+        public static final int SECTION_SZ = 16;
+
+        public WorldPos(BlockPos pos, LevelChunk chunk) {
+            blockPos = pos;
+            setWorldPos(pos, chunk);
+        }
+
+        public WorldPos(TripleInt indices, int section, LevelChunk chunk) {
+            sectionIndicies = indices;
+            sectionIndex = section;
+            setWorldPos(indices, section, chunk);
+        }
+
+        /** Setters **/
+
+        public void setWorldPos(BlockPos pos, LevelChunk chunk)
+        {
+            blockPos = pos;
+
+            //Convert worldPos to sectionIndicies
+            final BlockPos chunkPos = chunk.getPos().getWorldPosition();
+            final Integer Y_MIN = chunk.getMinBuildHeight();
+            final Integer Y_MAX = chunk.getMaxBuildHeight();
+
+            int x = pos.getX() - chunkPos.getX();
+            int z = pos.getZ() - chunkPos.getZ();
+            this.sectionIndex = (pos.getY() - Y_MIN) / SECTION_SZ;
+            int y = (pos.getY() - Y_MIN) % SECTION_SZ;
+
+            this.sectionIndicies = new TripleInt(x, y, z);
+
+        }
+
+
+        public void setWorldPos(TripleInt indices, int section, LevelChunk chunk)
+        {
+            final BlockPos chunkPos = chunk.getPos().getWorldPosition();
+            final Integer Y_MIN = chunk.getMinBuildHeight();
+            final Integer Y_MAX = chunk.getMaxBuildHeight();
+
+             int x = chunkPos.getX() + indices.x;
+             int y = Y_MIN + (SECTION_SZ * section);
+             int z = chunkPos.getZ() + indices.z;
+
+             this.blockPos = new BlockPos(x, y, z);
+        }
+
+        /** Getters **/
+
+        public BlockPos getWorldPos() {
+            return blockPos;
+        }
+
+        public TripleInt getIndices() {
+            return sectionIndicies;
+        }
+
+        public Integer getSectionIndex() {
+            return sectionIndex;
+        }
+
+        public int getX() {
+            return blockPos.getX();
+        }
+
+        public int getY() {
+            return blockPos.getY();
+        }
+
+        public int getZ() {
+            return blockPos.getZ();
+        }
+    }
+    //END WORLD POS
+
 
 
 
@@ -364,5 +469,17 @@ public class HolyBucketsUtility {
             return Z[index];
         }
 
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder("Count: " + size + " ");
+            String delimiter = "";
+            for( int i = 0; i < size; i++)
+            {
+                sb.append(delimiter);
+                sb.append("[" + X[i] + ", " + Y[i] + ", " + Z[i] + "]");
+                delimiter = ", ";
+            }
+            return sb.toString();
+        }
     }
 }

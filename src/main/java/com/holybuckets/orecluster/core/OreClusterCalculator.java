@@ -12,7 +12,7 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunk;
 
 import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
 import com.holybuckets.foundation.HolyBucketsUtility.*;
@@ -395,7 +395,7 @@ public class OreClusterCalculator {
     /**
      * CLEAN CLUSTERS
      */
-    public void cleanChunkFindAllOres(ManagedOreClusterChunk chunk, Set<Block> CLEANABLE_ORES)
+    public void cleanChunkFindAllOres(ManagedOreClusterChunk chunk, final Set<Block> COUNTABLE_ORES)
     {
         LevelChunk levelChunk = chunk.getChunk();
         LevelChunkSection[] sections = levelChunk.getSections();
@@ -409,6 +409,7 @@ public class OreClusterCalculator {
 
         BlockPos chunkWorldPos = levelChunk.getPos().getWorldPosition();
         int count = 0;
+        int outerCount = 0;
         //loop in reverse, top, down
         for (int i = sections.length - 1; i >= 0; i--) {
             LevelChunkSection section = sections[i];
@@ -420,14 +421,20 @@ public class OreClusterCalculator {
             //iterate over x, y, z
             PalettedContainer<BlockState> states = section.getStates();
 
-            for (int x = 0; x < SECTION_SZ; x++) {
-                for (int y = 0; y < SECTION_SZ; y++) {
-                    for (int z = 0; z < SECTION_SZ; z++) {
+            for (int x = 0; x < SECTION_SZ; x++)
+            {
+                for (int y = 0; y < SECTION_SZ; y++)
+                {
+                    for (int z = 0; z < SECTION_SZ; z++)
+                    {
+                        outerCount++;
                         Block block = states.get(x, y, z).getBlock();
-                        if (CLEANABLE_ORES.contains(block)) {
+                        if (COUNTABLE_ORES.contains(block))
+                        {
                             count++;
                             HolyBucketsUtility.Fast3DArray vertices = oreVerticesByBlock.getOrDefault(block,
                                 new HolyBucketsUtility.Fast3DArray(MAX_ORES));
+
                             vertices.add(
                                 chunkWorldPos.getX() + x,
                                 y + ((SECTION_SZ * i) - NEGATIVE_Y_RANGE),
@@ -449,6 +456,11 @@ public class OreClusterCalculator {
             //LoggerProject.logDebug("002028.5","Finished section: " + i);
         }
         //END SECTIONS LOOP
+
+        //Print the oreVertices array
+
+        //LoggerProject.logDebug("002028","Finished all sections, found " + oreVerticesByBlock );
+
     }
 
 
@@ -534,11 +546,11 @@ public class OreClusterCalculator {
      * @param chunk
      * @return
      */
-    public Vec3i determineSourcePosition(String oreType, ChunkAccess chunk) {
+    public Vec3i determineSourcePosition(String oreType, LevelChunk chunk) {
         return null;
     }
 
-    public List<Pair<String, Vec3i>> generateCluster(String oreType, Vec3i sourcePosition, ChunkAccess chunk )
+    public List<Pair<String, Vec3i>> generateCluster(String oreType, Vec3i sourcePosition, LevelChunk chunk )
     {
         //1. Get the cluster config
         OreClusterConfigModel config = C.getOreConfigs().get(oreType);
