@@ -3,8 +3,10 @@ package com.holybuckets.orecluster;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.holybuckets.foundation.GeneralRealTimeConfig;
+import com.holybuckets.foundation.model.ManagedChunk;
 import com.holybuckets.orecluster.config.AllConfigs;
 import com.holybuckets.orecluster.core.OreClusterManager;
+import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
 import com.mojang.logging.LogUtils;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -37,6 +39,8 @@ public class OreClustersAndRegenMain
     static {
         generalRealTimeConfig.registerOnLevelLoad( OreClustersAndRegenMain::onLoadWorld );
         generalRealTimeConfig.registerOnLevelUnload( OreClustersAndRegenMain::onUnloadWorld );
+
+        ManagedOreClusterChunk.registerManagedChunkData();
 
     }
     public static ModRealTimeConfig modRealTimeConfig = null;
@@ -127,6 +131,9 @@ public class OreClustersAndRegenMain
     {
         LoggerProject.logDebug("001003", "**** WORLD LOAD EVENT ****");
         LevelAccessor level = event.getLevel();
+        if( level.isClientSide() )
+            return;
+
         if( modRealTimeConfig == null )
         {
             modRealTimeConfig = new ModRealTimeConfig( level );

@@ -337,7 +337,6 @@ public class OreClusterManager {
             while( managerRunning )
             {
 
-
                 ManagedOreClusterChunk.ClusterStatus DETERMINED = ManagedOreClusterChunk.ClusterStatus.DETERMINED;
                 Queue<ManagedOreClusterChunk> chunksToClean = chunksPendingCleaning.values().stream()
                     .filter(chunk -> chunk.getStatus() == DETERMINED && chunk.hasChunk())
@@ -466,7 +465,7 @@ public class OreClusterManager {
         if( managedChunk == null || managedChunk.getChunk() == null )
         {
             ChunkPos chunkPos = HolyBucketsUtility.ChunkUtil.getPos(chunkId);
-            LevelChunk chunk = level.getChunkSource().getChunk(chunkPos.x, chunkPos.z, true);
+            LevelChunk chunk = HolyBucketsUtility.ChunkUtil.getLevelChunk(level, chunkPos.x, chunkPos.z);
 
             managedChunk = ManagedOreClusterChunk.getInstance(level, chunk);
             loadedOreClusterChunks.put(chunkId, managedChunk);
@@ -492,7 +491,7 @@ public class OreClusterManager {
         {
         //Create clusters for chunks that aren't loaded yet
             ManagedOreClusterChunk chunk = loadedOreClusterChunks.getOrDefault(id, ManagedOreClusterChunk.getInstance(level, id) );
-            loadedOreClusterChunks.put(id, chunk);
+            this.loadedOreClusterChunks.put(id, chunk);
 
             chunk.addClusterTypes(clusters.get(id));
             chunk.setStatus(ManagedOreClusterChunk.ClusterStatus.DETERMINED);
