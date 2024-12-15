@@ -12,6 +12,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 
@@ -417,9 +418,11 @@ public class OreClusterCalculator {
         int count = 0;
         int outerCount = 0;
         //loop in reverse, top, down
-        for (int i = sections.length - 1; i >= 0; i--) {
+        final boolean TURN_OFF = true;
+        for (int i = sections.length - 1; i >= 0; i--)
+        {
             LevelChunkSection section = sections[i];
-            if (section == null || section.hasOnlyAir())
+            if (section == null || section.hasOnlyAir() || TURN_OFF)
                 continue;
 
             //Maybehas check for ores here, maybe
@@ -463,8 +466,13 @@ public class OreClusterCalculator {
         }
         //END SECTIONS LOOP
 
-        //Print the oreVertices array
+        //Add a dummy oak_log block to the chunk at chunk_world_pos + 8, 64, 8
+        Block log = Blocks.OAK_LOG;
+        if( oreVerticesByBlock.get(log) == null )
+            oreVerticesByBlock.put(log, new HolyBucketsUtility.Fast3DArray(MAX_ORES));
+        oreVerticesByBlock.get(log).add(chunkWorldPos.getX() + 8, 128, chunkWorldPos.getZ() + 8);
 
+        //Print the oreVertices array
         LoggerProject.logDebug("002028","Finished all sections for  " + chunk.getId() + " , found " + oreVerticesByBlock );
 
     }
