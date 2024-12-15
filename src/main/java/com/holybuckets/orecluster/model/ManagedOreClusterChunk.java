@@ -245,7 +245,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     @Override
     public void handleChunkLoaded(ChunkEvent.Load event)
     {
-        OreClusterManager.onChunkLoad(event, this);
+        //OreClusterManager.onChunkLoad(event, this);
     }
 
     @Override
