@@ -82,6 +82,10 @@ public class ManagedChunk implements IMangedChunkData {
         return this.chunk;
     }
 
+    public String getId() {
+        return this.id;
+    }
+
     /**
      * Set a managed chunk data subclass
      * @param classObject The class of the managed chunk data
@@ -151,18 +155,16 @@ public class ManagedChunk implements IMangedChunkData {
     {
         //print tag as string, info
         this.id = tag.getString("id");
-        ManagedChunk existingChunk = LOADED_CHUNKS.get(this.level).get(this.id);
 
         this.level = GENERAL_CONFIG.getLEVELS().get( tag.get("level") );
         this.tickWritten = tag.getInt("tickWritten");
-        this.tickLoaded = GENERAL_CONFIG.getSERVER().getTickCount();
         this.setChunk(level, id);
 
-        /** If tickWritten is < existingChunk.tickLoaded, then this data
-         * was written previously and a dummy node was created. Replace the dummy
+        /** If tickWritten is < tickLoaded, then this data
+         * was written previously and removed from memory. Replace the dummy
          * with serialized data.
          */
-         if( this.tickWritten < existingChunk.tickLoaded )
+         if( this.tickWritten < this.tickLoaded )
          {
             LoggerBase.logInfo(null, "003006", "Init from memory id: " + this.id);
              this.initSubclassesFromNbt(tag);
@@ -172,6 +174,8 @@ public class ManagedChunk implements IMangedChunkData {
             LoggerBase.logInfo(null, "003007", "Init from nbt id: " + this.id);
              this.initSubclassesFromMemory(level, id);
          }
+         
+         this.tickLoaded = GENERAL_CONFIG.getSERVER().getTickCount();
 
     }
 
@@ -403,23 +407,41 @@ public class ManagedChunk implements IMangedChunkData {
             return details;
         }
 
+        int count = 0;
+        try {
 
-        details.putString("id", this.id);
-        details.putInt("level", this.level.hashCode());
-        this.tickWritten = GENERAL_CONFIG.getSERVER().getTickCount();
-        details.putInt("tickWritten", this.tickWritten);
+            details.putString("id", this.id); count++;
+            details.putInt("level", this.level.hashCode()); count++;
+            this.tickWritten = GENERAL_CONFIG.getSERVER().getTickCount(); count++;
+            details.putInt("tickWritten", this.tickWritten); count++;
 
-        for(IMangedChunkData data : managedChunkData.values())
+            for(IMangedChunkData data : managedChunkData.values())
+            {
+                if( data == null )
+                    continue;
+                //TO DO: Thread this operation and lock until data object is done with current operation
+                //to ensure write is most recent info
+                details.put(data.getClass().getName(), data.serializeNBT());
+                count++;
+            }
+
+
+        } catch (Exception e)
         {
-            if( data == null )
-                continue;
-            //TO DO: Thread this operation and lock until data object is done with current operation
-            //to ensure write is most recent info
-            details.put(data.getClass().getName(), data.serializeNBT());
+            StringBuilder error = new StringBuilder();
+            error.append("Error serializing ManagedChunk with id: ");
+            error.append(this.id);
+            error.append("\nError: ");
+            error.append(e.getClass());
+            error.append(" - ");
+            error.append(e.getMessage());
+            error.append("\nCount: ");
+            error.append(count);
+
+            LoggerBase.logError(null, "003020", error.toString());
         }
 
         LoggerBase.logDebug( null,"003002", "Serializing ManagedChunk with data: " + details);
-
         return details;
     }
 

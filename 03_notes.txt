@@ -132,6 +132,16 @@ Threading
 	but we may need to load chunks to write data out in the background, loading chunks one at a time
 
 4. Main thread:
-	- Writes out block changes in a chunk that we have determined
+	- Writes out block changes in a chunk that we have determined\
 
-5. 
+
+
+Bugs
+---
+
+1. Cannot edit chunks in world. I can break and place blocks, but the changes are not saved after quitting the world
+and rejoining
+---
+- serialization method for ManagedChunkCapability was throwing error and the chunk failed to save
+
+
