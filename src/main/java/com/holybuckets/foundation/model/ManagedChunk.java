@@ -19,6 +19,7 @@ import net.minecraftforge.event.level.ChunkEvent;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 public class ManagedChunk implements IMangedChunkData {
@@ -26,8 +27,9 @@ public class ManagedChunk implements IMangedChunkData {
     public static final String CLASS_ID = "003";
     //public static final String NBT_KEY_HEADER = "managedChunk";
     public static final GeneralRealTimeConfig GENERAL_CONFIG = GeneralRealTimeConfig.getInstance();
-    public static final HashMap<Class<? extends IMangedChunkData>, IMangedChunkData> MANAGED_SUBCLASSES = new HashMap<>();
-    public static final HashMap<LevelAccessor, HashMap<String, ManagedChunk>> LOADED_CHUNKS = new HashMap<>();
+    public static final Map<Class<? extends IMangedChunkData>, IMangedChunkData> MANAGED_SUBCLASSES = new ConcurrentHashMap<>();
+    public static final Map<LevelAccessor, Map<String, ManagedChunk>> LOADED_CHUNKS = new ConcurrentHashMap<>();
+    public static final Map<LevelAccessor, Map<String, ManagedChunk>> INITIALIZED_CHUNKS = new ConcurrentHashMap<>();
     public static final Gson GSON_BUILDER = new GsonBuilder().serializeNulls().create();
 
     private String id;
@@ -47,7 +49,7 @@ public class ManagedChunk implements IMangedChunkData {
     }
 
     public ManagedChunk( CompoundTag tag ) {
-        super();
+        this();
         this.deserializeNBT(tag);
         LOADED_CHUNKS.get(this.level).put(this.id, this);
     }
@@ -63,9 +65,11 @@ public class ManagedChunk implements IMangedChunkData {
         this.initSubclassesFromMemory(level, id);
 
         if(LOADED_CHUNKS.get(this.level) == null) {
-            LOADED_CHUNKS.put(this.level, new HashMap<>());
+            LOADED_CHUNKS.put(this.level, new ConcurrentHashMap<>());
+            INITIALIZED_CHUNKS.put(this.level,  new ConcurrentHashMap<>());
         }
         LOADED_CHUNKS.get(this.level).put(this.id, this);
+        INITIALIZED_CHUNKS.get(this.level).put(this.id, this);
     }
 
 
@@ -260,7 +264,8 @@ public class ManagedChunk implements IMangedChunkData {
         LevelChunk levelChunk = ManagedChunk.getChunk(level, chunkId);
 
         if(LOADED_CHUNKS.get(level) == null) {
-            LOADED_CHUNKS.put(level, new HashMap<>());
+            LOADED_CHUNKS.put(level, new ConcurrentHashMap<>());
+            INITIALIZED_CHUNKS.put(level,  new ConcurrentHashMap<>());
         }
 
         if (levelChunk == null) {

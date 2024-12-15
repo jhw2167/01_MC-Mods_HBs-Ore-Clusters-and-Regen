@@ -425,6 +425,13 @@ public class OreClusterManager {
                 List<ManagedOreClusterChunk> readyChunks = loadedOreClusterChunks.values().stream().filter(
                     chunk -> !BAD_STATUS.contains(chunk.getStatus())).toList();
 
+                //TEMP - filter for only chunks within a 4 chunk radius of 0,0
+                readyChunks = readyChunks.stream().filter(chunk -> {
+                    ChunkPos pos = HolyBucketsUtility.ChunkUtil.getPos(chunk.getId());
+                    //return Math.abs(pos.x) < 4 && Math.abs(pos.z) < 4;
+                    return true;
+                }).toList();
+
                 for( ManagedOreClusterChunk chunk : readyChunks )
                 {
                     Queue<Pair<Block, BlockPos>> blockUpdates = chunk.getBlockStateUpdates();
@@ -441,6 +448,8 @@ public class OreClusterManager {
                     });
 
                 }
+
+                sleep(10000);   //10 seconds
             }
 
         }
