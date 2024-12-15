@@ -245,7 +245,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     @Override
     public void handleChunkLoaded(ChunkEvent.Load event)
     {
-        //OreClusterManager.onChunkLoad(event, this);
+        OreClusterManager.onChunkLoad(event, this);
     }
 
     @Override
@@ -325,13 +325,20 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
             StringBuilder blockStateUpdates = new StringBuilder();
             for(Pair<Block, BlockPos> pair : this.blockStateUpdates)
             {
+                blockStateUpdates.append("{");
                 String block = HolyBucketsUtility.BlockUtil.blockToString(pair.getLeft());
-                BlockPos pos = pair.getRight();
-                Vector3i vec = new Vector3i(pos.getX(), pos.getY(), pos.getZ());
                 blockStateUpdates.append(block);
                 blockStateUpdates.append(":");
-                blockStateUpdates.append(gson.toJson(vec));
+
+                BlockPos pos = pair.getRight();
+                HolyBucketsUtility.TripleInt vec = new HolyBucketsUtility.TripleInt(pos);
+                blockStateUpdates.append("[" + vec.x + "," + vec.y + "," + vec.z + "]");
+                blockStateUpdates.append("}, ");
             }
+            //remove trailing comma and space
+            blockStateUpdates.deleteCharAt(blockStateUpdates.length() - 1);
+            blockStateUpdates.deleteCharAt(blockStateUpdates.length() - 1);
+
             LoggerProject.logDebug("003009", "Serializing blockStateUpdates: " + blockStateUpdates);
             details.putString("blockStateUpdates", blockStateUpdates.toString());
         }
@@ -367,18 +374,37 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         {
             String blockStateUpdates = tag.getString("blockStateUpdates");
             /**
-             * Read the pairs out from the string
-             *
-             * for(Pair<Block, BlockPos> pair : this.blockStateUpdates)
+             * Rfor(Pair<Block, BlockPos> pair : this.blockStateUpdates)
              *             {
+             *                 blockStateUpdates.append("{");
              *                 String block = HolyBucketsUtility.BlockUtil.blockToString(pair.getLeft());
+             *                 blockStateUpdates.append(block);
+             *                 blockStateUpdates.append(":");
+             *
              *                 BlockPos pos = pair.getRight();
-             *                 Vector3i vec = new Vector3i(pos.getX(), pos.getY(), pos.getZ());
-             *                 blockStateUpdates.append(block + ":");
-             *                 blockStateUpdates.append(gson.toJson(vec));
+             *                 HolyBucketsUtility.TripleInt vec = new HolyBucketsUtility.TripleInt(pos);
+             *                 blockStateUpdates.append("[" + vec.x + "-" + vec.y + "-" + vec.z + "]");
+             *                 blockStateUpdates.append("},");
              *             }
-             *             LoggerProject.logDebug("003009", "Serializing blockStateUpdates: " + blockStateUpdates);
              */
+             String[] pairs = blockStateUpdates.split(", ");
+             for (String pair : pairs)
+             {
+                //remove curly braces
+                 pair = pair.substring(1, pair.length() - 1);
+
+                 String[] parts = pair.split(":");
+                 String block = parts[0];
+                 Block blockType = HolyBucketsUtility.BlockUtil.blockNameToBlock(block);
+
+                 String[] pos = parts[1].split(",");
+                 int x = Integer.parseInt(pos[0]);
+                 int y = Integer.parseInt(pos[1]);
+                 int z = Integer.parseInt(pos[2]);
+                 BlockPos blockPos = new BlockPos(x, y, z);
+
+                 this.blockStateUpdates.add(Pair.of(blockType, blockPos));
+             }
 
 
 

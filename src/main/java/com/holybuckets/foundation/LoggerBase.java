@@ -76,7 +76,8 @@ public class LoggerBase {
 
     static {
         //FILTER_RULES.put("INFO", new LogEntry("INFO", "000", PREFIX, "This is an info message"));
-        FILTER_RULES.put("003002", new LogEntry(null, null, null, null, 0.01f));
+        FILTER_RULES.put("003001", new LogEntry(null, null, null, null, 0.1f));
+        FILTER_RULES.put("003002", new LogEntry(null, null, null, null, 0.1f));
         FILTER_RULES.put("003007", new LogEntry(null, null, null, "minecraft:", null));
         FILTER_RULES.put("007002", new LogEntry(null, null, null, "1", null));
 
@@ -137,7 +138,6 @@ public class LoggerBase {
             "002010",
             "002018",
             "005003",
-            "005002",
             ""
         )
     );
