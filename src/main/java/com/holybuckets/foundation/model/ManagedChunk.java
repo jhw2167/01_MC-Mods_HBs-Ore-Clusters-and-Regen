@@ -55,10 +55,11 @@ public class ManagedChunk implements IMangedChunkData {
         this();
         this.id = id;
         this.level = level;
-        this.tickWritten = GENERAL_CONFIG.getSERVER().getTickCount();
+
         this.tickLoaded = GENERAL_CONFIG.getSERVER().getTickCount();
         this.chunk = chunk;
-        //Dont init here, working static maps will never be ready at this time
+        this.initSubclassesFromMemory(level, id);
+
     }
 
 
@@ -86,11 +87,19 @@ public class ManagedChunk implements IMangedChunkData {
     }
 
     public void setChunk(LevelAccessor level, String id) {
-        this.chunk = getChunk(level, id);
+        this.chunk = ManagedChunk.getChunk(level, id);
     }
 
 
-
+    /**
+     * Initialize subclasses using getStaticInstance method from each subclass. Which
+     * allows each subclass to initialize itself from an existing datastructure owned by
+     * a class unknown to Managed Chunk. useSerialize is a boolean, that if set to true
+     * the subclass will be skipped since more correct data is from the serialized data.
+     * @param level
+     * @param chunkId
+     * @param useSerialize
+     */
     private void initSubclassesFromMemory(LevelAccessor level, String chunkId)
     {
         for(Map.Entry<Class<? extends IMangedChunkData>, IMangedChunkData> data : MANAGED_SUBCLASSES.entrySet() ) {
@@ -99,19 +108,10 @@ public class ManagedChunk implements IMangedChunkData {
 
     }
 
-
-    /** OVERRIDES **/
-    private void init(LevelAccessor level, String id, CompoundTag nbtData) throws InvalidId
+    private void initSubclassesFromNbt(CompoundTag tag) throws InvalidId
     {
-        this.id = id;
-        this.level = level;
-        this.setChunk(level, id);
-        HashMap<String, String> errors = new HashMap<>();
-
-        //Attempt to link existing subclasses from RAM
-        this.initSubclassesFromMemory(level, id);
-
         //Loop over all subclasses and deserialize if matching chunk not found in RAM
+        HashMap<String, String> errors = new HashMap<>();
         for(Map.Entry entry : managedChunkData.entrySet())
         {
             if (entry.getValue() != null)
@@ -119,7 +119,7 @@ public class ManagedChunk implements IMangedChunkData {
 
             try {
                 IMangedChunkData sub = (IMangedChunkData) entry.getKey().getClass().newInstance();
-                sub.deserializeNBT(nbtData.getCompound(sub.getClass().getName()));
+                sub.deserializeNBT(tag.getCompound(sub.getClass().getName()));
                 setSubclass(sub.getClass(), sub);
 
             } catch (Exception e) {
@@ -130,14 +130,43 @@ public class ManagedChunk implements IMangedChunkData {
 
         if(errors.size() > 0)
         {
-        //Add all errors in list to error message
+            //Add all errors in list to error message
             StringBuilder error = new StringBuilder();
             for (String key : errors.keySet()) {
                 error.append(key).append(": ").append(errors.get(key)).append("\n");
             }
             throw new InvalidId(error.toString());
         }
+    }
 
+
+    /** OVERRIDES **/
+    private void init(CompoundTag tag) throws InvalidId
+    {
+        //print tag as string, info
+        this.id = tag.getString("id");
+        ManagedChunk existingChunk = LOADED_CHUNKS.get(this.level).get(this.id);
+        this.level = GENERAL_CONFIG.getLEVELS().get( tag.get("level") );
+        this.tickWritten = tag.getInt("tickWritten");
+        this.tickLoaded = GENERAL_CONFIG.getSERVER().getTickCount();
+        this.setChunk(level, id);
+
+        /** If tickWritten is < existingChunk.tickLoaded, then this data
+         * was written previously and a dummy node was created. Replace the dummy
+         * with serialized data.
+         */
+         if( this.tickWritten < existingChunk.tickLoaded )
+         {
+            LoggerBase.logInfo(null, "003006", "Init from memory id: " + this.id);
+             this.initSubclassesFromNbt(tag);
+         }
+         else
+         {
+            LoggerBase.logInfo(null, "003007", "Init from nbt id: " + this.id);
+             this.initSubclassesFromMemory(level, id);
+         }
+
+        LOADED_CHUNKS.get(this.level).put(this.id, this);
     }
 
     /**
@@ -170,18 +199,37 @@ public class ManagedChunk implements IMangedChunkData {
         return getManagedChunk(level, id);
     }
 
-    public void handleChunkLoaded() {
+    @Override
+    public void handleChunkLoaded(ChunkEvent.Load event)
+    {
         this.isLoaded = true;
-        initSubclassesFromMemory(level, id);
+        LoggerBase.logInfo(null, "003005", "Loading ManagedChunk with id: " + this.id);
+
+        for(IMangedChunkData data : managedChunkData.values()) {
+            data.handleChunkLoaded(event);
+        }
     }
 
-    public void handleChunkUnloaded() {
+    @Override
+    public void handleChunkUnloaded(ChunkEvent.Unload event)
+    {
        this.isLoaded = false;
+       this.tickWritten = GENERAL_CONFIG.getSERVER().getTickCount();
+
+         for(IMangedChunkData data : managedChunkData.values()) {
+              data.handleChunkUnloaded(event);
+         }
     }
 
 
     /** STATIC UTILITY METHODS **/
 
+    /**
+     * Get a chunk from a level using a chunk id
+     * @param level
+     * @param chunkId
+     * @return
+     */
     public static LevelChunk getChunk(LevelAccessor level, String chunkId)
     {
         ChunkPos p = HolyBucketsUtility.ChunkUtil.getPos(chunkId);
@@ -207,23 +255,25 @@ public class ManagedChunk implements IMangedChunkData {
         String chunkId = HolyBucketsUtility.ChunkUtil.getId(event.getChunk());
         LevelChunk levelChunk = getChunk(level, chunkId);
 
+
+
         if(LOADED_CHUNKS.get(level) == null) {
             LOADED_CHUNKS.put(level, new HashMap<>());
         }
 
         if (levelChunk == null) {
-            //LoggerProject.logDebug("002021", "Chunk " + chunkId + " unloaded before data could be written");
+            //LoggerProject.logDebug("003021", "Chunk " + chunkId + " unloaded before data could be written");
         }
         else
         {
-            if( LOADED_CHUNKS.get(level).containsKey(chunkId) ) {
-                LoggerBase.logDebug(null, "002020", "Chunk " + chunkId + " already loaded");
+            ManagedChunk c = LOADED_CHUNKS.get(level).get(chunkId);
+            if(  c != null ) {
+                //nothing
             } else {
-                ManagedChunk managedChunk = new ManagedChunk(level, chunkId, levelChunk);
-                LOADED_CHUNKS.get(level).put(chunkId, managedChunk);
+                c = new ManagedChunk(level, chunkId, levelChunk);
             }
-            ManagedChunk c = getManagedChunk(level, chunkId);
-            c.handleChunkLoaded();
+
+            c.handleChunkLoaded(event);
         }
 
     }
@@ -231,7 +281,9 @@ public class ManagedChunk implements IMangedChunkData {
     public static void onChunkUnload( final ChunkEvent.Unload event )
     {
         LevelAccessor level = event.getLevel();
-        LOADED_CHUNKS.get(level).get(HolyBucketsUtility.ChunkUtil.getId(event.getChunk())).handleChunkUnloaded();
+        ChunkAccess chunk = event.getChunk();
+        ManagedChunk c = getManagedChunk(level, HolyBucketsUtility.ChunkUtil.getId(chunk));
+        c.handleChunkUnloaded(event);
     }
 
 
@@ -251,7 +303,7 @@ public class ManagedChunk implements IMangedChunkData {
         if( chunk.getStatus() != ChunkStatus.FULL )
             return false;
 
-        //LoggerBase.logDebug(null, "002022", "Updating chunk block states: " + HolyBucketsUtility.ChunkUtil.getId( chunk));
+        //LoggerBase.logDebug(null, "003022", "Updating chunk block states: " + HolyBucketsUtility.ChunkUtil.getId( chunk));
 
         try
         {
@@ -279,7 +331,7 @@ public class ManagedChunk implements IMangedChunkData {
         }
         catch (IllegalStateException e)
         {
-            LoggerBase.logWarning(null, "002023", "Illegal state exception " +
+            LoggerBase.logWarning(null, "003023", "Illegal state exception " +
              "updating chunk block states. Updates may be replayed later. At Chunk: " + HolyBucketsUtility.ChunkUtil.getId( chunk));
             return false;
         }
@@ -292,7 +344,7 @@ public class ManagedChunk implements IMangedChunkData {
             error.append("Corresponding exception message: \n");
             error.append(e.getMessage());
 
-            LoggerBase.logError(null, "002024", error.toString());
+            LoggerBase.logError(null, "003024", error.toString());
 
             return false;
         }
@@ -344,11 +396,11 @@ public class ManagedChunk implements IMangedChunkData {
 
         details.putString("id", this.id);
         details.putInt("level", this.level.hashCode());
-        details.putInt("tickWritten", GENERAL_CONFIG.getSERVER().getTickCount());
+        this.tickWritten = GENERAL_CONFIG.getSERVER().getTickCount();
+        details.putInt("tickWritten", this.tickWritten);
 
-        this.initSubclassesFromMemory(level, id);
-
-        for(IMangedChunkData data : managedChunkData.values()) {
+        for(IMangedChunkData data : managedChunkData.values())
+        {
             if( data == null )
                 continue;
             //TO DO: Thread this operation and lock until data object is done with current operation
@@ -368,16 +420,13 @@ public class ManagedChunk implements IMangedChunkData {
             return;
         }
 
-        //print tag as string, info
-        this.id = tag.getString("id");
-        this.level = GENERAL_CONFIG.getLEVELS().get( tag.get("level") );
-        this.tickWritten = tag.getInt("tickWritten");
-        this.tickLoaded = GENERAL_CONFIG.getSERVER().getTickCount();
+        LoggerBase.logInfo(null, "003001", "Deserializing ManagedChunk with id: " + this.id);
 
+        //Deserialize subclasses
         try {
-            this.init(level, id, tag );
+            this.init(tag);
         } catch (InvalidId e) {
-            LoggerBase.logError(null, "002021", "Error initializing ManagedChunk with id: " + id);
+            LoggerBase.logError(null, "003021", "Error initializing ManagedChunk with id: " + id);
         }
 
     }

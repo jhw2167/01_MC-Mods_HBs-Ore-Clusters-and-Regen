@@ -1,15 +1,10 @@
 package com.holybuckets.foundation.modelInterface;
 
-import com.holybuckets.foundation.exception.InvalidId;
-import com.holybuckets.orecluster.OreClustersAndRegenMain;
-import com.holybuckets.orecluster.core.OreClusterManager;
-import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraftforge.common.util.INBTSerializable;
-
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
+import net.minecraftforge.event.level.ChunkEvent;
 
 public interface IMangedChunkData extends INBTSerializable<CompoundTag> {
 
@@ -26,4 +21,15 @@ public interface IMangedChunkData extends INBTSerializable<CompoundTag> {
      * @return IMangedChunkData
      */
     public IMangedChunkData getStaticInstance(LevelAccessor level, String id);
+
+    /**
+     * @param event
+     */
+    public void handleChunkLoaded(ChunkEvent.Load event);
+
+    /**
+     * Fired when a chunk is unloaded from memory
+     * @param chunk
+     */
+    public void handleChunkUnloaded(ChunkEvent.Unload event);
 }
