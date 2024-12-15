@@ -152,23 +152,6 @@ public class HolyBucketsUtility {
             return "";
         }
 
-        /**
-         * Returns a levelChunk from the level object, never forceloaded
-         */
-        public static LevelChunk getLevelChunk(LevelAccessor level, ManagedOreClusterChunk chunk) {
-            return getLevelChunk(level, chunk.getId());
-        }
-
-        //override with chunkAccess object
-        public static LevelChunk getLevelChunk(LevelAccessor level, ChunkAccess chunk) {
-            return getLevelChunk(level, getId(chunk));
-        }
-
-        //override with string Id args
-        public static LevelChunk getLevelChunk(LevelAccessor level, String id) {
-          ChunkPos pos =  getPos(id);
-            return level.getChunkSource().getChunkNow(pos.x, pos.z);
-        }
         //override with x and y coordinates
         public static LevelChunk getLevelChunk(LevelAccessor level, int x, int z) {
             return level.getChunkSource().getChunkNow(x, z);

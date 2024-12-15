@@ -17,12 +17,12 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraftforge.event.level.ChunkEvent;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3i;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -131,6 +131,10 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         return parent.getChunk();
     }
 
+    public boolean hasChunk() {
+        return getChunk() != null;
+    }
+
     public ChunkPos getPos() {
         return pos;
     }
@@ -216,27 +220,36 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.blockStateUpdates.add( Pair.of(block, pos) );
     }
 
-    @Override
-    public boolean isInit(String subClass) {
-        return subClass.equals(ManagedOreClusterChunk.class.getName()) && this.id != null;
-    }
-
 
     public ManagedOreClusterChunk getStaticInstance(LevelAccessor level, String id)
     {
         if(id == null || level == null )
          return null;
 
-         ManagedOreClusterChunk chunk = getInstance(level, id);
-        if(chunk != null)
-            return chunk;
-
         OreClusterManager manager = OreClustersAndRegenMain.ORE_CLUSTER_MANAGER_BY_LEVEL.get(level);
-        if(manager == null)
-            return null;
+        if(manager != null)
+            return manager.getLoadedChunk(id);
 
-        return manager.getLoadedChunk(id);
+        ManagedOreClusterChunk chunk = ManagedOreClusterChunk.getInstance(level, id);
 
+        return chunk;
+    }
+
+    @Override
+    public boolean isInit(String subClass) {
+        return subClass.equals(ManagedOreClusterChunk.class.getName()) && this.id != null;
+    }
+
+    @Override
+    public void handleChunkLoaded(ChunkEvent.Load event)
+    {
+        OreClusterManager.onChunkLoad(event, this);
+    }
+
+    @Override
+    public void handleChunkUnloaded(ChunkEvent.Unload event)
+    {
+        OreClusterManager.onChunkUnload(event);
     }
 
     /** STATIC METHODS **/

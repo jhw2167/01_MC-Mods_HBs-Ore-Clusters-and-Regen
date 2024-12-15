@@ -76,17 +76,20 @@ public class LoggerBase {
 
     static {
         //FILTER_RULES.put("INFO", new LogEntry("INFO", "000", PREFIX, "This is an info message"));
-        FILTER_RULES.put("003002", new LogEntry(null, null, null, "DETERMINED", null));
+        FILTER_RULES.put("003002", new LogEntry(null, null, null, null, 0.01f));
         FILTER_RULES.put("003007", new LogEntry(null, null, null, "minecraft:", null));
         FILTER_RULES.put("007002", new LogEntry(null, null, null, "1", null));
 
-        FILTER_RULES.put("003005", new LogEntry(null, null, null, null, null));
-        FILTER_RULES.put("003006", new LogEntry(null, null, null, "minecraft", null));
+        //FILTER_RULES.put("003005", new LogEntry(null, null, null, null, null));
+        //FILTER_RULES.put("003006", new LogEntry(null, null, null, "minecraft", null));
         FILTER_RULES.put("002020", new LogEntry(null, null, null, null, null));
         FILTER_RULES.put("002004", new LogEntry(null, null, null, null, null));
-        FILTER_RULES.put("002025", new LogEntry(null, null, null, null, null));
         FILTER_RULES.put("002032", new LogEntry(null, null, null, null, null));
-        FILTER_RULES.put("002028", new LogEntry(null, null, null, null, 0.01f));
+        //FILTER_RULES.put("002028", new LogEntry(null, null, null, null, 0.01f));
+        FILTER_RULES.put("002028", new LogEntry(null, null, null, null, 0.001f));
+        FILTER_RULES.put("002025", new LogEntry(null, null, null, null, 0.01f));
+        FILTER_RULES.put("002026", new LogEntry(null, null, null, null, 0.01f));
+        FILTER_RULES.put("002027", new LogEntry(null, null, null, null, 0.01f));
 
     }
 
