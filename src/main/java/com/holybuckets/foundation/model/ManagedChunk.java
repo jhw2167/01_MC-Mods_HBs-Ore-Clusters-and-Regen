@@ -19,6 +19,7 @@ import net.minecraftforge.event.level.ChunkEvent;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 public class ManagedChunk implements IMangedChunkData {
 
@@ -48,6 +49,7 @@ public class ManagedChunk implements IMangedChunkData {
     public ManagedChunk( CompoundTag tag ) {
         super();
         this.deserializeNBT(tag);
+        LOADED_CHUNKS.get(this.level).put(this.id, this);
     }
 
     public ManagedChunk(LevelAccessor level, String id, LevelChunk chunk)
@@ -60,6 +62,10 @@ public class ManagedChunk implements IMangedChunkData {
         this.chunk = chunk;
         this.initSubclassesFromMemory(level, id);
 
+        if(LOADED_CHUNKS.get(this.level) == null) {
+            LOADED_CHUNKS.put(this.level, new HashMap<>());
+        }
+        LOADED_CHUNKS.get(this.level).put(this.id, this);
     }
 
 
@@ -78,7 +84,8 @@ public class ManagedChunk implements IMangedChunkData {
      * @param data The managed chunk data instance
      * @return true if set successfully
      */
-    public Boolean setSubclass(Class<? extends IMangedChunkData> classObject, IMangedChunkData data) {
+    public Boolean setSubclass(Class<? extends IMangedChunkData> classObject, IMangedChunkData data)
+    {
         if (classObject == null || data == null) {
             return false;
         }
@@ -98,7 +105,6 @@ public class ManagedChunk implements IMangedChunkData {
      * the subclass will be skipped since more correct data is from the serialized data.
      * @param level
      * @param chunkId
-     * @param useSerialize
      */
     private void initSubclassesFromMemory(LevelAccessor level, String chunkId)
     {
@@ -112,23 +118,19 @@ public class ManagedChunk implements IMangedChunkData {
     {
         //Loop over all subclasses and deserialize if matching chunk not found in RAM
         HashMap<String, String> errors = new HashMap<>();
-        for(Map.Entry entry : managedChunkData.entrySet())
+        for(Map.Entry<Class<? extends IMangedChunkData>, IMangedChunkData> data : MANAGED_SUBCLASSES.entrySet() )
         {
-            if (entry.getValue() != null)
-                continue;
-
+            IMangedChunkData sub = data.getValue();
             try {
-                IMangedChunkData sub = (IMangedChunkData) entry.getKey().getClass().newInstance();
                 sub.deserializeNBT(tag.getCompound(sub.getClass().getName()));
                 setSubclass(sub.getClass(), sub);
-
             } catch (Exception e) {
-                errors.put(entry.getKey().getClass().getName(), e.getMessage());
+                errors.put(sub.getClass().getName(), e.getMessage());
             }
 
         }
 
-        if(errors.size() > 0)
+        if(!errors.isEmpty())
         {
             //Add all errors in list to error message
             StringBuilder error = new StringBuilder();
@@ -146,6 +148,7 @@ public class ManagedChunk implements IMangedChunkData {
         //print tag as string, info
         this.id = tag.getString("id");
         ManagedChunk existingChunk = LOADED_CHUNKS.get(this.level).get(this.id);
+
         this.level = GENERAL_CONFIG.getLEVELS().get( tag.get("level") );
         this.tickWritten = tag.getInt("tickWritten");
         this.tickLoaded = GENERAL_CONFIG.getSERVER().getTickCount();
@@ -166,7 +169,6 @@ public class ManagedChunk implements IMangedChunkData {
              this.initSubclassesFromMemory(level, id);
          }
 
-        LOADED_CHUNKS.get(this.level).put(this.id, this);
     }
 
     /**
@@ -250,12 +252,12 @@ public class ManagedChunk implements IMangedChunkData {
 
     public static void onChunkLoad( final ChunkEvent.Load event )
     {
-        // Implementation for chunk unload
         LevelAccessor level = event.getLevel();
+        if(level.isClientSide())
+            return;
+
         String chunkId = HolyBucketsUtility.ChunkUtil.getId(event.getChunk());
-        LevelChunk levelChunk = getChunk(level, chunkId);
-
-
+        LevelChunk levelChunk = ManagedChunk.getChunk(level, chunkId);
 
         if(LOADED_CHUNKS.get(level) == null) {
             LOADED_CHUNKS.put(level, new HashMap<>());
@@ -266,10 +268,9 @@ public class ManagedChunk implements IMangedChunkData {
         }
         else
         {
+
             ManagedChunk c = LOADED_CHUNKS.get(level).get(chunkId);
-            if(  c != null ) {
-                //nothing
-            } else {
+            if(  c == null ) {
                 c = new ManagedChunk(level, chunkId, levelChunk);
             }
 
@@ -281,6 +282,9 @@ public class ManagedChunk implements IMangedChunkData {
     public static void onChunkUnload( final ChunkEvent.Unload event )
     {
         LevelAccessor level = event.getLevel();
+        if(level.isClientSide())
+            return;
+
         ChunkAccess chunk = event.getChunk();
         ManagedChunk c = getManagedChunk(level, HolyBucketsUtility.ChunkUtil.getId(chunk));
         c.handleChunkUnloaded(event);
@@ -368,16 +372,17 @@ public class ManagedChunk implements IMangedChunkData {
      */
     public static synchronized boolean updateChunkBlocks(LevelChunk chunk, Queue<Pair<Block, BlockPos>> updates)
     {
-        if( chunk == null || updates == null || updates.size() == 0 )
-            return false;
-
         Queue<Pair<BlockState, BlockPos>> blockStates = new LinkedList<>();
-
         for(Pair<Block, BlockPos> update : updates) {
             blockStates.add( Pair.of(update.getLeft().defaultBlockState(), update.getRight()) );
         }
 
         return updateChunkBlockStates(chunk, blockStates);
+    }
+
+    public static void registerManagedChunkData(Class<? extends IMangedChunkData> classObject, Supplier<IMangedChunkData> data)
+    {
+        MANAGED_SUBCLASSES.put(classObject, data.get());
     }
 
 

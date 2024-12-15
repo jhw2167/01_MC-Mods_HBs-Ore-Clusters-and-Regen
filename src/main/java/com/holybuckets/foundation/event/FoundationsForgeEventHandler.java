@@ -31,9 +31,12 @@ public class FoundationsForgeEventHandler {
     @SubscribeEvent
     public static void onAttachCapabilities(AttachCapabilitiesEvent<LevelChunk> event)
     {
-        LevelChunk chunk = event.getObject();
 
-        if( chunk instanceof LevelChunk ) {
+        if( event.getObject() instanceof LevelChunk )
+        {
+            LevelChunk chunk = event.getObject();
+            if(chunk.getLevel().isClientSide())
+                return;
             //LoggerBase.logDebug("002001", "Attaching Capabilities to MOD EVENT:  ");
             if( !event.getObject().getCapability(ManagedChunkCapabilityProvider.MANAGED_CHUNK).isPresent() ) {
                 event.addCapability(new ResourceLocation(HolyBucketsUtility.RESOURCE_NAMESPACE, "chunk"),

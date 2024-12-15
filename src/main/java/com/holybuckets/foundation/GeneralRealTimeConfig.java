@@ -108,6 +108,7 @@ public class GeneralRealTimeConfig {
 
     public void onChunkLoad(final ChunkEvent.Load event)
     {
+
         {
             ManagedChunk.onChunkLoad(event);
         }

@@ -59,8 +59,8 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         GENERATED
     }
 
-    static {
-        ManagedChunk.MANAGED_SUBCLASSES.put(ManagedOreClusterChunk.class, new ManagedOreClusterChunk());
+    public static void registerManagedChunkData() {
+        ManagedChunk.registerManagedChunkData(ManagedOreClusterChunk.class, ManagedOreClusterChunk::new);
     }
 
     /** Variables **/
@@ -125,7 +125,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     /** Getters **/
     public LevelChunk getChunk()
     {
-        ManagedChunk parent = getParent(level, id);
+        ManagedChunk parent = ManagedOreClusterChunk.getParent(level, id);
         if(parent == null)
             return null;
         return parent.getChunk();
@@ -228,10 +228,12 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
 
         OreClusterManager manager = OreClustersAndRegenMain.ORE_CLUSTER_MANAGER_BY_LEVEL.get(level);
         if(manager != null)
-            return manager.getLoadedChunk(id);
+        {
+            if(manager.getLoadedChunk(id) != null)
+                return manager.getLoadedChunk(id);
+        }
 
         ManagedOreClusterChunk chunk = ManagedOreClusterChunk.getInstance(level, id);
-
         return chunk;
     }
 
@@ -261,7 +263,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
      * @return
      */
     public static ManagedOreClusterChunk getInstance(LevelAccessor level, LevelChunk chunk) {
-        return getInstance(level, ChunkUtil.getId( chunk ));
+        return ManagedOreClusterChunk.getInstance(level, ChunkUtil.getId( chunk ));
     }
 
     /**

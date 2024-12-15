@@ -152,9 +152,15 @@ public class HolyBucketsUtility {
             return "";
         }
 
-        //override with x and y coordinates
+        /**
+         * Forceloads a chunk from the level
+         * @param level
+         * @param x
+         * @param z
+         * @return
+         */
         public static LevelChunk getLevelChunk(LevelAccessor level, int x, int z) {
-            return level.getChunkSource().getChunkNow(x, z);
+            return level.getChunkSource().getChunk( x, z, true);
         }
 
 
