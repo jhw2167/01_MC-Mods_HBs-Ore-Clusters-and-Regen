@@ -403,8 +403,16 @@ public class OreClusterManager {
     private void workerThreadEditChunk()
     {
         Throwable thrown = null;
+
+
         try
         {
+
+            if( true ) {
+                sleep(10000);
+                return;
+            }
+
             while( managerRunning )
             {
                 //Sleep if loaded chunks is empty, else iterate over them
@@ -449,7 +457,7 @@ public class OreClusterManager {
 
                 }
 
-                sleep(10000);   //10 seconds
+                //sleep(10000);   //10 seconds
             }
 
         }
