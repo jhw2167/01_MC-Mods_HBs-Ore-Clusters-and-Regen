@@ -79,8 +79,8 @@ public class DataStore implements IStringSerializable {
     private class DefaultDataStore extends DataStore implements IStringSerializable {
         public static final ModSaveData DATA = new ModSaveData(HBUtil.NAME);
         static {
-            DATA.setComment("The purpose of this JSON file is to store data at the world save file level." +
-             "This data is not intended to be modified by the user.");
+            DATA.setComment("The purpose of this JSON file is to store data at the world save file level for supporting HB" +
+             " Utility Foundation mods. This data is not intended to be modified by the user.");
         }
         public DefaultDataStore() {
             super(List.of(DATA));
