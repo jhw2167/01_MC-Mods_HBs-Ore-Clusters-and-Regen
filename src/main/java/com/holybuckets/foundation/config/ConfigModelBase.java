@@ -1,6 +1,6 @@
-package com.holybuckets.foundation;
+package com.holybuckets.foundation.config;
 
-import com.holybuckets.orecluster.config.COreClusters;
+import com.holybuckets.foundation.LoggerBase;
 
 import java.util.Arrays;
 import java.util.HashSet;

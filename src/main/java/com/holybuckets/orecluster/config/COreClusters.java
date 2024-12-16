@@ -1,6 +1,6 @@
 package com.holybuckets.orecluster.config;
 
-import com.holybuckets.foundation.ConfigBase;
+import com.holybuckets.foundation.config.ConfigBase;
 import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
 import net.minecraft.world.level.block.Blocks;
 

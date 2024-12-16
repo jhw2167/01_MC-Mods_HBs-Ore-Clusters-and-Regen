@@ -1,7 +1,7 @@
 package com.holybuckets.orecluster.config.model;
 
-import com.holybuckets.foundation.ConfigBase;
-import com.holybuckets.foundation.ConfigModelBase;
+import com.holybuckets.foundation.config.ConfigBase;
+import com.holybuckets.foundation.config.ConfigModelBase;
 import com.holybuckets.foundation.HolyBucketsUtility.*;
 import com.holybuckets.orecluster.LoggerProject;
 import net.minecraft.world.level.block.Block;

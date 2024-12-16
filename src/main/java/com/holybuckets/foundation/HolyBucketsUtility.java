@@ -1,10 +1,10 @@
 package com.holybuckets.foundation;
 
 
+import com.holybuckets.foundation.config.ConfigBase;
 import com.holybuckets.foundation.database.DatabaseManager;
 import com.holybuckets.foundation.modelInterface.IStringSerializable;
 import com.holybuckets.orecluster.LoggerProject;
-import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
@@ -203,7 +203,7 @@ public class HolyBucketsUtility {
          * @param defaultData
          * @return String
          */
-        public static String loadJsonConfig(LevelAccessor level, ConfigBase.ConfigString jsonFilePathConfig,  IStringSerializable defaultData)
+        public static String loadJsonConfig(LevelAccessor level, ConfigBase.ConfigString jsonFilePathConfig, IStringSerializable defaultData)
         {
             final String providedFileName = jsonFilePathConfig.get();
             final String defaultFileName = jsonFilePathConfig.getDefault();

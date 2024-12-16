@@ -1,6 +1,6 @@
 package com.holybuckets.orecluster.config;
 
-import com.holybuckets.foundation.ConfigBase;
+import com.holybuckets.foundation.config.ConfigBase;
 
 public class CCommon extends ConfigBase {
 

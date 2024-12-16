@@ -18,7 +18,7 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 
-import com.holybuckets.foundation.ConfigBase;
+import com.holybuckets.foundation.config.ConfigBase;
 import com.holybuckets.orecluster.LoggerProject;
 
 
