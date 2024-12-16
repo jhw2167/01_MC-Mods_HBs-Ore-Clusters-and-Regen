@@ -4,6 +4,7 @@ package com.holybuckets.foundation;
 
 //Forge Imports
 
+import com.holybuckets.foundation.datastore.DataStore;
 import com.holybuckets.foundation.model.ManagedChunk;
 import net.minecraft.core.Vec3i;
 import net.minecraft.server.MinecraftServer;
@@ -30,6 +31,7 @@ public class GeneralRealTimeConfig {
      * World Data
      **/
     private static GeneralRealTimeConfig instance;
+    private final DataStore DATA_STORE;
     private MinecraftServer SERVER;
     private Map<Integer, LevelAccessor> LEVELS;
     private Long WORLD_SEED;
@@ -47,7 +49,10 @@ public class GeneralRealTimeConfig {
     /**
      * Constructor
      **/
-    private GeneralRealTimeConfig() {
+    private GeneralRealTimeConfig()
+    {
+        super();
+        this.DATA_STORE = DataStore.getInstance();
         this.LEVELS = new HashMap<>();
 
         instance = this;
@@ -71,7 +76,8 @@ public class GeneralRealTimeConfig {
     {
         // Capture the world seed, use logical server
         LevelAccessor level = event.getLevel();
-        if (!level.isClientSide()) {
+        if (!level.isClientSide())
+        {
             MinecraftServer server = level.getServer();
             instance.WORLD_SEED = server.overworld().getSeed();
             instance.WORLD_SPAWN = server.overworld().getSharedSpawnPos();

@@ -103,7 +103,13 @@ Game Settings loading:
 5. Main.onLoad
 6. RealTimeConfig loaded
 7. OreClusterMangerConfigs loaded
-8.
+
+
+Events
+---
+
+
+
 
 Performance
 ---

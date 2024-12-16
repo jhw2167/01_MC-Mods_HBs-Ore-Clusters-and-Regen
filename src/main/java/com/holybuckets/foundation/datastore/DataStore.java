@@ -10,6 +10,7 @@ import com.holybuckets.foundation.modelInterface.IStringSerializable;
 import java.io.File;
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,18 +27,24 @@ public class DataStore implements IStringSerializable {
     private final Map<String, ModSaveData> STORE;
 
 
-    public DataStore() {
+    private DataStore()
+    {
         super();
         STORE = new HashMap<>();
-        File localDir = new File(".");
-        ConfigBase.ConfigString cs = new ConfigStringFactory("hbs_datastore.json", "hbs_datastore_filepath").getConfigString();
-
-        String json = HBUtil.FileIO.loadJsonConfig(localDir, cs, new DefaultDataStore());
+        File dataStoreFile = new File("hb_datastore.json");
+        String json = HBUtil.FileIO.loadJsonConfig(dataStoreFile, dataStoreFile, new DefaultDataStore());
         this.deserialize(json);
     }
 
-    public void addModSaveData(String modId, ModSaveData worldSaveData) {
-        STORE.put(modId, worldSaveData);
+    private DataStore(List<ModSaveData> modData)
+    {
+        super();
+        STORE = new HashMap<>();
+        modData.forEach(this::addModSaveData);
+    }
+
+    public void addModSaveData(ModSaveData worldSaveData) {
+        STORE.put(worldSaveData.getModId(), worldSaveData);
     }
 
     public void deserialize(String jsonString)
@@ -69,16 +76,19 @@ public class DataStore implements IStringSerializable {
 
     /** SUBCLASSES **/
 
-    private class DefaultDataStore implements IStringSerializable {
+    private class DefaultDataStore extends DataStore implements IStringSerializable {
         public static final ModSaveData DATA = new ModSaveData(HBUtil.NAME);
         static {
             DATA.setComment("The purpose of this JSON file is to store data at the world save file level." +
              "This data is not intended to be modified by the user.");
         }
+        public DefaultDataStore() {
+            super(List.of(DATA));
+        }
 
         @Override
         public String serialize() {
-            return DATA.toJson().toString();
+            return super.serialize();
         }
 
         @Override
@@ -87,24 +97,5 @@ public class DataStore implements IStringSerializable {
         }
     }
 
-    private class ConfigStringFactory extends ConfigBase {
-        private String name;
-        private String path;
-
-        public ConfigStringFactory(String name, String path) {
-            super();
-            this.name = name;
-            this.path = path;
-        }
-
-        public ConfigString getConfigString() {
-            return s(path, name, null);
-        }
-
-        @Override
-        public String getName() {
-            return "hbs_datastore_filepath";
-        }
-    }
 
 }

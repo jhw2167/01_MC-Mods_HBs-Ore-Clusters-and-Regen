@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.function.Supplier;
 
 /**
 * Class: HolyBucketsUtility
@@ -198,19 +199,15 @@ public class HBUtil {
          * - Provided string may be a relative path or a full path from the root directory.
          * - First checks if a config file exists in the <serverDirectory>/<fileName>
          * - returns string that can be Parsed into a json object
-         * @param serverDirectory
-         * @param jsonFilePathConfig
+         * @param userConfigFile
+         * @param defaultConfigFile
          * @param defaultData
          * @return String
          */
-        public static String loadJsonConfig(File serverDirectory, ConfigBase.ConfigString jsonFilePathConfig, IStringSerializable defaultData)
+        public static String loadJsonConfig(File userConfigFile, File defaultConfigFile, IStringSerializable defaultData)
         {
-            final String providedFileName = jsonFilePathConfig.get();
-            final String defaultFileName = jsonFilePathConfig.getDefault();
-
-            File configFile = new File(serverDirectory, providedFileName);
-
             //Use gson to serialize the default values and write to the file
+            File configFile = userConfigFile;
             final String DEFAULT_DATA = defaultData.serialize();
 
             if( !configFile.exists() )  //User set file
@@ -219,12 +216,12 @@ public class HBUtil {
                 warnNoUserFile.append("Could not find the provided ore cluster config file at path: ");
                 warnNoUserFile.append(configFile.getAbsolutePath());
                 warnNoUserFile.append(". Provided file name from serverConfig/hbs_ore_clusters_and_regen-server.toml: ");
-                warnNoUserFile.append(providedFileName);
-                warnNoUserFile.append(". Attempting to load the default file at: ");
-                warnNoUserFile.append(defaultFileName);
+                warnNoUserFile.append(configFile.getPath());
+                warnNoUserFile.append(". Attempting to load the default file at default location: ");
+                warnNoUserFile.append(configFile.getAbsolutePath());
                 LoggerProject.logWarning("000001",  warnNoUserFile.toString() );
 
-                configFile = new File(serverDirectory, defaultFileName);
+                configFile = defaultConfigFile;
                 if( !configFile.exists() )  //default file
                 {
                     final StringBuilder warnNoDefaultFile = new StringBuilder();
