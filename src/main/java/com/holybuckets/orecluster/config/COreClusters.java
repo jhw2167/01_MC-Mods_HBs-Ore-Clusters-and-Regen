@@ -67,8 +67,8 @@ public class COreClusters extends ConfigBase {
          " Ore cluster generation uses the world seed to determine which chunks have ore clusters and their shape and size. By assigning a " +
           "sub-seed, you can adjust this randomness for the same world";
         public static final String DEF_VALID_ORE_CLUSTER_ORE_BLOCKS = "List of blocks that the mod will attempt to create clusters for upon chunk load. " +
-         "Clusters created from these blocks will take all default ore cluster parameters unless overridden in 'oreClusters' below. " +
-          "If you are going to override the default parameters for an ore anyways, you don't need to include it in this list";
+         "Clusters created from these blocks will take all default ore cluster parameters unless overridden." +
+          " If you are going to override the default parameters for an ore anyways, you don't need to include it in this list";
         public static final String DEF_ORE_CLUSTER_SPAWN_RATE = "Defines the default frequency of ore clusters. Takes an integer" +
          " as the number of expected ore clusters per " + DEF_ORE_CLUSTER_SPAWNRATE_AREA + " chunks";
         public static final String DEF_ORE_CLUSTER_VOLUME = "Specifies the default dimensions of a cluster. <X>x<Y>x<Z>. " +

@@ -52,7 +52,8 @@ public class OreClusterConfigModel extends ConfigModelBase {
         deserialize(oreClusterJson);
     }
 
-    public OreClusterConfigModel( COreClusters cOreClusters ) {
+    public OreClusterConfigModel( COreClusters cOreClusters )
+    {
 
         if( cOreClusters == null ) {
             return;
