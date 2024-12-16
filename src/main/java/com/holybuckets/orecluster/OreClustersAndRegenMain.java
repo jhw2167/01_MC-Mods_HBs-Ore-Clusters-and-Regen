@@ -87,7 +87,7 @@ public class OreClustersAndRegenMain
         AllPlacementModifiers.register(modEventBus);
         */
         AllConfigs.register(modLoadingContext);
-        com.holybuckets.foundation.config.AllConfigs.register(modLoadingContext);
+        //com.holybuckets.foundation.config.AllConfigs.register(modLoadingContext);
 
         /*
         // FIXME: some of these registrations are not thread-safe
