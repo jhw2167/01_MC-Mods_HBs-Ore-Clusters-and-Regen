@@ -1,15 +1,11 @@
 package com.holybuckets.foundation.event;
 
 import com.holybuckets.foundation.GeneralRealTimeConfig;
-import com.holybuckets.foundation.HolyBucketsUtility;
+import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.LoggerBase;
-import com.holybuckets.foundation.database.DatabaseManager;
-import com.holybuckets.foundation.model.ManagedChunk;
 import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
 import com.holybuckets.orecluster.OreClustersAndRegenMain;
-import com.holybuckets.orecluster.core.OreClusterManager;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.LevelAccessor;
 
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
@@ -39,7 +35,7 @@ public class FoundationsForgeEventHandler {
                 return;
             //LoggerBase.logDebug("002001", "Attaching Capabilities to MOD EVENT:  ");
             if( !event.getObject().getCapability(ManagedChunkCapabilityProvider.MANAGED_CHUNK).isPresent() ) {
-                event.addCapability(new ResourceLocation(HolyBucketsUtility.RESOURCE_NAMESPACE, "chunk"),
+                event.addCapability(new ResourceLocation(HBUtil.RESOURCE_NAMESPACE, "chunk"),
                 new ManagedChunkCapabilityProvider( chunk ) );
             }
         }

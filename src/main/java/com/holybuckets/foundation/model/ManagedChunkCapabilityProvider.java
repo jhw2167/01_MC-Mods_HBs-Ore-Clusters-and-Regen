@@ -1,10 +1,9 @@
 package com.holybuckets.foundation.model;
 
-import com.holybuckets.foundation.HolyBucketsUtility;
+import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.LoggerBase;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityManager;
@@ -26,7 +25,7 @@ public class ManagedChunkCapabilityProvider implements ICapabilityProvider, INBT
     public ManagedChunkCapabilityProvider(LevelChunk chunk)
     {
         super();
-        String id = HolyBucketsUtility.ChunkUtil.getId(chunk.getPos());
+        String id = HBUtil.ChunkUtil.getId(chunk.getPos());
         if(this.managedChunk == null)
             this.managedChunk = new ManagedChunk(chunk.getLevel(), id, chunk);
     }

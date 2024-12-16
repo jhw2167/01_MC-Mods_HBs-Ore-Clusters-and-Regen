@@ -2,8 +2,8 @@ package com.holybuckets.orecluster.model;
 
 import com.google.gson.Gson;
 import com.holybuckets.foundation.GeneralRealTimeConfig;
-import com.holybuckets.foundation.HolyBucketsUtility;
-import com.holybuckets.foundation.HolyBucketsUtility.ChunkUtil;
+import com.holybuckets.foundation.HBUtil;
+import com.holybuckets.foundation.HBUtil.ChunkUtil;
 import com.holybuckets.foundation.model.ManagedChunk;
 import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
 import com.holybuckets.foundation.modelInterface.IMangedChunkData;
@@ -20,7 +20,6 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.event.level.ChunkEvent;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Vector3i;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -70,7 +69,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     private ClusterStatus status;
 
     private HashMap<Block, BlockPos> clusterTypes;
-    private Map<Block, HolyBucketsUtility.Fast3DArray> originalOres;
+    private Map<Block, HBUtil.Fast3DArray> originalOres;
     private ConcurrentLinkedQueue<Pair<Block, BlockPos>> blockStateUpdates;
 
     private ReentrantLock lock = new ReentrantLock();
@@ -164,7 +163,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         return blockStateUpdates;
     }
 
-    public Map<Block, HolyBucketsUtility.Fast3DArray> getOriginalOres() {
+    public Map<Block, HBUtil.Fast3DArray> getOriginalOres() {
         return originalOres;
     }
 
@@ -197,7 +196,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     }
 
 
-    public void setOriginalOres(Map<Block, HolyBucketsUtility.Fast3DArray> originalOres) {
+    public void setOriginalOres(Map<Block, HBUtil.Fast3DArray> originalOres) {
         this.originalOres = originalOres;
     }
 
@@ -326,12 +325,12 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
             for(Pair<Block, BlockPos> pair : this.blockStateUpdates)
             {
                 blockStateUpdates.append("{");
-                String block = HolyBucketsUtility.BlockUtil.blockToString(pair.getLeft());
+                String block = HBUtil.BlockUtil.blockToString(pair.getLeft());
                 blockStateUpdates.append(block);
                 blockStateUpdates.append(":");
 
                 BlockPos pos = pair.getRight();
-                HolyBucketsUtility.TripleInt vec = new HolyBucketsUtility.TripleInt(pos);
+                HBUtil.TripleInt vec = new HBUtil.TripleInt(pos);
                 blockStateUpdates.append("[" + vec.x + "," + vec.y + "," + vec.z + "]");
                 blockStateUpdates.append("}, ");
             }
@@ -395,7 +394,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
 
                  String[] parts = pair.split(":");
                  String block = parts[0];
-                 Block blockType = HolyBucketsUtility.BlockUtil.blockNameToBlock(block);
+                 Block blockType = HBUtil.BlockUtil.blockNameToBlock(block);
 
                  String[] pos = parts[1].split(",");
                  int x = Integer.parseInt(pos[0]);

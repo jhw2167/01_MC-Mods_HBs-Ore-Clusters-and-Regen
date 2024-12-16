@@ -182,7 +182,32 @@ jarJar {
 24.
 ---
 
+	- Added DataStore class to store ModSavedData objects
+	- Added ModSavedData class to store Mod Saved data mapping mod_id to an arbitrary JSON object
+	- Reworked HBUtil loadJsonConfigs function to accept File instead of level object
+	- Renamed HBUtility to HBUtil for brevity
+	- added json support for reading json configs in and out for DataStore
 
+
+
+	- test file creation, serialization and location tomorrow
+	- Attempt to add oreConfig data and serialize
+	- iD levels with dimension names
+	- ID save files with world Folder, levelData
+	- Create static hashset of LoadedIds
+	-
+
+
+25.
+---
+
+
+26.
+---
+
+
+27.
+---
 
 		- SERVER_DIRECTORY == .
 		- user.dir == \run directory
@@ -205,16 +230,7 @@ jarJar {
 
 		
 
-25.
----
 
-
-26.
----
-
-
-27.
----
 
 
 28.

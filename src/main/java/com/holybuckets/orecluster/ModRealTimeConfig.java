@@ -4,7 +4,7 @@ package com.holybuckets.orecluster;
 
 //Forge Imports
 import com.holybuckets.foundation.GeneralRealTimeConfig;
-import com.holybuckets.foundation.HolyBucketsUtility;
+import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.orecluster.config.COreClusters;
 import com.holybuckets.orecluster.config.model.OreClusterJsonConfig;
 import net.minecraft.world.level.LevelAccessor;
@@ -12,6 +12,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraftforge.fml.common.Mod;
 
 //Java Imports
+import java.io.File;
 import java.util.*;
 import java.util.function.Function;
 
@@ -73,7 +74,8 @@ public class ModRealTimeConfig
 
             //Create new oreConfig for each element in cOreClusters list
             oreConfigs = new HashMap<Block, OreClusterConfigModel>();
-            String jsonOreConfigData = HolyBucketsUtility.FileIO.loadJsonConfig( level,
+            File localDir = level.getServer().getServerDirectory();
+            String jsonOreConfigData = HBUtil.FileIO.loadJsonConfig( localDir,
                  clusterConfig.oreClusters , OreClusterJsonConfig.DEFAULT_CONFIG );
             OreClusterJsonConfig jsonOreConfigs = new OreClusterJsonConfig(jsonOreConfigData);
 
