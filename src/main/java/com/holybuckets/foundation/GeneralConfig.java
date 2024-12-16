@@ -4,6 +4,7 @@ package com.holybuckets.foundation;
 
 //Forge Imports
 
+import com.google.gson.Gson;
 import com.holybuckets.foundation.datastore.DataStore;
 import com.holybuckets.foundation.event.EventRegistrar;
 import com.holybuckets.foundation.model.ManagedChunk;
@@ -30,6 +31,8 @@ import java.util.function.Consumer;
 public class GeneralConfig {
     public static final String CLASS_ID = "000";
 
+    public static final Gson GSON = new Gson();
+
     /**
      * World Data
      **/
@@ -41,7 +44,7 @@ public class GeneralConfig {
     private final Map<Integer, LevelAccessor> LEVELS;
     private Long WORLD_SEED;
     private Vec3i WORLD_SPAWN;
-    private Boolean PLAYER_LOADED = false;
+    private Boolean PLAYER_LOADED;
 
     /**
      * Constructor
@@ -50,6 +53,7 @@ public class GeneralConfig {
     {
         super();
         LoggerBase.logInit( null, "000000", this.getClass().getName());
+        this.PLAYER_LOADED = false;
         this.DATA_STORE = DataStore.getInstance();
         this.LEVELS = new HashMap<>();
 
