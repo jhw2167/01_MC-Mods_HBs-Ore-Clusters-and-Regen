@@ -3,7 +3,7 @@ package com.holybuckets.foundation.model;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.holybuckets.foundation.GeneralRealTimeConfig;
-import com.holybuckets.foundation.HolyBucketsUtility;
+import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.foundation.modelInterface.IMangedChunkData;
@@ -242,7 +242,7 @@ public class ManagedChunk implements IMangedChunkData {
      */
     public static LevelChunk getChunk(LevelAccessor level, String chunkId)
     {
-        ChunkPos p = HolyBucketsUtility.ChunkUtil.getPos(chunkId);
+        ChunkPos p = HBUtil.ChunkUtil.getPos(chunkId);
         return level.getChunkSource().getChunkNow(p.x, p.z);
     }
 
@@ -264,7 +264,7 @@ public class ManagedChunk implements IMangedChunkData {
         if(level.isClientSide())
             return;
 
-        String chunkId = HolyBucketsUtility.ChunkUtil.getId(event.getChunk());
+        String chunkId = HBUtil.ChunkUtil.getId(event.getChunk());
         LevelChunk levelChunk = ManagedChunk.getChunk(level, chunkId);
 
         if(LOADED_CHUNKS.get(level) == null) {
@@ -295,7 +295,7 @@ public class ManagedChunk implements IMangedChunkData {
             return;
 
         ChunkAccess chunk = event.getChunk();
-        ManagedChunk c = getManagedChunk(level, HolyBucketsUtility.ChunkUtil.getId(chunk));
+        ManagedChunk c = getManagedChunk(level, HBUtil.ChunkUtil.getId(chunk));
         c.handleChunkUnloaded(event);
     }
 
@@ -345,14 +345,14 @@ public class ManagedChunk implements IMangedChunkData {
         catch (IllegalStateException e)
         {
             LoggerBase.logWarning(null, "003023", "Illegal state exception " +
-             "updating chunk block states. Updates may be replayed later. At Chunk: " + HolyBucketsUtility.ChunkUtil.getId( chunk));
+             "updating chunk block states. Updates may be replayed later. At Chunk: " + HBUtil.ChunkUtil.getId( chunk));
             return false;
         }
         catch (Exception e)
         {
             StringBuilder error = new StringBuilder();
             error.append("Error updating chunk block states. At Chunk: ");
-            error.append(HolyBucketsUtility.ChunkUtil.getId( chunk));
+            error.append(HBUtil.ChunkUtil.getId( chunk));
             error.append("\n");
             error.append("Corresponding exception message: \n");
             error.append(e.getMessage());

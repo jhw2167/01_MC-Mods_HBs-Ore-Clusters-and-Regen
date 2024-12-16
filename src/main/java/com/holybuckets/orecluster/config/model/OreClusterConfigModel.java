@@ -2,7 +2,7 @@ package com.holybuckets.orecluster.config.model;
 
 import com.holybuckets.foundation.config.ConfigBase;
 import com.holybuckets.foundation.config.ConfigModelBase;
-import com.holybuckets.foundation.HolyBucketsUtility.*;
+import com.holybuckets.foundation.HBUtil.*;
 import com.holybuckets.orecluster.LoggerProject;
 import net.minecraft.world.level.block.Block;
 import org.antlr.v4.runtime.misc.Triple;

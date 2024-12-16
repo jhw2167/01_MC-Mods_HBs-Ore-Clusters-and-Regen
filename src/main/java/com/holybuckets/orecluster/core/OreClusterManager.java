@@ -1,8 +1,8 @@
 package com.holybuckets.orecluster.core;
 
 import com.holybuckets.foundation.GeneralRealTimeConfig;
-import com.holybuckets.foundation.HolyBucketsUtility;
-import com.holybuckets.foundation.HolyBucketsUtility.*;
+import com.holybuckets.foundation.HBUtil;
+import com.holybuckets.foundation.HBUtil.*;
 import com.holybuckets.foundation.model.ManagedChunk;
 import com.holybuckets.orecluster.LoggerProject;
 import com.holybuckets.orecluster.ModRealTimeConfig;
@@ -435,7 +435,7 @@ public class OreClusterManager {
 
                 //TEMP - filter for only chunks within a 4 chunk radius of 0,0
                 readyChunks = readyChunks.stream().filter(chunk -> {
-                    ChunkPos pos = HolyBucketsUtility.ChunkUtil.getPos(chunk.getId());
+                    ChunkPos pos = HBUtil.ChunkUtil.getPos(chunk.getId());
                     //return Math.abs(pos.x) < 4 && Math.abs(pos.z) < 4;
                     return true;
                 }).toList();
@@ -481,8 +481,8 @@ public class OreClusterManager {
         ManagedOreClusterChunk managedChunk = loadedOreClusterChunks.get(chunkId);
         if( managedChunk == null || managedChunk.getChunk() == null )
         {
-            ChunkPos chunkPos = HolyBucketsUtility.ChunkUtil.getPos(chunkId);
-            LevelChunk chunk = HolyBucketsUtility.ChunkUtil.getLevelChunk(level, chunkPos.x, chunkPos.z);
+            ChunkPos chunkPos = HBUtil.ChunkUtil.getPos(chunkId);
+            LevelChunk chunk = HBUtil.ChunkUtil.getLevelChunk(level, chunkPos.x, chunkPos.z);
 
             managedChunk = ManagedOreClusterChunk.getInstance(level, chunk);
             loadedOreClusterChunks.put(chunkId, managedChunk);

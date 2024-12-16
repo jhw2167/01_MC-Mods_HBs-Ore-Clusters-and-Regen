@@ -26,7 +26,7 @@ import java.nio.file.Paths;
 * Description: This class will contain utility methods amd objects that I find myself using frequently
 *
  */
-public class HolyBucketsUtility {
+public class HBUtil {
 
     public static final String CLASS_ID = "004";
 
@@ -195,19 +195,18 @@ public class HolyBucketsUtility {
 
         /**
          * - Attempts to load the HBOreClustersAndRegenConfigs.json file from the config directory
-         * - First checks if a config file exists in the <serverDirectory>/config
          * - Provided string may be a relative path or a full path from the root directory.
-         * -
-         * @param level
+         * - First checks if a config file exists in the <serverDirectory>/<fileName>
+         * - returns string that can be Parsed into a json object
+         * @param serverDirectory
          * @param jsonFilePathConfig
          * @param defaultData
          * @return String
          */
-        public static String loadJsonConfig(LevelAccessor level, ConfigBase.ConfigString jsonFilePathConfig, IStringSerializable defaultData)
+        public static String loadJsonConfig(File serverDirectory, ConfigBase.ConfigString jsonFilePathConfig, IStringSerializable defaultData)
         {
             final String providedFileName = jsonFilePathConfig.get();
             final String defaultFileName = jsonFilePathConfig.getDefault();
-            final File serverDirectory = level.getServer().getServerDirectory();
 
             File configFile = new File(serverDirectory, providedFileName);
 
@@ -258,10 +257,10 @@ public class HolyBucketsUtility {
              * At this point, configFile exists in some capacity, lets check
              * if its valid JSON or not by reading it in.
              */
-            String jsonOreConfigs = "";
+            String json = "";
             try {
                 //Read line by line into a single string
-                jsonOreConfigs = Files.readString(Paths.get(configFile.getAbsolutePath()));
+                json = Files.readString(Paths.get(configFile.getAbsolutePath()));
             } catch (IOException e) {
                 final StringBuilder error = new StringBuilder();
                 error.append("Could not read the ore cluster JSON config file at path: ");
@@ -272,7 +271,7 @@ public class HolyBucketsUtility {
                 return DEFAULT_DATA;
             }
 
-            return jsonOreConfigs;
+            return json;
 
         }
         //END loadJsonOreConfigs

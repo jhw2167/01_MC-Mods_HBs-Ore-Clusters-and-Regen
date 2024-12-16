@@ -2,10 +2,9 @@ package com.holybuckets.orecluster.core;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
-import com.holybuckets.foundation.HolyBucketsUtility;
+import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.orecluster.ModRealTimeConfig;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
 import net.minecraft.core.BlockPos;
@@ -17,7 +16,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 
 import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
-import com.holybuckets.foundation.HolyBucketsUtility.*;
+import com.holybuckets.foundation.HBUtil.*;
 import com.holybuckets.orecluster.LoggerProject;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
@@ -411,7 +410,7 @@ public class OreClusterCalculator {
         final int MAX_ORES = 2048;
         final int NEGATIVE_Y_RANGE = 64;
 
-        Map<Block, HolyBucketsUtility.Fast3DArray> oreVerticesByBlock = new HashMap<>();
+        Map<Block, HBUtil.Fast3DArray> oreVerticesByBlock = new HashMap<>();
         chunk.setOriginalOres(oreVerticesByBlock);
 
         BlockPos chunkWorldPos = levelChunk.getPos().getWorldPosition();
@@ -441,8 +440,8 @@ public class OreClusterCalculator {
                         if (COUNTABLE_ORES.contains(block))
                         {
                             count++;
-                            HolyBucketsUtility.Fast3DArray vertices = oreVerticesByBlock.getOrDefault(block,
-                                new HolyBucketsUtility.Fast3DArray(MAX_ORES));
+                            HBUtil.Fast3DArray vertices = oreVerticesByBlock.getOrDefault(block,
+                                new HBUtil.Fast3DArray(MAX_ORES));
 
                             vertices.add(
                                 chunkWorldPos.getX() + x,
@@ -469,7 +468,7 @@ public class OreClusterCalculator {
         //Add a dummy oak_log block to the chunk at chunk_world_pos + 8, 64, 8
         Block log = Blocks.OAK_LOG;
         if( oreVerticesByBlock.get(log) == null )
-            oreVerticesByBlock.put(log, new HolyBucketsUtility.Fast3DArray(MAX_ORES));
+            oreVerticesByBlock.put(log, new HBUtil.Fast3DArray(MAX_ORES));
         oreVerticesByBlock.get(log).add(chunkWorldPos.getX() + 8, 128, chunkWorldPos.getZ() + 8);
 
         //Print the oreVertices array
@@ -483,13 +482,13 @@ public class OreClusterCalculator {
 
         final Map<Block, BlockPos> CLUSTER_TYPES = chunk.getClusterTypes();
         final Map<Block, OreClusterConfigModel> ORE_CONFIGS = C.getOreConfigs();
-        final Map<Block, HolyBucketsUtility.Fast3DArray> oreVerticesByBlock = chunk.getOriginalOres();
+        final Map<Block, HBUtil.Fast3DArray> oreVerticesByBlock = chunk.getOriginalOres();
         final Random randSeqClusterBuildGen = chunk.getChunkRandom();
 
         //Save BlockPos to generate CLUSTER_TYPES on to ManagedOreClusterChunk
         for (Block b : CLUSTER_TYPES.keySet())
         {
-            HolyBucketsUtility.Fast3DArray oreVertices = oreVerticesByBlock.get(b);
+            HBUtil.Fast3DArray oreVertices = oreVerticesByBlock.get(b);
             if (oreVertices == null)
                 continue;
 
@@ -518,12 +517,12 @@ public class OreClusterCalculator {
     {
 
         final Map<Block, OreClusterConfigModel> ORE_CONFIGS = C.getOreConfigs();
-        final Map<Block, HolyBucketsUtility.Fast3DArray> oreVerticesByBlock = chunk.getOriginalOres();
+        final Map<Block, HBUtil.Fast3DArray> oreVerticesByBlock = chunk.getOriginalOres();
         final Random randSeqClusterBuildGen = chunk.getChunkRandom();
 
         for (Block b : CLEANABLE_ORES)
         {
-            HolyBucketsUtility.Fast3DArray oreVertices = oreVerticesByBlock.get(b);
+            HBUtil.Fast3DArray oreVertices = oreVerticesByBlock.get(b);
             if (oreVertices == null)
                 continue;
 

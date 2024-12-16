@@ -54,7 +54,7 @@ public class LoggerBase {
 
 
     public static final Logger LOGGER = LogUtils.getLogger();
-    public static final String PREFIX =  HolyBucketsUtility.NAME;
+    public static final String PREFIX =  HBUtil.NAME;
     public static final Boolean DEBUG_MODE = true;
 
     /*
