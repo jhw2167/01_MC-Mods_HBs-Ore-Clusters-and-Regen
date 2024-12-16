@@ -3,13 +3,8 @@ package com.holybuckets.orecluster;
 //MC Imports
 
 //Forge Imports
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.holybuckets.foundation.ConfigBase;
 import com.holybuckets.foundation.GeneralRealTimeConfig;
 import com.holybuckets.foundation.HolyBucketsUtility;
-import com.holybuckets.foundation.modelInterface.IStringSerializable;
 import com.holybuckets.orecluster.config.COreClusters;
 import com.holybuckets.orecluster.config.model.OreClusterJsonConfig;
 import net.minecraft.world.level.LevelAccessor;
@@ -17,18 +12,12 @@ import net.minecraft.world.level.block.Block;
 import net.minecraftforge.fml.common.Mod;
 
 //Java Imports
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 
 //Project imports
 import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
 import com.holybuckets.orecluster.config.AllConfigs;
-import org.openjdk.nashorn.internal.parser.JSONParser;
 
 
 /**

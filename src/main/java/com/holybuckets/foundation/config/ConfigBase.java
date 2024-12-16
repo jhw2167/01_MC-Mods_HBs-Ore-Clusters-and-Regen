@@ -1,4 +1,4 @@
-package com.holybuckets.foundation;
+package com.holybuckets.foundation.config;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import com.electronwill.nightconfig.core.ConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
 import net.minecraftforge.common.ForgeConfigSpec.Builder;
@@ -15,7 +14,6 @@ import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 import net.minecraftforge.common.ForgeConfigSpec.DoubleValue;
 import net.minecraftforge.common.ForgeConfigSpec.EnumValue;
 import net.minecraftforge.common.ForgeConfigSpec.IntValue;
-import net.minecraftforge.fml.Logging;
 
 public abstract class ConfigBase {
 

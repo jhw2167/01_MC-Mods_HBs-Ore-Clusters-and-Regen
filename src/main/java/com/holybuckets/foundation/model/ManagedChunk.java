@@ -174,7 +174,7 @@ public class ManagedChunk implements IMangedChunkData {
             LoggerBase.logInfo(null, "003007", "Init from nbt id: " + this.id);
              this.initSubclassesFromMemory(level, id);
          }
-         
+
          this.tickLoaded = GENERAL_CONFIG.getSERVER().getTickCount();
 
     }
