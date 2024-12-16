@@ -169,13 +169,15 @@ jarJar {
 	- Fixed Index OOB error when gaussian returned negative value.
 	- reworked determinedClusters into chunkPendingCleaning queue
 
-{managedChunk:{com.holybuckets.orecluster.model.ManagedOreClusterChunk:{blockStateUpdates:"",clusterTypes:'{"Block{minecraft:deepslate_diamond_ore}":{"x":-148,"y":-31,"z":145}}',id:"-10,9",status:"GENERATED"},id:"-10,9",level:600925286,tickWritten:10182}}
-
---> onChunkLoad should be called by managedChunk, not directly by oreClusterCalculator
-
-
 23.
 ---
+
+	- Created AllConfigs class in holyBucketsFoundation to support configs in foundations library mod
+	- Created CFoundation class to support implementation config types and support
+	- Created CServer class to establish CFoundation as server side configurations
+	- Registed mod context under OreClustersMain because foundations doesnt have a main yet
+
+
 
 24.
 ---

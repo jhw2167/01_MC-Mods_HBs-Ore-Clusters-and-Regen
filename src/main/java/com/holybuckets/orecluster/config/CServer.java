@@ -14,8 +14,9 @@ public class CServer extends ConfigBase {
 
 	private static class Comments {
 		static String base = "Wrapper group for ore cluster regeneration configuration components";
-		static String clusters = "Definition of various cluster parameters in general " +
-				"and by specific type";
+		static String clusters = "Default cluster and regen period settings, applies to all ores specified in validOreClusterOreBlocks," +
+		 " unless overridden by individual settings . To modify the cluster settings" +
+		 " of a particular ore, use the file specified by the parameter 'oreClustersJsonConfigFilePath' below";
 	}
 
 }
