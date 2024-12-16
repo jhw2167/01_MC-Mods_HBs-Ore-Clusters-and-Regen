@@ -1,6 +1,5 @@
 package com.holybuckets.foundation.event;
 
-import com.holybuckets.foundation.GeneralRealTimeConfig;
 import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
@@ -22,7 +21,7 @@ public class FoundationsForgeEventHandler {
     //create class_id
     public static final String CLASS_ID = "002";
 
-    private static final GeneralRealTimeConfig config = GeneralRealTimeConfig.getInstance();
+    private static final EventRegistrar config = EventRegistrar.getInstance();
 
     @SubscribeEvent
     public static void onAttachCapabilities(AttachCapabilitiesEvent<LevelChunk> event)

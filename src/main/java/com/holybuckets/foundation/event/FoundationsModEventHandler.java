@@ -1,16 +1,7 @@
 package com.holybuckets.foundation.event;
 
-import com.holybuckets.foundation.GeneralRealTimeConfig;
-import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.LoggerBase;
-import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
 import com.holybuckets.orecluster.OreClustersAndRegenMain;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.level.ChunkEvent;
-import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.event.lifecycle.ModLifecycleEvent;
@@ -23,7 +14,7 @@ public class FoundationsModEventHandler {
     //create class_id
     public static final String CLASS_ID = "009";
 
-    private static final GeneralRealTimeConfig config = GeneralRealTimeConfig.getInstance();
+    private static final EventRegistrar config = EventRegistrar.getInstance();
 
 
     @SubscribeEvent

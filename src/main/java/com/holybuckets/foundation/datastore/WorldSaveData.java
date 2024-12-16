@@ -1,8 +1,7 @@
-package com.holybuckets.orecluster.model;
+package com.holybuckets.foundation.datastore;
 
 import net.minecraft.world.level.LevelAccessor;
 
-import javax.json.JsonObject;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
