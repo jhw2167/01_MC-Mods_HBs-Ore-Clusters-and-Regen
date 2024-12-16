@@ -29,7 +29,8 @@ public class ModSaveData {
     }
 
     public ModSaveData(JsonObject worldSaveData) {
-
+        this(worldSaveData.get("modId").getAsString());
+        this.fromJson(worldSaveData);
     }
 
    /** GETTERS & SETTERS **/

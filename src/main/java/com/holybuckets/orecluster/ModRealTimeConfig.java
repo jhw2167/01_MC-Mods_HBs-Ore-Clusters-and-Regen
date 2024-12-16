@@ -74,9 +74,11 @@ public class ModRealTimeConfig
 
             //Create new oreConfig for each element in cOreClusters list
             oreConfigs = new HashMap<Block, OreClusterConfigModel>();
-            File localDir = level.getServer().getServerDirectory();
-            String jsonOreConfigData = HBUtil.FileIO.loadJsonConfig( localDir,
-                 clusterConfig.oreClusters , OreClusterJsonConfig.DEFAULT_CONFIG );
+
+            File configFile = new File(clusterConfig.oreClusters.get());
+            File defaultConfigFile = new File(clusterConfig.oreClusters.getDefault());
+            String jsonOreConfigData = HBUtil.FileIO.loadJsonConfig( configFile, defaultConfigFile, OreClusterJsonConfig.DEFAULT_CONFIG );
+
             OreClusterJsonConfig jsonOreConfigs = new OreClusterJsonConfig(jsonOreConfigData);
 
 
