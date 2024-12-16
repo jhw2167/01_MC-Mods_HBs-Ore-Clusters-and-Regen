@@ -1,7 +1,8 @@
 package com.holybuckets.orecluster.model;
 
 import com.google.gson.Gson;
-import com.holybuckets.foundation.GeneralRealTimeConfig;
+import com.holybuckets.foundation.GeneralConfig;
+import com.holybuckets.foundation.event.EventRegistrar;
 import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.HBUtil.ChunkUtil;
 import com.holybuckets.foundation.model.ManagedChunk;
@@ -173,8 +174,8 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
      * @return
      */
     public Random getChunkRandom() {
-        GeneralRealTimeConfig config = GeneralRealTimeConfig.getInstance();
-        return new Random( this.hashCode() * config.getWORLD_SEED() );
+        final GeneralConfig CONFIG = GeneralConfig.getInstance();
+        return new Random( this.hashCode() * CONFIG.getWORLD_SEED() );
     }
 
     public synchronized ReentrantLock getLock() {

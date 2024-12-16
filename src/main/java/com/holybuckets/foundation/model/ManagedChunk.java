@@ -2,7 +2,8 @@ package com.holybuckets.foundation.model;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.holybuckets.foundation.GeneralRealTimeConfig;
+import com.holybuckets.foundation.GeneralConfig;
+import com.holybuckets.foundation.event.EventRegistrar;
 import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.foundation.exception.InvalidId;
@@ -26,7 +27,8 @@ public class ManagedChunk implements IMangedChunkData {
 
     public static final String CLASS_ID = "003";
     //public static final String NBT_KEY_HEADER = "managedChunk";
-    public static final GeneralRealTimeConfig GENERAL_CONFIG = GeneralRealTimeConfig.getInstance();
+
+    public static final GeneralConfig GENERAL_CONFIG = GeneralConfig.getInstance();
     public static final Map<Class<? extends IMangedChunkData>, IMangedChunkData> MANAGED_SUBCLASSES = new ConcurrentHashMap<>();
     public static final Map<LevelAccessor, Map<String, ManagedChunk>> LOADED_CHUNKS = new ConcurrentHashMap<>();
     public static final Map<LevelAccessor, Map<String, ManagedChunk>> INITIALIZED_CHUNKS = new ConcurrentHashMap<>();
@@ -257,6 +259,11 @@ public class ManagedChunk implements IMangedChunkData {
         return null;
     }
 
+    static {
+         EventRegistrar reg = EventRegistrar.getInstance();
+        reg.registerOnChunkLoad(ManagedChunk::onChunkLoad);
+        reg.registerOnChunkUnload(ManagedChunk::onChunkUnload);
+    }
 
     public static void onChunkLoad( final ChunkEvent.Load event )
     {

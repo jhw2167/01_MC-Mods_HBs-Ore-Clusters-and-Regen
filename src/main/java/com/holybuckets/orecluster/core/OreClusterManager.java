@@ -1,6 +1,6 @@
 package com.holybuckets.orecluster.core;
 
-import com.holybuckets.foundation.GeneralRealTimeConfig;
+import com.holybuckets.foundation.GeneralConfig;
 import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.HBUtil.*;
 import com.holybuckets.foundation.model.ManagedChunk;
@@ -69,7 +69,7 @@ import static java.lang.Thread.sleep;
 public class OreClusterManager {
 
     public static final String CLASS_ID = "002";    //value used in logs
-    public static final GeneralRealTimeConfig GENERAL_CONFIG = GeneralRealTimeConfig.getInstance();
+    public static final GeneralConfig GENERAL_CONFIG = GeneralConfig.getInstance();
 
     /** Variables **/
     private final LevelAccessor level;

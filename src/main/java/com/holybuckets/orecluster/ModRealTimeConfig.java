@@ -3,7 +3,8 @@ package com.holybuckets.orecluster;
 //MC Imports
 
 //Forge Imports
-import com.holybuckets.foundation.GeneralRealTimeConfig;
+import com.holybuckets.foundation.GeneralConfig;
+import com.holybuckets.foundation.event.EventRegistrar;
 import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.orecluster.config.COreClusters;
 import com.holybuckets.orecluster.config.model.OreClusterJsonConfig;
@@ -104,7 +105,7 @@ public class ModRealTimeConfig
             if( !defaultConfig.subSeed.equals(0L) ) {
                 CLUSTER_SEED = defaultConfig.subSeed;
             } else {
-                CLUSTER_SEED = GeneralRealTimeConfig.getInstance().getWORLD_SEED();
+                CLUSTER_SEED = GeneralConfig.getInstance().getWORLD_SEED();
             }
 
             LoggerProject.logInit("000000", this.getClass().getName());

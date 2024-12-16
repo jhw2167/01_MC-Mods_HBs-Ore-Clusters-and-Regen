@@ -1,15 +1,9 @@
 package com.holybuckets.orecluster;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.holybuckets.foundation.GeneralRealTimeConfig;
-import com.holybuckets.foundation.model.ManagedChunk;
+import com.holybuckets.foundation.event.EventRegistrar;
 import com.holybuckets.orecluster.config.AllConfigs;
 import com.holybuckets.orecluster.core.OreClusterManager;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
-import com.mojang.logging.LogUtils;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.level.LevelEvent;
@@ -18,11 +12,9 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import org.slf4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(OreClustersAndRegenMain.MODID)
@@ -35,10 +27,10 @@ public class OreClustersAndRegenMain
     public static final String NAME = "HBs Ore Clusters and Regen";
     public static final String VERSION = "1.0.0f";
 
-    public static GeneralRealTimeConfig generalRealTimeConfig = GeneralRealTimeConfig.getInstance();
+    public static EventRegistrar eventRegistrar = EventRegistrar.getInstance();
     static {
-        generalRealTimeConfig.registerOnLevelLoad( OreClustersAndRegenMain::onLoadWorld );
-        generalRealTimeConfig.registerOnLevelUnload( OreClustersAndRegenMain::onUnloadWorld );
+        eventRegistrar.registerOnLevelLoad( OreClustersAndRegenMain::onLoadWorld );
+        eventRegistrar.registerOnLevelUnload( OreClustersAndRegenMain::onUnloadWorld );
 
         ManagedOreClusterChunk.registerManagedChunkData();
 
@@ -53,8 +45,8 @@ public class OreClustersAndRegenMain
     public OreClustersAndRegenMain()
     {
         super();
-        initMod();
         LoggerProject.logInit( "001000", this.getClass().getName() );
+        initMod();
     }
 
     public static void initMod() {
@@ -87,7 +79,7 @@ public class OreClustersAndRegenMain
         AllPlacementModifiers.register(modEventBus);
         */
         AllConfigs.register(modLoadingContext);
-        
+
         //com.holybuckets.foundation.config.AllConfigs.register(modLoadingContext);
 
         /*

@@ -189,28 +189,98 @@ jarJar {
 	- added json support for reading json configs in and out for DataStore
 
 
+25.  
+---  
+
+	- Added event registrar class
+	- Removed registration elements from config class, renamed to GeneralConfig
+
+26.  
+---  
+
+27.  
+---  
+
+28.  
+---  
+
+29.  
+---  
+
+30.  
+---  
+
+31.  
+---  
+
+32.  
+---  
+
+33.  
+---  
+
+34.  
+---  
+
+35.  
+---  
+
+36.  
+---  
+
+37.  
+---  
+
+38.  
+---  
+
+39.  
+---  
+
+40.  
+---  
+
+41.  
+---  
+
+42.  
+---  
+
+43.  
+---  
+
+44.  
+---  
+
+45.  
+---  
+
+46.  
+---  
+
+47.  
+---  
+
+48.  
+---  
+
+49.  
+---  
+
+50.  
+---  
+
 
 	- test file creation, serialization and location tomorrow
+	- 
+
 	- Attempt to add oreConfig data and serialize
-	- iD levels with dimension names
+	- ID levels with dimension names
 	- ID save files with world Folder, levelData
 	- Create static hashset of LoadedIds
 	-
 
 
-25.
----
-
-
-26.
----
-
-
-27.
----
-
-		- SERVER_DIRECTORY == .
-		- user.dir == \run directory
 		- Add an indicator to the param to NOT generate clusters
 
 		- port mod to remote server and test for accuracy and ability
@@ -230,11 +300,6 @@ jarJar {
 
 		
 
-
-
-
-28.
----
 
 	Touchups:
 	- Determine Max Size/Lifetime of Managed Chunk in RAM
