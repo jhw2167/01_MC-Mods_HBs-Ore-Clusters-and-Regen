@@ -39,10 +39,6 @@ public class ModSaveData {
         return MOD_ID;
     }
 
-    public Map<String, JsonObject> getWORLD_SAVE_DATA() {
-        return new HashMap<>(WORLD_SAVE_DATA);
-    }
-
     public void getWorldSaveData(String worldSaveName) {
         WORLD_SAVE_DATA.get(worldSaveName);
     }
