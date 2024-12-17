@@ -19,6 +19,7 @@ public class FoundationsModEventHandler {
     private static final EventRegistrar config = EventRegistrar.getInstance();
 
 
+
     @SubscribeEvent
     public static void onModLifecycleEvent(ModLifecycleEvent event) {
         LoggerBase.logInit( null, "009000", "ModLifecycleEvent fired: " + event.getClass().getSimpleName());
