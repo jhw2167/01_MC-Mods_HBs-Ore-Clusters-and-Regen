@@ -2,6 +2,7 @@ package com.holybuckets.foundation.event;
 
 import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.LoggerBase;
+import com.holybuckets.foundation.datastore.DataStore;
 import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
 import com.holybuckets.orecluster.OreClustersAndRegenMain;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -69,10 +70,24 @@ public class FoundationsForgeEventHandler {
     /** Server Events **/
 
     @SubscribeEvent
-    public static void onServerLifeCycleEvent(ServerLifecycleEvent event) {
-    //Minecraft.getInstance().gameDirectory
-        LoggerBase.logDebug( null,"002006", "Server Started Event");
+    public static void serverLifecycleEvent(ServerLifecycleEvent event)
+    {
+        //Minecraft.getInstance().gameDirectory
+        if( event.getClass().getName().contains("Start"))
+        {
+            LoggerBase.logInit( null, "009002", "ServerLifecycleEvent fired: Started");
+        }
+
+        if( event.getClass().getName().contains("Stop"))
+        {
+            LoggerBase.logInit( null, "009003", "ServerLifecycleEvent fired: Stopped");
+            DataStore.getInstance().shutdown();
+        }
+
+
     }
+
+
 
 
     /** PLAYER EVENTS **/

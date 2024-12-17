@@ -23,7 +23,7 @@ public class LevelSaveData {
     /** STATICS **/
 
     static String convertLevelId(LevelAccessor level) {
-        return level.dimensionType().toString();
+        return level.dimensionType().effectsLocation().toString();
     }
 
     /** ######### **/

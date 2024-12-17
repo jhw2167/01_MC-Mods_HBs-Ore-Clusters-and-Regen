@@ -1,15 +1,13 @@
 package com.holybuckets.foundation.datastore;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import com.holybuckets.foundation.GeneralConfig;
 import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.modelInterface.IStringSerializable;
 import com.holybuckets.orecluster.OreClustersAndRegenMain;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 
+import javax.lang.model.type.ArrayType;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -60,7 +58,7 @@ public class DataStore implements IStringSerializable {
     public void initWorldOnConfigLoad(ModConfigEvent event)
     {
         //if(event.getConfig().getFileName() != "hbs_utility-server.toml")
-        if(event.getConfig().getFileName() != OreClustersAndRegenMain.MODID + "-server.toml") //temp
+        if( !(event.getConfig().getFileName().equals(OreClustersAndRegenMain.MODID + "-server.toml")) )
             return;
 
         String path = event.getConfig().getFullPath().toString();
@@ -82,12 +80,12 @@ public class DataStore implements IStringSerializable {
         WorldSaveData worldData = modData.getOrCreateWorldSaveData(currentWorldId);
         worldData.addProperty("worldSeed", parse(config.getWORLD_SEED()) );
         worldData.addProperty("worldSpawn", parse(config.getWORLD_SPAWN()) );
-        worldData.addProperty("totalTicks", parse(0) );
+        worldData.addProperty("totalTicks", parse(Integer.valueOf(0)) );
 
         return true;
     }
     private static JsonElement parse(Object o) {
-        return JsonParser.parseString(o.toString());
+        return JsonParser.parseString( GeneralConfig.GSON.toJson(o) );
     }
 
     /** Serializers **/
