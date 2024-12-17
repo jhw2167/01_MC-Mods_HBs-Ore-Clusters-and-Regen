@@ -1,14 +1,17 @@
 package com.holybuckets.foundation.datastore;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.holybuckets.foundation.GeneralConfig;
 import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.modelInterface.IStringSerializable;
+import com.holybuckets.orecluster.OreClustersAndRegenMain;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -21,29 +24,73 @@ public class DataStore implements IStringSerializable {
     private static final String CLASS_ID = "007";
 
     private static DataStore INSTANCE;
-
+    private static final File DATA_STORE_FILE = new File("hb_datastore.json");
     private final Map<String, ModSaveData> STORE;
-
+    private String currentWorldId;
 
     private DataStore()
     {
         super();
         STORE = new HashMap<>();
-        File dataStoreFile = new File("hb_datastore.json");
-        String json = HBUtil.FileIO.loadJsonConfig(dataStoreFile, dataStoreFile, new DefaultDataStore());
+        String json = HBUtil.FileIO.loadJsonConfigs(DATA_STORE_FILE, DATA_STORE_FILE, new DefaultDataStore());
         this.deserialize(json);
     }
 
-    private DataStore(List<ModSaveData> modData)
+    // Constructor for default data store
+    private DataStore(ModSaveData data)
     {
         super();
         STORE = new HashMap<>();
-        modData.forEach(this::addModSaveData);
+        STORE.put(data.getModId(), data);
     }
 
-    public void addModSaveData(ModSaveData worldSaveData) {
-        STORE.put(worldSaveData.getModId(), worldSaveData);
+
+    public ModSaveData getOrCreateModSavedData(String modId) {
+        ModSaveData data = STORE.getOrDefault(modId, new ModSaveData(modId));
+        STORE.put(modId, data);
+        return data;
     }
+
+
+    public WorldSaveData getOrCreateWorldSaveData(String modId) {
+        ModSaveData modData = getOrCreateModSavedData(modId);
+        return modData.getOrCreateWorldSaveData(currentWorldId);
+    }
+
+    public void initWorldOnConfigLoad(ModConfigEvent event)
+    {
+        //if(event.getConfig().getFileName() != "hbs_utility-server.toml")
+        if(event.getConfig().getFileName() != OreClustersAndRegenMain.MODID + "-server.toml") //temp
+            return;
+
+        String path = event.getConfig().getFullPath().toString();
+        String[] dirs =  path.split("\\\\");
+        this.currentWorldId = dirs[dirs.length - 3];
+    }
+
+    /**
+     * Initialize a worldSaveData object on HB's Utility when a level loads
+     * @param config
+     * @return true if the worldSaveData object was initialized, false if it already exists
+     */
+    public boolean initWorldOnLevelLoad(GeneralConfig config)
+    {
+        ModSaveData modData = getOrCreateModSavedData(HBUtil.NAME);
+        if (modData.worldSaveData.containsKey(currentWorldId))
+            return false;
+
+        WorldSaveData worldData = modData.getOrCreateWorldSaveData(currentWorldId);
+        worldData.addProperty("worldSeed", parse(config.getWORLD_SEED()) );
+        worldData.addProperty("worldSpawn", parse(config.getWORLD_SPAWN()) );
+        worldData.addProperty("totalTicks", parse(0) );
+
+        return true;
+    }
+    private static JsonElement parse(Object o) {
+        return JsonParser.parseString(o.toString());
+    }
+
+    /** Serializers **/
 
     public void deserialize(String jsonString)
     {
@@ -72,6 +119,15 @@ public class DataStore implements IStringSerializable {
         return INSTANCE;
     }
 
+    private void save() {
+        HBUtil.FileIO.serializeJsonConfigs(DATA_STORE_FILE, this.serialize());
+    }
+
+    public static void shutdown() {
+        INSTANCE.save();
+        INSTANCE = null;
+    }
+
     /** SUBCLASSES **/
 
     private class DefaultDataStore extends DataStore implements IStringSerializable {
@@ -81,7 +137,7 @@ public class DataStore implements IStringSerializable {
              " Utility Foundation mods. This data is not intended to be modified by the user.");
         }
         public DefaultDataStore() {
-            super(List.of(DATA));
+            super(DATA);
         }
 
         @Override

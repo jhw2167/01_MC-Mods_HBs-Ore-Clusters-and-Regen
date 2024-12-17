@@ -2,8 +2,10 @@ package com.holybuckets.foundation.datastore;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 /**
@@ -12,23 +14,21 @@ import com.google.gson.JsonObject;
 public class ModSaveData {
 
     private static final String CLASS_ID = "008";
-    private String MOD_ID;
-    private Map<String, JsonObject> WORLD_SAVE_DATA;
+    String MOD_ID;
+    Map<String, JsonElement> properties;
+    Map<String, WorldSaveData> worldSaveData;
 
-    private String comment;
+    String comment;
 
-    public ModSaveData(String modId) {
+    ModSaveData(String modId) {
         super();
         MOD_ID = modId;
-        WORLD_SAVE_DATA = new HashMap<>();
+        properties = new ConcurrentHashMap<>();
+        worldSaveData = new ConcurrentHashMap<>();
     }
 
-    public ModSaveData(String modId, Map<String, JsonObject> worldSaveData) {
-        this(modId);
-        this.WORLD_SAVE_DATA.putAll(worldSaveData);
-    }
 
-    public ModSaveData(JsonObject worldSaveData) {
+    ModSaveData(JsonObject worldSaveData) {
         this(worldSaveData.get("modId").getAsString());
         this.fromJson(worldSaveData);
     }
@@ -39,47 +39,55 @@ public class ModSaveData {
         return MOD_ID;
     }
 
-    public void getWorldSaveData(String worldSaveName) {
-        WORLD_SAVE_DATA.get(worldSaveName);
+    public WorldSaveData getOrCreateWorldSaveData(String worldId) {
+        WorldSaveData data = worldSaveData.getOrDefault(worldId, new WorldSaveData(worldId));
+        worldSaveData.put(worldId, data);
+        return data;
     }
-    public void putWorldSaveData(String worldSaveName, JsonObject data) {
-        WORLD_SAVE_DATA.put(worldSaveName, data);
-    }
+
 
     public void clearWorldSaveData() {
-        WORLD_SAVE_DATA.clear();
+        worldSaveData.clear();
     }
 
-    public JsonObject toJson()
+    JsonObject toJson()
     {
         JsonObject json = new JsonObject();
         json.addProperty("modId", MOD_ID);
         if(comment != null)
             json.addProperty("comment", comment);
+
         JsonArray worldSaveDataArray = new JsonArray();
-        WORLD_SAVE_DATA.forEach((k, v) -> {
-            v.addProperty("worldName", k);
-            worldSaveDataArray.add(v);
+        worldSaveData.forEach((id, data) -> {
+            worldSaveDataArray.add(data.toJson());
         });
         json.add("worldSaves", worldSaveDataArray);
+
+        this.properties.forEach(json::add);
+
         return json;
     }
 
-    public void fromJson(JsonObject json)
+    private void fromJson(JsonObject json)
     {
         this.MOD_ID = json.get("modId").getAsString();
+        json.remove("modId");
         this.comment = json.get("comment").getAsString();
-        Map<String, JsonObject> worldSaveData = new HashMap<>();
-        json.getAsJsonArray("worldSaves").forEach((v) -> {
-            JsonObject worldSave = v.getAsJsonObject();
-            String worldName = worldSave.get("worldName").getAsString();
-            worldSave.remove("worldName");
-            worldSaveData.put(worldName, worldSave);
+        json.remove("comment");
+
+        json.getAsJsonArray("worldSaves").forEach(worldSave -> {
+        WorldSaveData w = new WorldSaveData(worldSave.getAsJsonObject());
+            this.worldSaveData.put(w.getWorldId(), w);
         });
+        json.remove("worldSaves");
+
+        this.properties.putAll(json.asMap());
 
     }
 
     public void setComment(String s) {
         this.comment = s;
     }
+
+
 }

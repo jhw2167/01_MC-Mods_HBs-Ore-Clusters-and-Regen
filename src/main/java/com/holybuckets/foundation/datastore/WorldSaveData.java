@@ -5,9 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.world.level.LevelAccessor;
 
-import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.holybuckets.foundation.datastore.LevelSaveData.convertLevelId;
@@ -46,13 +44,17 @@ public class WorldSaveData {
         this.fromJson(json);
     }
 
+    public String getWorldId() {
+        return worldId;
+    }
+
 
     /**
      * Creates or gets the LevelSaveData for the given level
      * @param level
      * @return LevelSaveData object
      */
-    public LevelSaveData getLevelSaveData(LevelAccessor level) {
+    public LevelSaveData getOrCreateLevelSaveData(LevelAccessor level) {
         String id = convertLevelId(level);
         LevelSaveData data = levelData.getOrDefault(id, new LevelSaveData(level));
         levelData.put(id, data);
@@ -84,6 +86,9 @@ public class WorldSaveData {
         levelData.forEach((levelId, levelSaveData) -> {
             levelDataArray.add(levelSaveData.toJson());
         });
+        json.add("levelData", levelDataArray);
+
+        this.properties.forEach(json::add);
 
         return json;
     }
@@ -101,6 +106,5 @@ public class WorldSaveData {
         map.forEach(this::addProperty);
 
     }
-
 
 }

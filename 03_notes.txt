@@ -126,9 +126,13 @@ Events of interest:
 	InputEvent 
 		- mouse inputs, key inputs
 	ServerLifecycleEvent 
+		- ServerAboutToStartEvent "net.minecraftforge.event.server.ServerAboutToStartEvent"
 	TickEvent
 	BlockEvent
-	ModConfigEvent
+
+
+	ModConfigEvent	- Deprecated
+
 
 	
 

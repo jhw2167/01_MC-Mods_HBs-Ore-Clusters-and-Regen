@@ -4,7 +4,6 @@ package com.holybuckets.orecluster;
 
 //Forge Imports
 import com.holybuckets.foundation.GeneralConfig;
-import com.holybuckets.foundation.event.EventRegistrar;
 import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.orecluster.config.COreClusters;
 import com.holybuckets.orecluster.config.model.OreClusterJsonConfig;
@@ -78,7 +77,7 @@ public class ModRealTimeConfig
 
             File configFile = new File(clusterConfig.oreClusters.get());
             File defaultConfigFile = new File(clusterConfig.oreClusters.getDefault());
-            String jsonOreConfigData = HBUtil.FileIO.loadJsonConfig( configFile, defaultConfigFile, OreClusterJsonConfig.DEFAULT_CONFIG );
+            String jsonOreConfigData = HBUtil.FileIO.loadJsonConfigs( configFile, defaultConfigFile, OreClusterJsonConfig.DEFAULT_CONFIG );
 
             OreClusterJsonConfig jsonOreConfigs = new OreClusterJsonConfig(jsonOreConfigData);
 
