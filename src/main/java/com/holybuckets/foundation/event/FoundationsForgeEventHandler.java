@@ -4,15 +4,20 @@ import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.foundation.model.ManagedChunkCapabilityProvider;
 import com.holybuckets.orecluster.OreClustersAndRegenMain;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.resources.ResourceLocation;
 
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
+import net.minecraftforge.event.server.ServerLifecycleEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
 
 
 @EventBusSubscriber(bus = EventBusSubscriber.Bus.FORGE, modid = OreClustersAndRegenMain.MODID)
@@ -21,7 +26,7 @@ public class FoundationsForgeEventHandler {
     //create class_id
     public static final String CLASS_ID = "002";
 
-    private static final EventRegistrar config = EventRegistrar.getInstance();
+    private static final EventRegistrar EVENT_REGISTRAR = EventRegistrar.getInstance();
 
     @SubscribeEvent
     public static void onAttachCapabilities(AttachCapabilitiesEvent<LevelChunk> event)
@@ -40,30 +45,41 @@ public class FoundationsForgeEventHandler {
         }
     }
 
-
+    /**
+     * This is a serverl level, not a dimension level, this holds the name of the save file
+     *  ServerLevel.getLevel().getLevelData().getLevelName()
+     * This also has dimension type data:
+     *  event.level.dimensionTypeId().location.toString()
+     * @param event
+     */
     @SubscribeEvent
     public static void onLoadWorld(LevelEvent.Load event)
     {
         LoggerBase.logDebug( null, "002003", "**** WORLD LOAD EVENT ****");
-        config.onLoadLevel( event );
+        EVENT_REGISTRAR.onLoadLevel( event );
 
     }
 
     @SubscribeEvent
     public static void onUnloadWorld(LevelEvent.Unload event) {
-        config.onUnLoadLevel( event );
+        EVENT_REGISTRAR.onUnLoadLevel( event );
         LoggerBase.logDebug( null,"002004", "**** WORLD UNLOAD EVENT ****");
     }
 
+    /** Server Events **/
 
-
+    @SubscribeEvent
+    public static void onServerLifeCycleEvent(ServerLifecycleEvent event) {
+    //Minecraft.getInstance().gameDirectory
+        LoggerBase.logDebug( null,"002006", "Server Started Event");
+    }
 
 
     /** PLAYER EVENTS **/
 
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        config.initPlayerConfigs( event );
+        EVENT_REGISTRAR.initPlayerConfigs( event );
         LoggerBase.logDebug( null,"002005", "Player Logged In");
     }
 
@@ -78,14 +94,14 @@ public class FoundationsForgeEventHandler {
     @SubscribeEvent
     public static void onChunkLoad(final ChunkEvent.Load event)
     {
-        config.onChunkLoad( event );
+        EVENT_REGISTRAR.onChunkLoad( event );
     }
 
 
     @SubscribeEvent
     public static void onChunkUnLoad(final ChunkEvent.Unload event)
     {
-        config.onChunkUnload( event );
+        EVENT_REGISTRAR.onChunkUnload( event );
     }
 
     /** ################## **/

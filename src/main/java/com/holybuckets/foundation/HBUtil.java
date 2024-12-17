@@ -1,7 +1,6 @@
 package com.holybuckets.foundation;
 
 
-import com.holybuckets.foundation.config.ConfigBase;
 import com.holybuckets.foundation.database.DatabaseManager;
 import com.holybuckets.foundation.modelInterface.IStringSerializable;
 import com.holybuckets.orecluster.LoggerProject;
@@ -19,7 +18,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.function.Supplier;
 
 /**
 * Class: HolyBucketsUtility
@@ -192,7 +190,7 @@ public class HBUtil {
 
     }
 
-    public class FileIO {
+    public static class FileIO {
 
         /**
          * - Attempts to load the HBOreClustersAndRegenConfigs.json file from the config directory
@@ -204,7 +202,7 @@ public class HBUtil {
          * @param defaultData
          * @return String
          */
-        public static String loadJsonConfig(File userConfigFile, File defaultConfigFile, IStringSerializable defaultData)
+        public static String loadJsonConfigs(File userConfigFile, File defaultConfigFile, IStringSerializable defaultData)
         {
             //Use gson to serialize the default values and write to the file
             File configFile = userConfigFile;
@@ -245,7 +243,7 @@ public class HBUtil {
                         return DEFAULT_DATA;
                     }
 
-                    writeDefaultJsonOreConfigsToFile(configFile, DEFAULT_DATA);
+                    serializeJsonConfigs(configFile, DEFAULT_DATA);
                 }
 
             }
@@ -273,15 +271,15 @@ public class HBUtil {
         }
         //END loadJsonOreConfigs
 
-        private static boolean writeDefaultJsonOreConfigsToFile(File configFile, String jsonData)
+        public static boolean serializeJsonConfigs(File configFile, String jsonData)
         {
             try {
                 Files.write(Paths.get(configFile.getAbsolutePath()), jsonData.getBytes());
             } catch (IOException e) {
                 final StringBuilder error = new StringBuilder();
-                error.append("Could not write the default ore cluster JSON config file at path: ");
+                error.append("Could not write JSON data to config file at path: ");
                 error.append(configFile.getAbsolutePath());
-                error.append(" due to an unknown exception. The game will still run using default values from memory.");
+                error.append(" due to an unknown exception." );
                 error.append("  You can try running the game as an administrator or check the file permissions.");
                 LoggerProject.logError("000004", error.toString());
                 return false;

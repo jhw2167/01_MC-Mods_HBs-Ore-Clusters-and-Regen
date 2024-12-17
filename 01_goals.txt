@@ -193,13 +193,16 @@ jarJar {
 ---  
 
 	- Added event registrar class
-	- Removed registration elements from config class, renamed to GeneralConfig
+	- Removed registration elements from config class, renamed to GeneralConfig class
 
 26.  
 ---  
+	- cleaned up datastore, added worldSave and levelSave Objects
 
 27.  
 ---  
+
+	- 
 
 28.  
 ---  

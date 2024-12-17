@@ -5,11 +5,15 @@ package com.holybuckets.foundation;
 //Forge Imports
 
 import com.google.gson.Gson;
+import com.google.gson.JsonParser;
 import com.holybuckets.foundation.datastore.DataStore;
+import com.holybuckets.foundation.datastore.LevelSaveData;
+import com.holybuckets.foundation.datastore.WorldSaveData;
 import com.holybuckets.foundation.event.EventRegistrar;
 import com.holybuckets.foundation.model.ManagedChunk;
 import net.minecraft.core.Vec3i;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.ChunkEvent;
@@ -37,7 +41,6 @@ public class GeneralConfig {
      * World Data
      **/
     private static GeneralConfig instance;
-    private static final EventRegistrar eventRegistrar = EventRegistrar.getInstance();
     private final DataStore DATA_STORE;
 
     private MinecraftServer SERVER;
@@ -57,9 +60,6 @@ public class GeneralConfig {
         this.DATA_STORE = DataStore.getInstance();
         this.LEVELS = new HashMap<>();
 
-        //Register Events
-        eventRegistrar.registerOnLevelLoad(this::onLoadLevel);
-
         instance = this;
     }
 
@@ -75,8 +75,12 @@ public class GeneralConfig {
 
 
     /** Level Events **/
+    static {
+        EventRegistrar reg = EventRegistrar.getInstance();
+        reg.registerOnLevelLoad(GeneralConfig::onLoadLevel, true);
+    }
 
-    public void onLoadLevel(LevelEvent.Load event)
+    public static void onLoadLevel(LevelEvent.Load event)
     {
         // Capture the world seed, use logical server
         LevelAccessor level = event.getLevel();
@@ -87,6 +91,9 @@ public class GeneralConfig {
             instance.WORLD_SPAWN = server.overworld().getSharedSpawnPos();
             instance.LEVELS.put(level.hashCode(), level);
             instance.SERVER = level.getServer();
+
+            initDataStore();
+            createLevelData(level);
 
             LoggerBase.logInfo( null, "010001", "World Seed: " + instance.WORLD_SEED);
             LoggerBase.logInfo( null, "010002", "World Spawn: " + instance.WORLD_SPAWN);
@@ -135,6 +142,20 @@ public class GeneralConfig {
 
 
 
+    /**
+     * Utility
+     */
+
+     private static void initDataStore()
+     {
+        DataStore.getInstance().initWorldOnLevelLoad(instance);
+     }
+
+     private static void createLevelData(LevelAccessor level)
+     {
+         WorldSaveData worldData = DataStore.getInstance().getOrCreateWorldSaveData(HBUtil.NAME);
+         worldData.getOrCreateLevelSaveData(level);
+     }
 
 
 }
