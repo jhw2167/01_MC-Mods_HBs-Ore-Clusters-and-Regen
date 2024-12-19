@@ -22,21 +22,18 @@ public class FoundationsModEventHandler {
 
     @SubscribeEvent
     public static void onModLifecycleEvent(ModLifecycleEvent event) {
-        LoggerBase.logInit( null, "009000", "ModLifecycleEvent fired: " + event.getClass().getSimpleName());
+        LoggerBase.logDebug( null, "009000", "ModLifecycleEvent fired: " + event.getClass().getSimpleName());
         EVENT_REGISTRAR.onModLifecycle(event);
     }
 
     @SubscribeEvent
     public static void onRegisterEvent(RegisterEvent event) {
-        LoggerBase.logInit( null, "009001", "RegisterEvent fired: " + event.getClass().getSimpleName());
+        LoggerBase.logDebug( null, "009001", "RegisterEvent fired: " + event.getClass().getSimpleName());
         EVENT_REGISTRAR.onRegister(event);
     }
 
     @SubscribeEvent
     public static void onModConfigEvent(ModConfigEvent event) {
-        //event.getConfig().getFullPath();
-        //need to match config.filename == hbs_utility-server.toml
-        DataStore.getInstance().initWorldOnConfigLoad(event);
         LoggerBase.logDebug( null,"002007", "Mod Config Event");
         EVENT_REGISTRAR.onModConfig(event);
     }

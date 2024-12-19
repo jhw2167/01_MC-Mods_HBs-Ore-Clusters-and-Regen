@@ -3,8 +3,11 @@ package com.holybuckets.foundation.datastore;
 import com.google.gson.*;
 import com.holybuckets.foundation.GeneralConfig;
 import com.holybuckets.foundation.HBUtil;
+import com.holybuckets.foundation.event.EventRegistrar;
 import com.holybuckets.foundation.modelInterface.IStringSerializable;
 import com.holybuckets.orecluster.OreClustersAndRegenMain;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraftforge.event.server.ServerLifecycleEvent;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 
 import javax.lang.model.type.ArrayType;
@@ -55,7 +58,16 @@ public class DataStore implements IStringSerializable {
         return modData.getOrCreateWorldSaveData(currentWorldId);
     }
 
-    public void initWorldOnConfigLoad(ModConfigEvent event)
+    public LevelSaveData getOrCreateLevelSaveData(String modId, LevelAccessor level) {
+        WorldSaveData worldData = getOrCreateWorldSaveData(modId);
+        return worldData.getOrCreateLevelSaveData(level);
+    }
+
+    static {
+        EventRegistrar reg = EventRegistrar.getInstance();
+        reg.registerOnModConfig(DataStore::initWorldOnConfigLoad);
+    }
+    public static void initWorldOnConfigLoad(ModConfigEvent event)
     {
         //if(event.getConfig().getFileName() != "hbs_utility-server.toml")
         if( !(event.getConfig().getFileName().equals(OreClustersAndRegenMain.MODID + "-server.toml")) )
@@ -63,7 +75,7 @@ public class DataStore implements IStringSerializable {
 
         String path = event.getConfig().getFullPath().toString();
         String[] dirs =  path.split("\\\\");
-        this.currentWorldId = dirs[dirs.length - 3];
+        INSTANCE.currentWorldId = dirs[dirs.length - 3];
     }
 
     /**
@@ -121,10 +133,15 @@ public class DataStore implements IStringSerializable {
         HBUtil.FileIO.serializeJsonConfigs(DATA_STORE_FILE, this.serialize());
     }
 
-    public static void shutdown() {
+    static {
+        EventRegistrar.getInstance().registerOnServerStop(DataStore::shutdown);
+    }
+    public static void shutdown(ServerLifecycleEvent s) {
         INSTANCE.save();
         INSTANCE = null;
     }
+
+
 
     /** SUBCLASSES **/
 
