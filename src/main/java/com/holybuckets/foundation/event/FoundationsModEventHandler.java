@@ -16,7 +16,7 @@ public class FoundationsModEventHandler {
     //create class_id
     public static final String CLASS_ID = "009";
 
-    private static final EventRegistrar config = EventRegistrar.getInstance();
+    private static final EventRegistrar EVENT_REGISTRAR = EventRegistrar.getInstance();
 
 
 
