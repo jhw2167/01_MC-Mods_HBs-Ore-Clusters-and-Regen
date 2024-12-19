@@ -2,7 +2,10 @@ package com.holybuckets.foundation.model;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.holybuckets.foundation.GeneralConfig;
+import com.holybuckets.foundation.datastore.DataStore;
+import com.holybuckets.foundation.datastore.LevelSaveData;
 import com.holybuckets.foundation.event.EventRegistrar;
 import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.LoggerBase;
@@ -17,8 +20,10 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.*;
 import net.minecraftforge.event.level.ChunkEvent;
+import net.minecraftforge.event.level.LevelEvent;
 import org.apache.commons.lang3.tuple.Pair;
 
+import javax.xml.crypto.Data;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -31,7 +36,7 @@ public class ManagedChunk implements IMangedChunkData {
     public static final GeneralConfig GENERAL_CONFIG = GeneralConfig.getInstance();
     public static final Map<Class<? extends IMangedChunkData>, IMangedChunkData> MANAGED_SUBCLASSES = new ConcurrentHashMap<>();
     public static final Map<LevelAccessor, Map<String, ManagedChunk>> LOADED_CHUNKS = new ConcurrentHashMap<>();
-    public static final Map<LevelAccessor, Map<String, ManagedChunk>> INITIALIZED_CHUNKS = new ConcurrentHashMap<>();
+    public static final Map<LevelAccessor, Map<String, Object>> INITIALIZED_CHUNKS = new ConcurrentHashMap<>();
     public static final Gson GSON_BUILDER = new GsonBuilder().serializeNulls().create();
 
     private String id;
@@ -66,10 +71,6 @@ public class ManagedChunk implements IMangedChunkData {
         this.chunk = chunk;
         this.initSubclassesFromMemory(level, id);
 
-        if(LOADED_CHUNKS.get(this.level) == null) {
-            LOADED_CHUNKS.put(this.level, new ConcurrentHashMap<>());
-            INITIALIZED_CHUNKS.put(this.level,  new ConcurrentHashMap<>());
-        }
         LOADED_CHUNKS.get(this.level).put(this.id, this);
         INITIALIZED_CHUNKS.get(this.level).put(this.id, this);
     }
@@ -261,8 +262,58 @@ public class ManagedChunk implements IMangedChunkData {
 
     static {
          EventRegistrar reg = EventRegistrar.getInstance();
+        reg.registerOnLevelLoad(ManagedChunk::onWorldLoad);
+        reg.registerOnLevelUnload(ManagedChunk::onWorldUnload);
+
         reg.registerOnChunkLoad(ManagedChunk::onChunkLoad);
         reg.registerOnChunkUnload(ManagedChunk::onChunkUnload);
+    }
+
+    public static void onWorldLoad( final LevelEvent.Load event )
+    {
+        LevelAccessor level = event.getLevel();
+        if(level.isClientSide())
+            return;
+        DataStore ds = DataStore.getInstance();
+        LevelSaveData levelData = ds.getOrCreateLevelSaveData( HBUtil.NAME, level);
+
+
+        if(LOADED_CHUNKS.get(level) == null)
+        {
+            LOADED_CHUNKS.put(level, new ConcurrentHashMap<>());
+            INITIALIZED_CHUNKS.put(level,  new ConcurrentHashMap<>());
+        }
+
+        JsonElement chunksIds = levelData.get("chunkIds");
+        if( chunksIds == null )
+        {
+            String[] ids = new String[0];
+            levelData.addProperty("chunkIds", GSON_BUILDER.toJsonTree(ids));
+            chunksIds = levelData.get("chunkIds");
+        }
+
+        Map<String, Object> initChunks = INITIALIZED_CHUNKS.get(level);
+        chunksIds.getAsJsonArray().forEach( chunkId -> {
+            initChunks.put(chunkId.getAsString(), "");
+        });
+
+    }
+
+    public static void onWorldUnload( final LevelEvent.Unload event )
+    {
+        LevelAccessor level = event.getLevel();
+        if(level.isClientSide())
+            return;
+
+        //Write out initialzed chunks to levelSaveData
+        DataStore ds = DataStore.getInstance();
+        LevelSaveData levelData = ds.getOrCreateLevelSaveData( HBUtil.NAME, level);
+
+        Map<String, Object> initChunks = INITIALIZED_CHUNKS.get(level);
+        String[] chunkIds = initChunks.keySet().toArray(new String[0]);
+
+        levelData.addProperty("chunkIds", GSON_BUILDER.toJsonTree(chunkIds));
+
     }
 
     public static void onChunkLoad( final ChunkEvent.Load event )
@@ -274,10 +325,6 @@ public class ManagedChunk implements IMangedChunkData {
         String chunkId = HBUtil.ChunkUtil.getId(event.getChunk());
         LevelChunk levelChunk = ManagedChunk.getChunk(level, chunkId);
 
-        if(LOADED_CHUNKS.get(level) == null) {
-            LOADED_CHUNKS.put(level, new ConcurrentHashMap<>());
-            INITIALIZED_CHUNKS.put(level,  new ConcurrentHashMap<>());
-        }
 
         if (levelChunk == null) {
             //LoggerProject.logDebug("003021", "Chunk " + chunkId + " unloaded before data could be written");
@@ -289,6 +336,7 @@ public class ManagedChunk implements IMangedChunkData {
             if(  c == null ) {
                 c = new ManagedChunk(level, chunkId, levelChunk);
             }
+            INITIALIZED_CHUNKS.get(level).put(chunkId, c);
 
             c.handleChunkLoaded(event);
         }

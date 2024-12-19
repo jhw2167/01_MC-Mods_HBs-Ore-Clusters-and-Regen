@@ -16,6 +16,8 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.event.server.ServerLifecycleEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
@@ -66,6 +68,24 @@ public class FoundationsForgeEventHandler {
         EVENT_REGISTRAR.onUnLoadLevel( event );
         LoggerBase.logDebug( null,"002004", "**** WORLD UNLOAD EVENT ****");
     }
+
+    /** Server Events **/
+
+    @SubscribeEvent
+    public static void serverLifecycleEvent(ServerLifecycleEvent event)
+    {
+        //Minecraft.getInstance().gameDirectory
+        if(event instanceof ServerStartedEvent) {
+            LoggerBase.logInit( null, "009002", "ServerLifecycleEvent fired: Started");
+            EVENT_REGISTRAR.onServerStart( event );
+        }
+
+        if(event instanceof ServerStoppedEvent) {
+            LoggerBase.logInit( null, "009003", "ServerLifecycleEvent fired: Stopped");
+            EVENT_REGISTRAR.onServerStop( event );
+        }
+    }
+
 
 
 

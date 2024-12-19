@@ -55,9 +55,17 @@ public class LevelSaveData {
         return level;
     }
 
-
+    /**
+     * Adds a property to the level data, replaces existing property if key already exists
+     * @param key
+     * @param data
+     */
     public void addProperty(String key, JsonElement data) {
         properties.put(key, data);
+    }
+
+    public JsonElement get(String jsonProperty) {
+        return properties.get(jsonProperty);
     }
 
     /** Serializers */
@@ -83,6 +91,7 @@ public class LevelSaveData {
         Map<String, JsonElement> map = json.asMap();
         map.forEach(this::addProperty);
     }
+
 
 
 }

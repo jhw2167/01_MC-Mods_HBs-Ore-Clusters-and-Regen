@@ -5,15 +5,10 @@ package com.holybuckets.foundation.event;
 //Forge Imports
 
 import com.holybuckets.foundation.LoggerBase;
-import com.holybuckets.foundation.datastore.DataStore;
-import com.holybuckets.foundation.model.ManagedChunk;
-import jdk.jfr.Event;
-import net.minecraft.core.Vec3i;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
+import net.minecraftforge.event.server.ServerLifecycleEvent;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.event.lifecycle.ModLifecycleEvent;
 import net.minecraftforge.registries.RegisterEvent;
@@ -46,8 +41,8 @@ public class EventRegistrar {
     private final Deque<Consumer<ModLifecycleEvent>> ON_MOD_LIFECYCLE = new ArrayDeque<>();
     private final Deque<Consumer<RegisterEvent>> ON_REGISTER = new ArrayDeque<>();
     private final Deque<Consumer<ModConfigEvent>> ON_MOD_CONFIG = new ArrayDeque<>();
-    private final Deque<Consumer<ServerLifecycleEvent.ServerStarting>> ON_SERVER_START = new ArrayDeque<>();
-    private final Deque<Consumer<ServerLifecycleEvent.ServerStopping>> ON_SERVER_STOP = new ArrayDeque<>();
+    private final Deque<Consumer<ServerLifecycleEvent>> ON_SERVER_START = new ArrayDeque<>();
+    private final Deque<Consumer<ServerLifecycleEvent>> ON_SERVER_STOP = new ArrayDeque<>();
 
 
     /**
@@ -143,14 +138,14 @@ public class EventRegistrar {
 
     /** Server Events **/
     
-    public void onServerStart(ServerLifecycleEvent.ServerStarting event) {
-        for (Consumer<ServerLifecycleEvent.ServerStarting> function : ON_SERVER_START) {
+    public void onServerStart(ServerLifecycleEvent event) {
+        for (Consumer<ServerLifecycleEvent> function : ON_SERVER_START) {
             function.accept(event);
         }
     }
 
-    public void onServerStop(ServerLifecycleEvent.ServerStopping event) {
-        for (Consumer<ServerLifecycleEvent.ServerStopping> function : ON_SERVER_STOP) {
+    public void onServerStop(ServerLifecycleEvent event) {
+        for (Consumer<ServerLifecycleEvent> function : ON_SERVER_STOP) {
             function.accept(event);
         }
     }
@@ -228,13 +223,13 @@ public class EventRegistrar {
         generalRegister(function, ON_MOD_CONFIG, priority);
     }
 
-    public void registerOnServerStart(Consumer<ServerLifecycleEvent.ServerStarting> function) { registerOnServerStart(function, false); }
-    public void registerOnServerStart(Consumer<ServerLifecycleEvent.ServerStarting> function, boolean priority) {
+    public void registerOnServerStart(Consumer<ServerLifecycleEvent> function) { registerOnServerStart(function, false); }
+    public void registerOnServerStart(Consumer<ServerLifecycleEvent> function, boolean priority) {
         generalRegister(function, ON_SERVER_START, priority);
     }
 
-    public void registerOnServerStop(Consumer<ServerLifecycleEvent.ServerStopping> function) { registerOnServerStop(function, false); }
-    public void registerOnServerStop(Consumer<ServerLifecycleEvent.ServerStopping> function, boolean priority) {
+    public void registerOnServerStop(Consumer<ServerLifecycleEvent> function) { registerOnServerStop(function, false); }
+    public void registerOnServerStop(Consumer<ServerLifecycleEvent> function, boolean priority) {
         generalRegister(function, ON_SERVER_STOP, priority);
     }
 
