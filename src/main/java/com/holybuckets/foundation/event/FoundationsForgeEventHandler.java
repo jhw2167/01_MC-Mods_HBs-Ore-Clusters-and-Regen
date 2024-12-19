@@ -67,15 +67,6 @@ public class FoundationsForgeEventHandler {
         LoggerBase.logDebug( null,"002004", "**** WORLD UNLOAD EVENT ****");
     }
 
-    /** Server Events **/
-
-    @SubscribeEvent
-    public static void serverLifecycleEvent(ServerLifecycleEvent event)
-    {
-
-    }
-
-
 
 
     /** PLAYER EVENTS **/
