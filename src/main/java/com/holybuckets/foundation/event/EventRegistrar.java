@@ -46,6 +46,8 @@ public class EventRegistrar {
     private final Deque<Consumer<ModLifecycleEvent>> ON_MOD_LIFECYCLE = new ArrayDeque<>();
     private final Deque<Consumer<RegisterEvent>> ON_REGISTER = new ArrayDeque<>();
     private final Deque<Consumer<ModConfigEvent>> ON_MOD_CONFIG = new ArrayDeque<>();
+    private final Deque<Consumer<ServerLifecycleEvent.ServerStarting>> ON_SERVER_START = new ArrayDeque<>();
+    private final Deque<Consumer<ServerLifecycleEvent.ServerStopping>> ON_SERVER_STOP = new ArrayDeque<>();
 
 
     /**
@@ -139,6 +141,20 @@ public class EventRegistrar {
         }
     }
 
+    /** Server Events **/
+    
+    public void onServerStart(ServerLifecycleEvent.ServerStarting event) {
+        for (Consumer<ServerLifecycleEvent.ServerStarting> function : ON_SERVER_START) {
+            function.accept(event);
+        }
+    }
+
+    public void onServerStop(ServerLifecycleEvent.ServerStopping event) {
+        for (Consumer<ServerLifecycleEvent.ServerStopping> function : ON_SERVER_STOP) {
+            function.accept(event);
+        }
+    }
+
     /** ############### **/
 
     /** Player Events **/
@@ -212,6 +228,15 @@ public class EventRegistrar {
         generalRegister(function, ON_MOD_CONFIG, priority);
     }
 
+    public void registerOnServerStart(Consumer<ServerLifecycleEvent.ServerStarting> function) { registerOnServerStart(function, false); }
+    public void registerOnServerStart(Consumer<ServerLifecycleEvent.ServerStarting> function, boolean priority) {
+        generalRegister(function, ON_SERVER_START, priority);
+    }
+
+    public void registerOnServerStop(Consumer<ServerLifecycleEvent.ServerStopping> function) { registerOnServerStop(function, false); }
+    public void registerOnServerStop(Consumer<ServerLifecycleEvent.ServerStopping> function, boolean priority) {
+        generalRegister(function, ON_SERVER_STOP, priority);
+    }
 
 
 }
