@@ -73,18 +73,16 @@ public class FoundationsForgeEventHandler {
     public static void serverLifecycleEvent(ServerLifecycleEvent event)
     {
         //Minecraft.getInstance().gameDirectory
-        if( event.getClass().getName().contains("Start"))
-        {
+        if(event instanceof ServerLifecycleEvent.ServerStarting) {
             LoggerBase.logInit( null, "009002", "ServerLifecycleEvent fired: Started");
+            EVENT_REGISTRAR.onServerStart((ServerLifecycleEvent.ServerStarting)event);
         }
 
-        if( event.getClass().getName().contains("Stop"))
-        {
+        if(event instanceof ServerLifecycleEvent.ServerStopping) {
             LoggerBase.logInit( null, "009003", "ServerLifecycleEvent fired: Stopped");
+            EVENT_REGISTRAR.onServerStop((ServerLifecycleEvent.ServerStopping)event);
             DataStore.getInstance().shutdown();
         }
-
-
     }
 
 
