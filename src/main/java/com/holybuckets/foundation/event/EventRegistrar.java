@@ -40,6 +40,10 @@ public class EventRegistrar {
     private final Deque<Consumer<ChunkEvent.Load>> ON_CHUNK_LOAD = new ArrayDeque<>();
     private final Deque<Consumer<ChunkEvent.Unload>> ON_CHUNK_UNLOAD = new ArrayDeque<>();
 
+    private final Deque<Consumer<ModLifecycleEvent>> ON_MOD_LIFECYCLE = new ArrayDeque<>();
+    private final Deque<Consumer<RegisterEvent>> ON_REGISTER = new ArrayDeque<>();
+    private final Deque<Consumer<ModConfigEvent>> ON_MOD_CONFIG = new ArrayDeque<>();
+
 
     /**
      * Constructor
@@ -112,6 +116,27 @@ public class EventRegistrar {
 
     /** ############### **/
 
+    /** Mod Events **/
+    
+    public void onModLifecycle(ModLifecycleEvent event) {
+        for (Consumer<ModLifecycleEvent> function : ON_MOD_LIFECYCLE) {
+            function.accept(event);
+        }
+    }
+
+    public void onRegister(RegisterEvent event) {
+        for (Consumer<RegisterEvent> function : ON_REGISTER) {
+            function.accept(event);
+        }
+    }
+
+    public void onModConfig(ModConfigEvent event) {
+        for (Consumer<ModConfigEvent> function : ON_MOD_CONFIG) {
+            function.accept(event);
+        }
+    }
+
+    /** ############### **/
 
     /** Player Events **/
 
@@ -169,6 +194,20 @@ public class EventRegistrar {
         generalRegister(function, ON_CHUNK_UNLOAD, priority);
     }
 
+    public void registerOnModLifecycle(Consumer<ModLifecycleEvent> function) { registerOnModLifecycle(function, false); }
+    public void registerOnModLifecycle(Consumer<ModLifecycleEvent> function, boolean priority) {
+        generalRegister(function, ON_MOD_LIFECYCLE, priority);
+    }
+
+    public void registerOnRegister(Consumer<RegisterEvent> function) { registerOnRegister(function, false); }
+    public void registerOnRegister(Consumer<RegisterEvent> function, boolean priority) {
+        generalRegister(function, ON_REGISTER, priority);
+    }
+
+    public void registerOnModConfig(Consumer<ModConfigEvent> function) { registerOnModConfig(function, false); }
+    public void registerOnModConfig(Consumer<ModConfigEvent> function, boolean priority) {
+        generalRegister(function, ON_MOD_CONFIG, priority);
+    }
 
 
 
