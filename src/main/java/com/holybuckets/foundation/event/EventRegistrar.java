@@ -14,6 +14,9 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.minecraftforge.fml.event.lifecycle.ModLifecycleEvent;
+import net.minecraftforge.registries.RegisterEvent;
 
 import java.util.*;
 import java.util.function.Consumer;
