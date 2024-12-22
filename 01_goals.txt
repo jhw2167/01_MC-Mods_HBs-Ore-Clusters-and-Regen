@@ -198,6 +198,21 @@ jarJar {
 26.  
 ---  
 	- cleaned up datastore, added worldSave and levelSave Objects
+	- DataStore reads LevelSave, WorldSave, and ModSave data properties out of file
+	- We can read initialized chunks out of the configs
+	- Fixed error where deserialization was not occuring due to blockStateUpdates not being parsed correctly
+	- Changed delimitter for blockStateUpdates to '=' from ':' which is used for Minecraft block groups
+	- Fixed error where blockStateUpdates was null on deserialization
+	- Updated MANAGED_SUBCLASSES to take a supplier function so the same Managed Subclass chunk was not used to init all new subclasses. A new one is supplied each call.
+	- Removed halt on editManagedChunk that cause the function to auto return
+	- Commented out loggers 002025 and 002028
+	- Fixed issue with DataStore where it did not write out properties on first world load
+	- Altered ChunkUtils.getLevelChunk function to check getChunkNow() before getChunk(... forceLoad==true) because the latter caused circular dependency on world load
+
+
+
+	- Datastore logs error and handles cases here file is empty or returns invalid JSON
+	- 
 
 27.  
 ---  

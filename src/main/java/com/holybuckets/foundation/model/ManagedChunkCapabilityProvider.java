@@ -42,7 +42,7 @@ public class ManagedChunkCapabilityProvider implements ICapabilityProvider, INBT
         if(this.managedChunk == null) {
             return tag;
         }
-        LoggerBase.logDebug(null, "005002", "ManagedChunkCapabilityProvider.serializeNBT() " + this.managedChunk.getId());
+        //LoggerBase.logDebug(null, "005002", "ManagedChunkCapabilityProvider.serializeNBT() " + this.managedChunk.getId());
 
         tag.put("managedChunk", this.managedChunk.serializeNBT());
 

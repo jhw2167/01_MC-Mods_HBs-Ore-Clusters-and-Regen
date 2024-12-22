@@ -472,7 +472,7 @@ public class OreClusterCalculator {
         oreVerticesByBlock.get(log).add(chunkWorldPos.getX() + 8, 128, chunkWorldPos.getZ() + 8);
 
         //Print the oreVertices array
-        LoggerProject.logDebug("002028","Finished all sections for  " + chunk.getId() + " , found " + oreVerticesByBlock );
+        //LoggerProject.logDebug("002028","Finished all sections for  " + chunk.getId() + " , found " + oreVerticesByBlock );
 
     }
 

@@ -8,7 +8,8 @@ import net.minecraft.world.level.LevelAccessor;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.holybuckets.foundation.datastore.LevelSaveData.convertLevelId;
+import static com.holybuckets.foundation.HBUtil.LevelUtil;
+
 
 /**
  * Holds arbitrary data the library user would like to asociate with one or more world save files
@@ -55,14 +56,14 @@ public class WorldSaveData {
      * @return LevelSaveData object
      */
     public LevelSaveData getOrCreateLevelSaveData(LevelAccessor level) {
-        String id = convertLevelId(level);
+        String id = LevelUtil.toId(level);
         LevelSaveData data = levelData.getOrDefault(id, new LevelSaveData(level));
         levelData.put(id, data);
         return data;
     }
 
     public void removeLevelSaveData(LevelAccessor level) {
-        levelData.remove(convertLevelId(level));
+        levelData.remove(LevelUtil.toId(level));
     }
 
     public void createLevelSaveData(JsonElement json) {
@@ -74,7 +75,9 @@ public class WorldSaveData {
         properties.put(key, data);
     }
 
-
+    public JsonElement get(String property) {
+        return properties.get(property);
+    }
 
 
     public JsonObject toJson()
@@ -82,19 +85,21 @@ public class WorldSaveData {
         JsonObject json = new JsonObject();
         json.addProperty("worldId", worldId);
 
+        this.properties.forEach(json::add);
+
         JsonArray levelDataArray = new JsonArray();
         levelData.forEach((levelId, levelSaveData) -> {
             levelDataArray.add(levelSaveData.toJson());
         });
         json.add("levelData", levelDataArray);
 
-        this.properties.forEach(json::add);
-
         return json;
     }
 
     void fromJson(JsonObject json)
     {
+        this.properties.clear();
+
         this.worldId = json.get("worldId").getAsString();
         json.remove("worldId");
 
@@ -102,9 +107,8 @@ public class WorldSaveData {
         levelData.forEach(this::createLevelSaveData);
         json.remove("levelData");
 
-        Map<String, JsonElement> map = json.asMap();
-        map.forEach(this::addProperty);
-
+        this.properties.putAll(json.asMap());
     }
+
 
 }

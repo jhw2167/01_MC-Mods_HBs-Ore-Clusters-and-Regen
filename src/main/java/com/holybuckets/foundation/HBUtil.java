@@ -2,6 +2,7 @@ package com.holybuckets.foundation;
 
 
 import com.holybuckets.foundation.database.DatabaseManager;
+import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.foundation.modelInterface.IStringSerializable;
 import com.holybuckets.orecluster.LoggerProject;
 import net.minecraft.core.BlockPos;
@@ -93,6 +94,17 @@ public class HBUtil {
         }
     }
 
+    public static class LevelUtil {
+
+        public static LevelAccessor toLevel(String id) throws InvalidId {
+            return GeneralConfig.getInstance().getLevel(id);
+        }
+
+        public static String toId(LevelAccessor level) {
+            return level.dimensionType().effectsLocation().toString();
+        }
+    }
+
     public static class ChunkUtil {
 
         public static String getId(ChunkAccess chunk) {
@@ -152,15 +164,21 @@ public class HBUtil {
         }
 
         /**
-         * Forceloads a chunk from the level
+         * Loads the targeted chunk, forceloading if necessary. Force loading may
+         * cause a circular dependency during worldLoad, first call is getChunkNow call
+         * to protect against this.
          * @param level
          * @param x
          * @param z
          * @return
          */
         public static LevelChunk getLevelChunk(LevelAccessor level, int x, int z) {
-            return level.getChunkSource().getChunk( x, z, true);
+            LevelChunk c = level.getChunkSource().getChunkNow(x, z);
+            if( c == null)
+                c = level.getChunkSource().getChunk( x, z, true);
+            return c;
         }
+
 
 
     }
