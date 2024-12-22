@@ -10,6 +10,7 @@ import com.holybuckets.foundation.datastore.DataStore;
 import com.holybuckets.foundation.datastore.LevelSaveData;
 import com.holybuckets.foundation.datastore.WorldSaveData;
 import com.holybuckets.foundation.event.EventRegistrar;
+import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.foundation.model.ManagedChunk;
 import net.minecraft.core.Vec3i;
 import net.minecraft.server.MinecraftServer;
@@ -44,7 +45,7 @@ public class GeneralConfig {
     private final DataStore DATA_STORE;
 
     private MinecraftServer SERVER;
-    private final Map<Integer, LevelAccessor> LEVELS;
+    private final Map<String, LevelAccessor> LEVELS;
     private Long WORLD_SEED;
     private Vec3i WORLD_SPAWN;
     private Boolean PLAYER_LOADED;
@@ -89,7 +90,7 @@ public class GeneralConfig {
             MinecraftServer server = level.getServer();
             instance.WORLD_SEED = server.overworld().getSeed();
             instance.WORLD_SPAWN = server.overworld().getSharedSpawnPos();
-            instance.LEVELS.put(level.hashCode(), level);
+            instance.LEVELS.put(HBUtil.LevelUtil.toId(level), level);
             instance.SERVER = level.getServer();
 
             initDataStore();
@@ -114,8 +115,15 @@ public class GeneralConfig {
     /**
      * Getters
      */
-    public Map<Integer, LevelAccessor> getLEVELS() {
-        return LEVELS;
+    public LevelAccessor getLevel(String id) throws InvalidId
+    {
+        if(LEVELS == null)
+            throw new InvalidId("LEVELS is null");
+
+        LevelAccessor level = LEVELS.get(id);
+        if( level == null)
+            throw new InvalidId("Level ID not found in GeneralConfig.LEVELS: " + id);
+        return level;
     }
 
     public Long getWORLD_SEED() {

@@ -404,13 +404,12 @@ public class OreClusterManager {
     {
         Throwable thrown = null;
 
-
         try
         {
 
             if( true ) {
-                sleep(10000);
-                return;
+                //sleep(10000);
+                //return;
             }
 
             while( managerRunning )
@@ -571,7 +570,7 @@ public class OreClusterManager {
         if( chunk.getChunk().getStatus() != ChunkStatus.FULL )
             return;
 
-        LoggerProject.logDebug("002025", "Cleaning chunk: " + chunk.getId());
+        //LoggerProject.logDebug("002025", "Cleaning chunk: " + chunk.getId());
 
         try {
 
@@ -603,7 +602,7 @@ public class OreClusterManager {
             //5. Set the chunk status to CLEANED
             chunk.setStatus(ManagedOreClusterChunk.ClusterStatus.CLEANED);
 
-            LoggerProject.logError("002027", "Cleaning chunk: " + chunk.getId() + " complete");
+            //LoggerProject.logError("002027", "Cleaning chunk: " + chunk.getId() + " complete");
 
     }
     catch(Exception e) {

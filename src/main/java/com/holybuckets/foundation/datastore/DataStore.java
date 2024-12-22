@@ -1,11 +1,13 @@
 package com.holybuckets.foundation.datastore;
 
+import com.google.common.primitives.UnsignedLong;
 import com.google.gson.*;
 import com.holybuckets.foundation.GeneralConfig;
 import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.event.EventRegistrar;
 import com.holybuckets.foundation.modelInterface.IStringSerializable;
 import com.holybuckets.orecluster.OreClustersAndRegenMain;
+import jdk.jfr.Unsigned;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraftforge.event.server.ServerLifecycleEvent;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
@@ -69,6 +71,7 @@ public class DataStore implements IStringSerializable {
     }
     public static void initWorldOnConfigLoad(ModConfigEvent event)
     {
+
         //if(event.getConfig().getFileName() != "hbs_utility-server.toml")
         if( !(event.getConfig().getFileName().equals(OreClustersAndRegenMain.MODID + "-server.toml")) )
             return;
@@ -104,12 +107,40 @@ public class DataStore implements IStringSerializable {
 
     public void deserialize(String jsonString)
     {
+        //test if the string contains valid json
+        if(jsonString == null || jsonString.isEmpty())
+            return;
+
+        String malformedJson = null;
+        //test if JSON is not structured properly
+        try {
+            JsonParser.parseString(jsonString);
+        } catch (Exception e)
+        {
+            StringBuilder error = new StringBuilder();
+            error.append("Error parsing JSON data from Datastore, file: ");
+            error.append(DATA_STORE_FILE);
+            error.append(".  The datastore will be configured with defaults values. Copy the file to save your data. ");
+
+            malformedJson = new String(jsonString);
+            jsonString = DefaultDataStore.getInstance().serialize();
+        }
+
+
         JsonObject json = JsonParser.parseString(jsonString).getAsJsonObject();
         JsonArray modSaveDataArray = json.getAsJsonArray("modSaveData");
         modSaveDataArray.forEach(modSaveData -> {
             ModSaveData data = new ModSaveData(modSaveData.getAsJsonObject());
             STORE.put(data.getModId(), data);
         });
+
+        if( malformedJson != null)
+        {
+            ModSaveData utilData = STORE.get(HBUtil.NAME);
+            utilData.addProperty("malformedJson", JsonParser.parseString(malformedJson));
+        }
+
+
     }
 
     public String serialize() {
@@ -136,9 +167,25 @@ public class DataStore implements IStringSerializable {
     static {
         EventRegistrar.getInstance().registerOnServerStop(DataStore::shutdown);
     }
-    public static void shutdown(ServerLifecycleEvent s) {
-        INSTANCE.save();
-        INSTANCE = null;
+    public static void shutdown(ServerLifecycleEvent s)
+    {
+        WorldSaveData worldData = INSTANCE.getOrCreateWorldSaveData(HBUtil.NAME);
+        GeneralConfig config = GeneralConfig.getInstance();
+
+        {
+            Long prevTicks = worldData.get("totalTicks").getAsLong();
+            Long currentTicks = Integer.toUnsignedLong( config.getSERVER().getTickCount() );
+            worldData.addProperty("totalTicks", parse(prevTicks + currentTicks) );
+        }
+
+        worldData.addProperty("worldSpawn", parse(config.getWORLD_SPAWN()) );
+
+        if(INSTANCE != null)
+            INSTANCE.save();
+
+        //Clear all fields
+        INSTANCE.currentWorldId = null;
+        INSTANCE.STORE.clear();
     }
 
 

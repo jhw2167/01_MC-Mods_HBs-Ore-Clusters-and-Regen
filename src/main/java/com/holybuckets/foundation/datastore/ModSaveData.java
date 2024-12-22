@@ -33,6 +33,11 @@ public class ModSaveData {
         this.fromJson(worldSaveData);
     }
 
+    public void createWorldSaveData(JsonElement json) {
+        WorldSaveData w = new WorldSaveData(json.getAsJsonObject());
+        this.worldSaveData.put(w.getWorldId(), w);
+    }
+
    /** GETTERS & SETTERS **/
 
     public String getModId() {
@@ -45,6 +50,9 @@ public class ModSaveData {
         return data;
     }
 
+    public void addProperty(String key, JsonElement data) {
+        properties.put(key, data);
+    }
 
     public void clearWorldSaveData() {
         worldSaveData.clear();
@@ -57,28 +65,36 @@ public class ModSaveData {
         if(comment != null)
             json.addProperty("comment", comment);
 
+        this.properties.forEach(json::add);
+
         JsonArray worldSaveDataArray = new JsonArray();
-        worldSaveData.forEach((id, data) -> {
-            worldSaveDataArray.add(data.toJson());
+        worldSaveData.forEach((key, value) -> {
+            worldSaveDataArray.add(value.toJson());
         });
         json.add("worldSaves", worldSaveDataArray);
 
-        this.properties.forEach(json::add);
 
         return json;
     }
 
     private void fromJson(JsonObject json)
     {
+        this.properties.clear();
+
+
         this.MOD_ID = json.get("modId").getAsString();
         json.remove("modId");
-        this.comment = json.get("comment").getAsString();
-        json.remove("comment");
 
-        json.getAsJsonArray("worldSaves").forEach(worldSave -> {
-        WorldSaveData w = new WorldSaveData(worldSave.getAsJsonObject());
-            this.worldSaveData.put(w.getWorldId(), w);
-        });
+        JsonElement comment = json.get("comment");
+        if(comment != null)
+        {
+            this.comment = json.get("comment").getAsString();
+            json.remove("comment");
+        }
+
+
+        JsonArray worldSaves = json.getAsJsonArray("worldSaves");
+        worldSaves.forEach(this::createWorldSaveData);
         json.remove("worldSaves");
 
         this.properties.putAll(json.asMap());

@@ -60,7 +60,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     }
 
     public static void registerManagedChunkData() {
-        ManagedChunk.registerManagedChunkData(ManagedOreClusterChunk.class, ManagedOreClusterChunk::new);
+        ManagedChunk.registerManagedChunkData(ManagedOreClusterChunk.class, () -> new ManagedOreClusterChunk(null) );
     }
 
     /** Variables **/
@@ -78,12 +78,6 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     //private List<Pair<String, Vec3i>> clusters;
 
     /** Constructors **/
-    /**
-        Dummy Constructor for using getInstance, should only have local scope
-     */
-    private ManagedOreClusterChunk() {
-        super();
-    }
 
     //Default constructor - creates dummy node to be loaded from HashMap later
     private ManagedOreClusterChunk(LevelAccessor level)
@@ -243,8 +237,8 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     }
 
     @Override
-    public void handleChunkLoaded(ChunkEvent.Load event)
-    {
+    public void handleChunkLoaded(ChunkEvent.Load event) {
+        this.level = event.getLevel();
         OreClusterManager.onChunkLoad(event, this);
     }
 
@@ -328,7 +322,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
                 blockStateUpdates.append("{");
                 String block = HBUtil.BlockUtil.blockToString(pair.getLeft());
                 blockStateUpdates.append(block);
-                blockStateUpdates.append(":");
+                blockStateUpdates.append("=");
 
                 BlockPos pos = pair.getRight();
                 HBUtil.TripleInt vec = new HBUtil.TripleInt(pos);
@@ -393,11 +387,11 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
                 //remove curly braces
                  pair = pair.substring(1, pair.length() - 1);
 
-                 String[] parts = pair.split(":");
+                 String[] parts = pair.split("=");
                  String block = parts[0];
                  Block blockType = HBUtil.BlockUtil.blockNameToBlock(block);
 
-                 String[] pos = parts[1].split(",");
+                 String[] pos = parts[1].replace("[", "").replace("]","").split(",");
                  int x = Integer.parseInt(pos[0]);
                  int y = Integer.parseInt(pos[1]);
                  int z = Integer.parseInt(pos[2]);
