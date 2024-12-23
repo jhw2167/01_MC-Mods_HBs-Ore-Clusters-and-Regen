@@ -25,6 +25,7 @@ import oshi.annotation.concurrent.ThreadSafe;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.lang.Thread.sleep;
@@ -141,10 +142,10 @@ public class OreClusterManager {
 
         //I want a fixed threadpool with a blocking queue
         this.threadPoolChunkProcessing = new ThreadPoolExecutor(1, 1,
-            300L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadPoolExecutor.DiscardPolicy());
+            300L, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.DiscardPolicy());
 
         this.threadPoolChunkEditing = new ThreadPoolExecutor(1, 1,
-            300L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadPoolExecutor.DiscardPolicy());
+            300L, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.DiscardPolicy());
 
         init(level);
         LoggerProject.logInit("002000", this.getClass().getName());
@@ -205,8 +206,8 @@ public class OreClusterManager {
      */
     public void handleChunkUnloaded(ChunkAccess chunk)
     {
-        //String chunkId = ChunkUtil.getId(chunk);
-        //loadedChunks.remove(chunkId);
+        String chunkId = ChunkUtil.getId(chunk);
+        loadedOreClusterChunks.remove(chunkId);
     }
 
     /**
@@ -422,17 +423,17 @@ public class OreClusterManager {
                 }
 
                 //filter out chunks with status none or determined
-                final Set<ManagedOreClusterChunk.ClusterStatus> BAD_STATUS = new HashSet<>(
+                final Set<ManagedOreClusterChunk.ClusterStatus> READY_STATUS = new HashSet<>(
                     Arrays.asList(
-                    ManagedOreClusterChunk.ClusterStatus.NONE,
-                    ManagedOreClusterChunk.ClusterStatus.DETERMINED,
-                    ManagedOreClusterChunk.ClusterStatus.GENERATED
+                    ManagedOreClusterChunk.ClusterStatus.CLEANED,
+                    ManagedOreClusterChunk.ClusterStatus.REGENERATED
                     ));
 
                 List<ManagedOreClusterChunk> readyChunks = loadedOreClusterChunks.values().stream().filter(
-                    chunk -> !BAD_STATUS.contains(chunk.getStatus())).toList();
+                    chunk -> READY_STATUS.contains(chunk.getStatus())
+                    ).toList();
 
-                //TEMP - filter for only chunks within a 4 chunk radius of 0,0
+                //DEBUG FILTER- filter for only chunks within a 4 chunk radius of 0,0
                 readyChunks = readyChunks.stream().filter(chunk -> {
                     ChunkPos pos = HBUtil.ChunkUtil.getPos(chunk.getId());
                     //return Math.abs(pos.x) < 4 && Math.abs(pos.z) < 4;
@@ -441,13 +442,21 @@ public class OreClusterManager {
 
                 for( ManagedOreClusterChunk chunk : readyChunks )
                 {
+                    if( chunk.hasChunk() == false )
+                        continue;
+
+                    if( chunk.getChunk(false).getStatus() != ChunkStatus.FULL )
+                        return;
+
                     Queue<Pair<Block, BlockPos>> blockUpdates = chunk.getBlockStateUpdates();
                     if( blockUpdates == null || blockUpdates.size() == 0 )
                         continue;
 
+
                     //LoggerProject.logDebug("002029.1","Editing chunk: " + chunk.getId() + " with " + blockUpdates.size() + " updates");
                     editManagedChunk(chunk, c -> {
-                        boolean isSuccessful = ManagedChunk.updateChunkBlocks(c.getChunk(), c.getBlockStateUpdates());
+                        LevelChunk levelChunk = c.getChunk(false);
+                        boolean isSuccessful = ManagedChunk.updateChunkBlocks(levelChunk, c.getBlockStateUpdates());
                         if( isSuccessful ) {
                             c.getBlockStateUpdates().clear();
                             c.setStatus(ManagedOreClusterChunk.ClusterStatus.GENERATED);
@@ -478,15 +487,10 @@ public class OreClusterManager {
     {
         long startTime = System.nanoTime();
         ManagedOreClusterChunk managedChunk = loadedOreClusterChunks.get(chunkId);
-        if( managedChunk == null || managedChunk.getChunk() == null )
-        {
-            ChunkPos chunkPos = HBUtil.ChunkUtil.getPos(chunkId);
-            LevelChunk chunk = HBUtil.ChunkUtil.getLevelChunk(level, chunkPos.x, chunkPos.z);
+        if( managedChunk == null || managedChunk.getChunk(false) == null )
+            return;
 
-            managedChunk = ManagedOreClusterChunk.getInstance(level, chunk);
-            loadedOreClusterChunks.put(chunkId, managedChunk);
-        }
-        LevelChunk start = managedChunk.getChunk();
+        LevelChunk start = managedChunk.getChunk(false);
         LinkedHashSet<String> chunkIds = getBatchedChunkList(batchSize, start);
         long step1Time = System.nanoTime();
         //LoggerProject.logDebug("002008", "Queued " + chunkIds.size() + " chunks for cluster determination");
@@ -564,10 +568,10 @@ public class OreClusterManager {
     private void handleChunkCleaning(ManagedOreClusterChunk chunk)
     {
 
-        if( chunk == null|| chunk.getChunk() == null )
+        if( chunk == null|| chunk.getChunk(false) == null )
             return;
 
-        if( chunk.getChunk().getStatus() != ChunkStatus.FULL )
+        if( chunk.getChunk(false).getStatus() != ChunkStatus.FULL )
             return;
 
         //LoggerProject.logDebug("002025", "Cleaning chunk: " + chunk.getId());

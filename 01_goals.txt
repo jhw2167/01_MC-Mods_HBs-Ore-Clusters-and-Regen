@@ -215,13 +215,27 @@ jarJar {
 
 	
 	- Datastore logs error and handles cases where file is empty or returns invalid JSON
-	- 
+	- Fixed issue where malformedData did not write correctly
 
 28.  
 ---  
 
+	- Turn on chunk section parsing and test for speed and accuracy again
+	- Speed is good, lag is minimal, but existent
+	- Consistent issue where blocks are placed but not rendered in the world for the client, will need to reload clients view
+	- Turned off automatic forceloading of chunks and instead makes user pass a boolean to indicate if chunk should be force loaded
+	- Added code to ensure ManagedOreClusterChunks are removed from loadedChunks array when unloaded
+	- Set realistic ore configs and determine if replacement alg can be used for real game scenarios
+	
+
+	- Determine if blockStateUpdate array should be deleted after each generation cycle
+
+
 29.  
 ---  
+
+	- Select cluster type chunks and attempt to build cluster cube
+	- 
 
 30.  
 ---  

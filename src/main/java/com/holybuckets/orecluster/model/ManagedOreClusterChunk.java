@@ -56,7 +56,8 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         DETERMINED,
         CLEANED,
         PENDING_GENERATION,
-        GENERATED
+        GENERATED,
+        REGENERATED
     }
 
     public static void registerManagedChunkData() {
@@ -117,16 +118,16 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
 
 
     /** Getters **/
-    public LevelChunk getChunk()
+    public LevelChunk getChunk(boolean forceLoad)
     {
         ManagedChunk parent = ManagedOreClusterChunk.getParent(level, id);
         if(parent == null)
             return null;
-        return parent.getChunk();
+        return parent.getChunk(forceLoad);
     }
 
     public boolean hasChunk() {
-        return getChunk() != null;
+        return getChunk(false) != null;
     }
 
     public ChunkPos getPos() {
