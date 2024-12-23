@@ -210,13 +210,11 @@ jarJar {
 	- Altered ChunkUtils.getLevelChunk function to check getChunkNow() before getChunk(... forceLoad==true) because the latter caused circular dependency on world load
 
 
-
-	- Datastore logs error and handles cases here file is empty or returns invalid JSON
-	- 
-
 27.  
 ---  
 
+	
+	- Datastore logs error and handles cases where file is empty or returns invalid JSON
 	- 
 
 28.  

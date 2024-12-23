@@ -123,7 +123,7 @@ public class DataStore implements IStringSerializable {
             error.append(".  The datastore will be configured with defaults values. Copy the file to save your data. ");
 
             malformedJson = new String(jsonString);
-            jsonString = DefaultDataStore.getInstance().serialize();
+            jsonString = new DefaultDataStore().serialize();
         }
 
 
@@ -137,7 +137,9 @@ public class DataStore implements IStringSerializable {
         if( malformedJson != null)
         {
             ModSaveData utilData = STORE.get(HBUtil.NAME);
-            utilData.addProperty("malformedJson", JsonParser.parseString(malformedJson));
+            String asString = malformedJson.replace('"','\'' ).replaceAll("\r\n", "");
+            utilData.addProperty("malformedJson",parse( asString ) );
+            this.save();
         }
 
 
