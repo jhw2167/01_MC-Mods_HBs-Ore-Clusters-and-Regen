@@ -403,7 +403,7 @@ public class OreClusterCalculator {
      */
     public void cleanChunkFindAllOres(ManagedOreClusterChunk chunk, final Set<Block> COUNTABLE_ORES)
     {
-        LevelChunk levelChunk = chunk.getChunk();
+        LevelChunk levelChunk = chunk.getChunk(true);
         LevelChunkSection[] sections = levelChunk.getSections();
 
         final int SECTION_SZ = 16;

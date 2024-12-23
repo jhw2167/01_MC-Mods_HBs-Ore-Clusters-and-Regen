@@ -80,9 +80,11 @@ public class ManagedChunk implements IMangedChunkData {
         return managedChunkData.get(classObject);
     }
 
-    public LevelChunk getChunk() {
+    //set chunk to null on chunkUnload
+    public LevelChunk getChunk(boolean forceLoad)
+    {
         if( this.chunk == null ) {
-            this.setChunk(level, id);
+            this.setChunk(level, id, forceLoad);
         }
         return this.chunk;
     }
@@ -106,8 +108,8 @@ public class ManagedChunk implements IMangedChunkData {
         return true;
     }
 
-    public void setChunk(LevelAccessor level, String id) {
-        this.chunk = ManagedChunk.getChunk(level, id);
+    public void setChunk(LevelAccessor level, String id, boolean forceLoad) {
+        this.chunk = ManagedChunk.getChunk(level, id, forceLoad);
     }
 
 
@@ -163,7 +165,6 @@ public class ManagedChunk implements IMangedChunkData {
 
         this.level = HBUtil.LevelUtil.toLevel(tag.getString("level"));
         this.tickWritten = tag.getInt("tickWritten");
-        this.setChunk(level, id);
 
         /** If tickWritten is < tickLoaded, then this data
          * was written previously and removed from memory. Replace the dummy
@@ -229,9 +230,8 @@ public class ManagedChunk implements IMangedChunkData {
     @Override
     public void handleChunkUnloaded(ChunkEvent.Unload event)
     {
-       this.tickWritten = GENERAL_CONFIG.getSERVER().getTickCount();
-
-         for(IMangedChunkData data : managedChunkData.values()) {
+        this.chunk = null;
+        for(IMangedChunkData data : managedChunkData.values()) {
               data.handleChunkUnloaded(event);
          }
         this.isLoaded = false;
@@ -246,10 +246,10 @@ public class ManagedChunk implements IMangedChunkData {
      * @param chunkId
      * @return
      */
-    public static LevelChunk getChunk(LevelAccessor level, String chunkId)
+    public static LevelChunk getChunk(LevelAccessor level, String chunkId, boolean forceLoad)
     {
         ChunkPos p = HBUtil.ChunkUtil.getPos(chunkId);
-        return HBUtil.ChunkUtil.getLevelChunk(level, p.x, p.z);
+        return HBUtil.ChunkUtil.getLevelChunk(level, p.x, p.z, forceLoad);
     }
 
     public static ManagedChunk getManagedChunk(LevelAccessor level, String id) throws NullPointerException
@@ -330,7 +330,7 @@ public class ManagedChunk implements IMangedChunkData {
             return;
 
         String chunkId = HBUtil.ChunkUtil.getId(event.getChunk());
-        LevelChunk levelChunk = ManagedChunk.getChunk(level, chunkId);
+        LevelChunk levelChunk = ManagedChunk.getChunk(level, chunkId, true);
 
 
         ManagedChunk loadedChunk = LOADED_CHUNKS.get(level).get(chunkId);

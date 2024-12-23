@@ -172,9 +172,10 @@ public class HBUtil {
          * @param z
          * @return
          */
-        public static LevelChunk getLevelChunk(LevelAccessor level, int x, int z) {
+        public static LevelChunk getLevelChunk(LevelAccessor level, int x, int z, boolean forceLoad)
+        {
             LevelChunk c = level.getChunkSource().getChunkNow(x, z);
-            if( c == null)
+            if( c == null && forceLoad)
                 c = level.getChunkSource().getChunk( x, z, true);
             return c;
         }
