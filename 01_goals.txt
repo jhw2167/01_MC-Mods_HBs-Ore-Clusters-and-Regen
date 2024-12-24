@@ -225,7 +225,12 @@ jarJar {
 	- Consistent issue where blocks are placed but not rendered in the world for the client, will need to reload clients view
 	- Turned off automatic forceloading of chunks and instead makes user pass a boolean to indicate if chunk should be force loaded
 	- Added code to ensure ManagedOreClusterChunks are removed from loadedChunks array when unloaded
+
+
 	- Set realistic ore configs and determine if replacement alg can be used for real game scenarios
+	- Fixed issue where threads were submitted several thousand times because blocking queue was used
+	instead of synchronous queue
+	-
 	
 
 	- Determine if blockStateUpdate array should be deleted after each generation cycle

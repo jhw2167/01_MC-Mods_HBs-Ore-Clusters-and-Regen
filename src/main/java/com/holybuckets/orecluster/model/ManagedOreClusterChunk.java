@@ -2,7 +2,6 @@ package com.holybuckets.orecluster.model;
 
 import com.google.gson.Gson;
 import com.holybuckets.foundation.GeneralConfig;
-import com.holybuckets.foundation.event.EventRegistrar;
 import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.HBUtil.ChunkUtil;
 import com.holybuckets.foundation.model.ManagedChunk;
@@ -25,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReentrantLock;
+
+import com.holybuckets.foundation.HBUtil.*;
 
 
 /**
@@ -196,7 +197,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.originalOres = originalOres;
     }
 
-    public void addClusterTypes(HashMap<Block, BlockPos> clusterMap)
+    public void addClusterTypes(Map<Block, BlockPos> clusterMap)
     {
         if( clusterMap == null )
             return;
@@ -317,22 +318,6 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         }
         else
         {
-            StringBuilder blockStateUpdates = new StringBuilder();
-            for(Pair<Block, BlockPos> pair : this.blockStateUpdates)
-            {
-                blockStateUpdates.append("{");
-                String block = HBUtil.BlockUtil.blockToString(pair.getLeft());
-                blockStateUpdates.append(block);
-                blockStateUpdates.append("=");
-
-                BlockPos pos = pair.getRight();
-                HBUtil.TripleInt vec = new HBUtil.TripleInt(pos);
-                blockStateUpdates.append("[" + vec.x + "," + vec.y + "," + vec.z + "]");
-                blockStateUpdates.append("}, ");
-            }
-            //remove trailing comma and space
-            blockStateUpdates.deleteCharAt(blockStateUpdates.length() - 1);
-            blockStateUpdates.deleteCharAt(blockStateUpdates.length() - 1);
 
             LoggerProject.logDebug("003009", "Serializing blockStateUpdates: " + blockStateUpdates);
             details.putString("blockStateUpdates", blockStateUpdates.toString());
@@ -358,7 +343,21 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         //Cluster Types
         {
             String clusterTypes = tag.getString("clusterTypes");
-            this.clusterTypes = gson.fromJson(clusterTypes, HashMap.class);
+            HashMap<String, String> clusterTypesMap = gson.fromJson(clusterTypes, HashMap.class);
+
+            for(Map.Entry<String, String> entry : clusterTypesMap.entrySet())
+            {
+                String block = entry.getKey();
+                Block blockType = BlockUtil.blockNameToBlock(block);
+
+                String[] pos = entry.getValue().replace("[", "").replace("]","").split(",");
+                int x = Integer.parseInt(pos[0]);
+                int y = Integer.parseInt(pos[1]);
+                int z = Integer.parseInt(pos[2]);
+                BlockPos blockPos = new BlockPos(x, y, z);
+
+                this.clusterTypes.put(blockType, blockPos);
+            }
 
             if(this.clusterTypes != null && this.clusterTypes.size() == 0 )
                 this.clusterTypes = null;
@@ -368,38 +367,13 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         //Block State Updates
         {
             String blockStateUpdates = tag.getString("blockStateUpdates");
-            /**
-             * Rfor(Pair<Block, BlockPos> pair : this.blockStateUpdates)
-             *             {
-             *                 blockStateUpdates.append("{");
-             *                 String block = HolyBucketsUtility.BlockUtil.blockToString(pair.getLeft());
-             *                 blockStateUpdates.append(block);
-             *                 blockStateUpdates.append(":");
-             *
-             *                 BlockPos pos = pair.getRight();
-             *                 HolyBucketsUtility.TripleInt vec = new HolyBucketsUtility.TripleInt(pos);
-             *                 blockStateUpdates.append("[" + vec.x + "-" + vec.y + "-" + vec.z + "]");
-             *                 blockStateUpdates.append("},");
-             *             }
-             */
-             String[] pairs = blockStateUpdates.split(", ");
-             for (String pair : pairs)
-             {
-                //remove curly braces
-                 pair = pair.substring(1, pair.length() - 1);
+            if(blockStateUpdates == null || blockStateUpdates.isEmpty()) {
+                this.blockStateUpdates = new ConcurrentLinkedQueue<>();
+            }
+            else {
+                Map<Block,List<BlockPos>> blocks =  BlockUtil.deserializeBlockPairs(blockStateUpdates);
 
-                 String[] parts = pair.split("=");
-                 String block = parts[0];
-                 Block blockType = HBUtil.BlockUtil.blockNameToBlock(block);
-
-                 String[] pos = parts[1].replace("[", "").replace("]","").split(",");
-                 int x = Integer.parseInt(pos[0]);
-                 int y = Integer.parseInt(pos[1]);
-                 int z = Integer.parseInt(pos[2]);
-                 BlockPos blockPos = new BlockPos(x, y, z);
-
-                 this.blockStateUpdates.add(Pair.of(blockType, blockPos));
-             }
+            }
 
 
 

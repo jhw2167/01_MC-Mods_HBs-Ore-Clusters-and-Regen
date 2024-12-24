@@ -499,7 +499,7 @@ public class OreClusterManager {
         //LoggerProject.logDebug("handlePrepareNewCluster #1  " + LoggerProject.getTime(startTime, step1Time) + " ms");
 
 
-        HashMap<String, HashMap<Block, BlockPos>> clusters;
+        Map<String, Map<Block, BlockPos>> clusters;
         clusters = oreClusterCalculator.calculateClusterLocations(chunkIds.stream().toList() , randSeqClusterPositionGen);
         long step2Time = System.nanoTime();
         //LoggerProject.logDebug("002009","Determined " + clusters.size() + " clusters in " + chunkIds.size() + " chunks");
@@ -523,7 +523,7 @@ public class OreClusterManager {
         long step3Time = System.nanoTime();
         //        //LoggerProject.logDebug("handlePrepareNewCluster #3  " + LoggerProject.getTime(step2Time, step3Time) + " ms");
 
-        for( Map.Entry<String, HashMap<Block, BlockPos>> cluster : clusters.entrySet())
+        for( Map.Entry<String, Map<Block, BlockPos>> cluster : clusters.entrySet())
         {
             //Add chunkId to existingClustersByType Map
             LinkedHashSet<Block> oreTypesInThisCluster = new LinkedHashSet<>(cluster.getValue().keySet());
@@ -618,7 +618,7 @@ public class OreClusterManager {
         error.append(" | ");
         error.append(e.getMessage());
         error.append(" stacktrace: \n");
-        error.append(e.getStackTrace());
+        error.append(Arrays.stream(e.getStackTrace()).toList().toString());
         LoggerProject.logError("002027.1", error.toString());
     }
 

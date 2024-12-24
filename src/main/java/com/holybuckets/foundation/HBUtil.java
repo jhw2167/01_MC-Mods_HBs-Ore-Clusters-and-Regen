@@ -14,11 +14,16 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
 * Class: HolyBucketsUtility
@@ -92,7 +97,88 @@ public class HBUtil {
 
             return b;
         }
+
+
+        /**
+         * Serialize a map of blocks and their positions to a string
+         * @param blocks
+         * @return
+         */
+        public static String serializeBlockPairs(Map<Block,List<BlockPos>> blocks)
+        {
+            StringBuilder blockStateUpdates = new StringBuilder();
+            for(Block block : blocks.keySet())
+            {
+                blockStateUpdates.append("{");
+                String blockName = HBUtil.BlockUtil.blockToString(block);
+                blockStateUpdates.append(blockName);
+                blockStateUpdates.append("=");
+
+                List<BlockPos> positions = blocks.get(block);
+                if( positions.isEmpty() )
+                {
+                    blockStateUpdates.append("[]}, ");
+                    continue;
+                }
+
+                for(BlockPos pos : positions)
+                {
+                    HBUtil.TripleInt vec = new HBUtil.TripleInt(pos);
+                    blockStateUpdates.append("[" + vec.x + "," + vec.y + "," + vec.z + "]");
+                    blockStateUpdates.append("&");
+                }
+                blockStateUpdates.deleteCharAt(blockStateUpdates.length() - 1);
+                blockStateUpdates.append("}, ");
+            }
+            //remove trailing comma and space
+            blockStateUpdates.deleteCharAt(blockStateUpdates.length() - 1);
+            blockStateUpdates.deleteCharAt(blockStateUpdates.length() - 1);
+
+            return blockStateUpdates.toString();
+        }
+
+        /**
+         * Deserialize a string to a map of blocks and all their positions
+         * @param data
+         * @return
+         */
+        public static Map<Block,List<BlockPos>> deserializeBlockPairs(String data)
+        {
+            Map<Block,List<BlockPos>> blockPairs = new HashMap<>();
+            String[] blocks = data.split(", ");
+
+            for (String pairs : blocks)
+            {
+                //remove curly braces
+                pairs = pairs.substring(1, pairs.length() - 1);
+
+                String[] parts = pairs.split("=");
+                Block blockType = BlockUtil.blockNameToBlock(parts[0]);
+
+                blockPairs.put(blockType, new ArrayList<>());
+                String[] positions = parts[1].split("&");
+
+                if( positions[0].contains("[]") )
+                    continue;
+
+                for( String pos : positions )
+                {
+                    String[] vec = pos.replace("[", "").replace("]","").split(",");
+                    int x = Integer.parseInt(vec[0]);
+                    int y = Integer.parseInt(vec[1]);
+                    int z = Integer.parseInt(vec[2]);
+                    BlockPos blockPos = new BlockPos(x, y, z);
+                    blockPairs.get(blockType).add(blockPos);
+                }
+
+            }
+
+            return blockPairs;
+        }
+
+
     }
+    //END BLOCK UTIL
 
     public static class LevelUtil {
 
