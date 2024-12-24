@@ -43,7 +43,7 @@ public class OreClusterCalculator {
         this.existingClustersByType = manager.getExistingClustersByType();
     }
 
-    public HashMap<String, HashMap<Block, BlockPos>> calculateClusterLocations(List<String> chunks, Random rng)
+    public Map<String, Map<Block, BlockPos>> calculateClusterLocations(List<String> chunks, Random rng)
     {
         long startTime = System.nanoTime();
 
@@ -227,7 +227,7 @@ public class OreClusterCalculator {
         //4. Using the Map of aggregate clusters, pick chunks for each cluster type
 
         // Maps <ChunkId, <OreType, BlockPos>>
-        HashMap<String, HashMap<Block, BlockPos>> clusterPositions = new HashMap<>();
+        HashMap<String, Map<Block, BlockPos>> clusterPositions = new HashMap<>();
 
         //Order OreCluster types by spawnRate ascending
         oreClusterTypes.sort(Comparator.comparingInt( o -> -1*clusterConfigs.get(o).oreClusterSpawnRate ));
@@ -331,7 +331,7 @@ public class OreClusterCalculator {
                          }
                          else
                          {
-                             HashMap<Block, BlockPos> clusterMap = new HashMap<>();
+                             Map<Block, BlockPos> clusterMap = new HashMap<>();
                              clusterMap.put(oreType, null);
                              clusterPositions.put(candidateChunkId, clusterMap);
                          }
