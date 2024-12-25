@@ -17,6 +17,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.*;
 import net.minecraftforge.event.level.ChunkEvent;
@@ -406,6 +407,8 @@ public class ManagedChunk implements IMangedChunkData {
         {
             BlockPos worldPos = chunk.getPos().getWorldPosition();
             Map<Integer, LevelChunkSection> sections = new HashMap<>();
+            Level level = chunk.getLevel();
+            Pair<BlockState, BlockPos> last = null;
 
             int i = 0;
             for(LevelChunkSection s : chunk.getSections()) {
@@ -422,9 +425,11 @@ public class ManagedChunk implements IMangedChunkData {
                 //section.setBlockState(t.x, t.y, t.z, update.getLeft(), true);
                 //section.release();
 
-                Level level = chunk.getLevel();
-                level.setBlock(bPos, update.getLeft(), 0);
+                level.setBlock(bPos, update.getLeft(), Block.UPDATE_IMMEDIATE );
+                last = update;
             }
+
+            level.setBlock(last.getRight(), last.getLeft(), Block.UPDATE_ALL_IMMEDIATE | Block.UPDATE_CLIENTS );
         }
         catch (IllegalStateException e)
         {
