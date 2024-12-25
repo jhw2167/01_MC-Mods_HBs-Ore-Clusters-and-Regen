@@ -239,11 +239,15 @@ jarJar {
 29.  
 ---  
 
-	- Select cluster type chunks and attempt to build cluster cube
+	- Finish and test BlockType serialization methods; wired up to blockPlacements and clusterTypes read in/out
+	- Deserialization method should be synchronous, locked on objects to ensure other methods aren't running
 	- 
 
 30.  
 ---  
+
+- Select cluster type chunks and attempt to build cluster cube
+	- 
 
 31.  
 ---  

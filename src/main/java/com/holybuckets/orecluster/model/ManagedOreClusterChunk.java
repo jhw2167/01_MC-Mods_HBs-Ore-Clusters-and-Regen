@@ -298,30 +298,57 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         details.putString("id", this.id);
         details.putString("status", this.status.toString());
 
-        Gson gson = ManagedChunk.GSON_BUILDER;
-
         //Cluster Types
-        if(this.clusterTypes == null || this.clusterTypes.size() == 0) {
-            details.putString("clusterTypes", "{}");
-        }
-        else
         {
-            String clusterTypes = gson.toJson(this.clusterTypes);
-            //LoggerProject.logDebug("003006", "Serializing clusterTypes: " + this.clusterTypes);
-            //LoggerProject.logDebug("003008", "Serializing clusterTypes 2: " + clusterTypes);
-            details.putString("clusterTypes", clusterTypes);
+            if(this.clusterTypes == null || this.clusterTypes.size() == 0) {
+                details.putString("clusterTypes", "");
+            }
+            else
+            {
+                Map<Block, List<BlockPos>> clusters = new HashMap<>();
+                this.clusterTypes.keySet().forEach((k) -> clusters.put(k, new ArrayList<>()));
+                for(Map.Entry<Block, BlockPos> entry : this.clusterTypes.entrySet())
+                {
+                    Block block = entry.getKey();
+                    BlockPos pos = entry.getValue();
+                    if(pos != null)
+                        clusters.get(block).add(pos);
+                }
+                String clusterTypes = BlockUtil.serializeBlockPairs(clusters);
+                details.putString("clusterTypes", clusterTypes);
+            }
         }
+
+
+
 
         //blockStateUpdates
-        if(this.blockStateUpdates == null || this.blockStateUpdates.size() == 0) {
-            details.putString("blockStateUpdates", "");
-        }
-        else
-        {
 
-            LoggerProject.logDebug("003009", "Serializing blockStateUpdates: " + blockStateUpdates);
-            details.putString("blockStateUpdates", blockStateUpdates.toString());
+        {
+            if(this.blockStateUpdates == null || this.blockStateUpdates.size() == 0) {
+                details.putString("blockStateUpdates", "");
+            }
+            else
+            {
+                Map<Block, List<BlockPos>> blocks = new HashMap<>();
+                this.blockStateUpdates.forEach((pair) -> {
+                    Block block = pair.getLeft();
+                    if(!blocks.containsKey(block))
+                        blocks.put(block, new ArrayList<>());
+                });
+
+                for(Pair<Block, BlockPos> pair : this.blockStateUpdates)
+                {
+                    Block block = pair.getLeft();
+                    BlockPos pos = pair.getRight();
+                    blocks.get(block).add(pos);
+                }
+
+                String blockStateUpdates = BlockUtil.serializeBlockPairs(blocks);
+                details.putString("blockStateUpdates", blockStateUpdates);
+            }
         }
+
 
         LoggerProject.logDebug("003007", "Serializing ManagedOreChunk: " + details);
 
@@ -338,41 +365,53 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.id = tag.getString("id");
         this.status = ClusterStatus.valueOf( tag.getString("status") );
 
-        Gson gson = ManagedChunk.GSON_BUILDER;
-
         //Cluster Types
         {
             String clusterTypes = tag.getString("clusterTypes");
-            HashMap<String, String> clusterTypesMap = gson.fromJson(clusterTypes, HashMap.class);
 
-            for(Map.Entry<String, String> entry : clusterTypesMap.entrySet())
+            this.clusterTypes = null;
+            if(clusterTypes == null || clusterTypes.isEmpty()) {
+                //add nothing
+            }
+            else
             {
-                String block = entry.getKey();
-                Block blockType = BlockUtil.blockNameToBlock(block);
+                Map<Block,List<BlockPos>> clusters =  BlockUtil.deserializeBlockPairs(clusterTypes);
+                this.clusterTypes = new HashMap<>();
+                for(Map.Entry<Block, List<BlockPos>> entry : clusters.entrySet())
+                {
+                    Block block = entry.getKey();
+                    List<BlockPos> positions = entry.getValue();
+                    for(BlockPos pos : positions)
+                    {
+                        this.clusterTypes.put(block, pos);
+                    }
 
-                String[] pos = entry.getValue().replace("[", "").replace("]","").split(",");
-                int x = Integer.parseInt(pos[0]);
-                int y = Integer.parseInt(pos[1]);
-                int z = Integer.parseInt(pos[2]);
-                BlockPos blockPos = new BlockPos(x, y, z);
-
-                this.clusterTypes.put(blockType, blockPos);
+                    if(this.clusterTypes.size() == 0)
+                        this.clusterTypes.put(block, null);
+                }
             }
 
-            if(this.clusterTypes != null && this.clusterTypes.size() == 0 )
-                this.clusterTypes = null;
             LoggerProject.logDebug("003008", "Deserializing clusterTypes: " + clusterTypes);
         }
 
         //Block State Updates
         {
             String blockStateUpdates = tag.getString("blockStateUpdates");
+            this.blockStateUpdates = new ConcurrentLinkedQueue<>();
             if(blockStateUpdates == null || blockStateUpdates.isEmpty()) {
-                this.blockStateUpdates = new ConcurrentLinkedQueue<>();
+               //add nothing
             }
             else {
                 Map<Block,List<BlockPos>> blocks =  BlockUtil.deserializeBlockPairs(blockStateUpdates);
-
+                for(Map.Entry<Block, List<BlockPos>> entry : blocks.entrySet())
+                {
+                    Block block = entry.getKey();
+                    List<BlockPos> positions = entry.getValue();
+                    for(BlockPos pos : positions)
+                    {
+                        this.blockStateUpdates.add( Pair.of(block, pos) );
+                    }
+                }
             }
 
 
