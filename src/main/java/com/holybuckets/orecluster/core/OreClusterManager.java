@@ -259,18 +259,21 @@ public class OreClusterManager {
             chunksPendingDeterminations.add(chunkId);
             this.threadPoolClusterDetermination.submit(this::workerThreadDetermineClusters);
         }
-        else if( chunk.getStatus() == ManagedOreClusterChunk.ClusterStatus.DETERMINED ) {
+        else if( ManagedOreClusterChunk.isDetermined(chunk) ) {
             chunksPendingCleaning.put(chunkId, chunk);
             this.threadPoolClusterCleaning.submit(this::workerThreadCleanClusters);
         }
-        else if( chunk.getStatus() == ManagedOreClusterChunk.ClusterStatus.CLEANED )
+        else if( ManagedOreClusterChunk.isCleaned(chunk) )
         {
             //LoggerProject.logDebug("002007","Chunk " + chunkId + " has been cleaned");
-            chunksPendingGeneration.put(chunkId, chunk);
-            this.threadPoolClusterGenerating.submit(this::workerThreadGenerateClusters);
+            if(chunk.hasClusters() )
+            {
+                chunksPendingGeneration.put(chunkId, chunk);
+                this.threadPoolClusterGenerating.submit(this::workerThreadGenerateClusters);
+            }
 
         }
-        else if( chunk.getStatus() == ManagedOreClusterChunk.ClusterStatus.GENERATED )
+        else if( ManagedOreClusterChunk.isGenerated(chunk) )
         {
             //LoggerProject.logDebug("002008","Chunk " + chunkId + " has been generated");
             //chunksPendingManifestation.add(chunkId);
@@ -381,13 +384,43 @@ public class OreClusterManager {
     private void workerThreadGenerateClusters()
     {
         Throwable thrown = null;
+
+        final Predicate<ManagedOreClusterChunk> IS_ADJACENT_CHUNKS_LOADED = chunk -> {
+            ChunkPos pos = HBUtil.ChunkUtil.getPos(chunk.getId());
+            //give me a nested for loop over x, z coordinates from -1 to 1
+            for (int x = -1; x <= 1; x++) {
+                for (int z = -1; z <= 1; z++) {
+                    ChunkPos adjPos = new ChunkPos(pos.x + x, pos.z + z);
+                    if (!loadedOreClusterChunks.containsKey(ChunkUtil.getId(adjPos)))
+                        return false;
+                }
+            }
+            return true;
+        };
+
         try
         {
+
             while( managerRunning )
             {
-                //String chunkId = chunksPendingGeneration.poll();
+                Queue<ManagedOreClusterChunk> chunksToGenerate = chunksPendingGeneration.values().stream()
+                    .filter(ManagedOreClusterChunk::isCleaned)
+                    .filter(chunk -> chunk.hasClusters())
+                    .filter(IS_ADJACENT_CHUNKS_LOADED)
+                    .collect(Collectors.toCollection(LinkedList::new));
 
-                //Optional<ManagedOreClusterChunk> chunk = editManagedChunk(chunkId, this::handleClusterGeneration);
+                if( chunksToGenerate.size() == 0 ) {
+                    sleep(10);
+                    continue;
+                }
+
+                for (ManagedOreClusterChunk chunk : chunksToGenerate)
+                {
+                    editManagedChunk(chunk, this::handleClusterGeneration);
+                    if( chunk.getStatus() == ManagedOreClusterChunk.ClusterStatus.GENERATED )
+                        chunksPendingGeneration.remove(chunk.getId());
+                }
+
 
             }
 
@@ -595,6 +628,7 @@ public class OreClusterManager {
             {
                 oreClusterCalculator.cleanChunkSelectClusterPosition(chunk);
                 this.chunksPendingGeneration.put(chunk.getId(), chunk);
+                this.threadPoolClusterGenerating.submit(this::workerThreadGenerateClusters);
             }
 
             //3. Determine which Ore Vertices need to be cleaned
@@ -627,13 +661,41 @@ public class OreClusterManager {
 
 
     /**
-     * Handles creation of each type of ore cluster within each chunk
+     * Takes a ManagedOreClusterChunk and generates a sequence of positions
+     * that will become the ore cluster in the world. These positions are
+     * added to ManagedOreClusterChunk::blockStateUpdates
+     *
+     * @param chunk
      */
     private void handleClusterGeneration(ManagedOreClusterChunk chunk)
     {
+        if( chunk == null || chunk.getChunk(false) == null )
+            return;
+
         LoggerProject.logDebug("002015","Generating clusters for chunk: " + chunk.getId());
-        HashMap<Block, BlockPos> clusters = chunk.getClusterTypes();
-        chunk.setStatus(ManagedOreClusterChunk.ClusterStatus.GENERATED);
+
+        if(chunk.getClusterTypes() == null || chunk.getClusterTypes().size() == 0)
+            return;
+
+        String SKIPPED = null;
+        for( Block oreType : chunk.getClusterTypes().keySet() )
+        {
+            //1. Get the cluster config
+
+            BlockPos sourcePos = chunk.getClusterTypes().get(oreType);
+            if( sourcePos == null ) {
+                LoggerProject.logDebug("002016","No source position for oreType: " + oreType);
+                SKIPPED = BlockUtil.blockToString(oreType);
+                continue;
+            }
+
+
+            List<BlockPos> clusterPos = oreClusterCalculator.generateCluster(Pair.of(oreType, sourcePos));
+            clusterPos.forEach( pos -> chunk.addBlockStateUpdate(oreType, pos) );
+        }
+
+        if( SKIPPED != null )
+            chunk.setStatus(ManagedOreClusterChunk.ClusterStatus.GENERATED);
     }
 
     /**

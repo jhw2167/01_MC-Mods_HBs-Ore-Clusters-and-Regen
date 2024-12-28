@@ -20,7 +20,6 @@ import com.holybuckets.foundation.HBUtil.*;
 import com.holybuckets.orecluster.LoggerProject;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
-import org.antlr.v4.runtime.misc.Triple;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class OreClusterCalculator {
@@ -563,24 +562,58 @@ public class OreClusterCalculator {
         return null;
     }
 
-    public List<Pair<String, Vec3i>> generateCluster(String oreType, Vec3i sourcePosition, LevelChunk chunk )
+    /**
+     * Takes a ManagedOreClusterChunk and generates a sequence of positions
+     * that will become the ore cluster in the world. These positions are
+     * added to ManagedOreClusterChunk::blockStateUpdates
+     *
+     * @param chunk
+     */
+    public void generateCluster(ManagedOreClusterChunk chunk)
     {
-        //1. Get the cluster config
-        OreClusterConfigModel config = C.getOreConfigs().get(oreType);
-
-        //2. Determine the cluster size and shape
-        Triple<Integer, Integer, Integer> volume = config.oreClusterVolume;
-        String shape = config.oreClusterShape;
-
-        //3. Generate the cluster
 
 
-        //4. Reduce cluster density
 
 
-        return null;
 
     }
+    //END GENERATE ORE CLUSTERS
+
+    /**
+     * Takes an oreConfig and a source position and generates a sequence of positions
+     * that will become the ore cluster in the world.
+     *
+     * @param source
+     * @return
+     */
+    public List<BlockPos> generateCluster(Pair<Block, BlockPos> source)
+    {
+
+        //1. Determine the cluster size and shape
+        //HBUtil.TripleInt volume = config.oreClusterVolume;
+        //String shape = config.oreClusterShape;
+        Block oreType = source.getLeft();
+        BlockPos sPos = source.getRight();
+        final OreClusterConfigModel config = C.getOreConfigs().get(oreType);
+
+       //2. Generate Cube
+       final TripleInt VOL = config.oreClusterVolume;
+       Fast3DArray positions = ShapeUtil.getCube(VOL.x, VOL.z, VOL.y);
+
+       //3. Convert cube to BlockPos
+        List<BlockPos> blockPositions = new ArrayList<>();
+        for( int i = 0; i < positions.size; i++ )
+        {
+            int x = sPos.getX() + positions.getX(i);
+            int y = sPos.getY() + positions.getY(i);
+            int z = sPos.getZ() + positions.getZ(i);
+            blockPositions.add(new BlockPos(x, y, z));
+        }
+
+        return blockPositions;
+    }
+
+
 }
 //END CLASS
 

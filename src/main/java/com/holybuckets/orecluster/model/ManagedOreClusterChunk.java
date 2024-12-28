@@ -164,14 +164,12 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         return originalOres;
     }
 
-    /**
-     * Multiplies the Object's hashcode by the provided seed to get a random number
-     * to this chunk
-     * @return
-     */
     public Random getChunkRandom() {
-        final GeneralConfig CONFIG = GeneralConfig.getInstance();
-        return new Random( this.hashCode() * CONFIG.getWORLD_SEED() );
+      ManagedChunk parent = ManagedOreClusterChunk.getParent(level, id);
+        if(parent == null)
+            return null;
+
+        return parent.getChunkRandom();
     }
 
     public synchronized ReentrantLock getLock() {
@@ -284,6 +282,26 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
 
     public static ManagedChunk getParent(LevelAccessor level, String id) {
         return ManagedChunk.getManagedChunk(level, id);
+    }
+
+    public static boolean isDetermined(ManagedOreClusterChunk chunk) {
+        return chunk.getStatus() == ClusterStatus.DETERMINED;
+    }
+
+    public static boolean isCleaned(ManagedOreClusterChunk chunk) {
+        return chunk.getStatus() == ClusterStatus.CLEANED;
+    }
+
+    public static boolean isPendingGeneration(ManagedOreClusterChunk chunk) {
+        return chunk.getStatus() == ClusterStatus.PENDING_GENERATION;
+    }
+
+    public static boolean isGenerated(ManagedOreClusterChunk chunk) {
+        return chunk.getStatus() == ClusterStatus.GENERATED;
+    }
+
+    public static boolean isRegenerated(ManagedOreClusterChunk chunk) {
+        return chunk.getStatus() == ClusterStatus.REGENERATED;
     }
 
 

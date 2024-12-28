@@ -17,12 +17,12 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.*;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import org.apache.commons.lang3.tuple.Pair;
+import org.checkerframework.checker.units.qual.C;
 
 import javax.xml.crypto.Data;
 import java.util.*;
@@ -41,6 +41,7 @@ public class ManagedChunk implements IMangedChunkData {
     public static final Gson GSON_BUILDER = new GsonBuilder().serializeNulls().create();
 
     private String id;
+    private ChunkPos pos;
     private LevelAccessor level;
     private LevelChunk chunk;
     private int tickWritten;
@@ -65,6 +66,7 @@ public class ManagedChunk implements IMangedChunkData {
     {
         this();
         this.id = id;
+        this.pos = HBUtil.ChunkUtil.getPos(id);
         this.level = level;
 
         this.tickLoaded = GENERAL_CONFIG.getSERVER().getTickCount();
@@ -92,6 +94,32 @@ public class ManagedChunk implements IMangedChunkData {
 
     public String getId() {
         return this.id;
+    }
+
+    /**
+     * Get a new instance of random object unique to this chunks coordinates
+     * and the Minecraft world seed value
+     * @return
+     */
+    public Random getChunkRandom()
+    {
+        if( this.id == null || this.pos == null )
+            return null;
+
+        final GeneralConfig CONFIG = GeneralConfig.getInstance();
+        final Long SEED = CONFIG.getWORLD_SEED();
+
+        Double RAND = HBUtil.ChunkUtil.getChunkRandom(this.pos) *1d;
+
+        if( RAND.equals( 0d ) )
+            return new Random( SEED );
+
+        RAND = SEED / RAND;
+
+        if( RAND < 1d && RAND > -1d)
+            RAND = 1d / RAND;
+
+        return new Random( RAND.intValue() );
     }
 
     /**
