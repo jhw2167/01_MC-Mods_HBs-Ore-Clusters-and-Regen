@@ -26,7 +26,7 @@ public class OreClusterConfigModel extends ConfigModelBase {
     public Block oreClusterType = null;
     public HashSet<Block> validOreClusterOreBlocks; //defaultConfigOnly
     public Integer oreClusterSpawnRate = COreClusters.DEF_ORE_CLUSTER_SPAWN_RATE;
-    public Triple<Integer, Integer, Integer> oreClusterVolume = processVolume( COreClusters.DEF_ORE_CLUSTER_VOLUME);
+    public TripleInt oreClusterVolume = processVolume( COreClusters.DEF_ORE_CLUSTER_VOLUME);
     public Float oreClusterDensity = COreClusters.DEF_ORE_CLUSTER_DENSITY;
     public String oreClusterShape = COreClusters.DEF_ORE_CLUSTER_SHAPE;
     public Integer oreClusterMaxYLevelSpawn = COreClusters.ORE_CLUSTER_MAX_Y_LEVEL_SPAWN;
@@ -116,7 +116,7 @@ public class OreClusterConfigModel extends ConfigModelBase {
     }
 
 
-    public Triple<Integer, Integer, Integer> processVolume(String volume)
+    public TripleInt processVolume(String volume)
     {
         /** Define Errors for validation **/
         StringBuilder volumeNotParsedCorrectlyError = new StringBuilder();
@@ -154,9 +154,9 @@ public class OreClusterConfigModel extends ConfigModelBase {
             }
         }
 
-        return new Triple<>(Integer.parseInt(volumeArray[0]),
-                Integer.parseInt(volumeArray[1]),
-                Integer.parseInt(volumeArray[2]));
+        return new TripleInt(Integer.parseInt(volumeArray[0]),
+            Integer.parseInt(volumeArray[1]),
+            Integer.parseInt(volumeArray[2]));
     }
 
     public HashMap<String, Integer> processRegenPeriods(String [] upgrades, String [] oreClusterRegenPeriodArray)
@@ -220,7 +220,7 @@ public class OreClusterConfigModel extends ConfigModelBase {
     }
 
     public void setOreClusterVolume(String oreClusterVolume) {
-        Triple<Integer, Integer, Integer> volume = processVolume(oreClusterVolume);
+        TripleInt volume = processVolume(oreClusterVolume);
         this.oreClusterVolume = volume;
     }
 
@@ -371,9 +371,9 @@ public class OreClusterConfigModel extends ConfigModelBase {
         String oreClusterTypeString = BlockUtil.blockToString(c.oreClusterType);
         jsonObject.addProperty("oreClusterType", oreClusterTypeString);
         jsonObject.addProperty("oreClusterSpawnRate", c.oreClusterSpawnRate);
-        jsonObject.addProperty("oreClusterVolume", c.oreClusterVolume.a
-                + "x" + c.oreClusterVolume.b
-                + "x" + c.oreClusterVolume.c
+        jsonObject.addProperty("oreClusterVolume", c.oreClusterVolume.x
+                + "x" + c.oreClusterVolume.y
+                + "x" + c.oreClusterVolume.z
         );
         jsonObject.addProperty("oreClusterDensity", c.oreClusterDensity);
         jsonObject.addProperty("oreClusterShape", c.oreClusterShape);

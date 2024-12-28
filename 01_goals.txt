@@ -240,14 +240,19 @@ jarJar {
 ---  
 
 	- Finish and test BlockType serialization methods; wired up to blockPlacements and clusterTypes read in/out
-	- Deserialization method should be synchronous, locked on objects to ensure other methods aren't running
+	- Added UpdateAll flags to setBlock methods to update all after last block was placed and update clients
 	- 
 
 30.  
 ---  
 
-- Select cluster type chunks and attempt to build cluster cube
-	- 
+	- Select cluster type chunks and attempt to build cluster cube
+
+
+	- Shapes to add:
+		- Cube
+		- Anvil(?)
+		- bowl
 
 31.  
 ---  
@@ -347,6 +352,10 @@ jarJar {
 	- Alter ManagedOreClusterChunk sourcing algorithm to select valid Regenerating ores by cluster
 	- Move Particular Ore configuration JSON to its own config file and folder
 	- Set TOML config file to read file name where JSON config is stored
+	
+	- Deserialization method should be synchronous, locked on objects to ensure other methods aren't running
+	- Performance isnt excellent, but it is pretty good, could be improved but intersecting noise generating alg to source ores
+	- 
 
 			
 

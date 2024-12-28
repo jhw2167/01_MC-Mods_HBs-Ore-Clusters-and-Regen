@@ -240,6 +240,16 @@ public class HBUtil {
             return new ChunkPos(p1.x + dir[0], p1.z + dir[1]);
         }
 
+        public static Long getChunkRandom(String id) {
+            return getChunkRandom(getPos(id));
+        }
+
+        public static Long getChunkRandom( ChunkPos pos ) {
+            //map the chunks x and z position to a random number
+            final Long WIDTH = 10_000_000l;
+            return (pos.x * WIDTH) + pos.z;
+        }
+
 
         public static String readNBT(ChunkAccess chunk, String property) {
             return "";
@@ -270,30 +280,104 @@ public class HBUtil {
 
     }
 
-    public static class SerializeUtil {
+    public static class ShapeUtil {
 
         /**
-         * Serialize iterable object to a string
+         * Returns a 3D array of all vertices within a circle of radius r.
+         * The y value is always 0. If the provided radius is even, it will be incremented by 1.
+         * @param radius
+         * @return null if radius is <= 0. returns 3x3 square if radius is 2 or 3. Otherwise
+         * returns all integer solutions where x^2 + z^2 <= r^2
          */
-        public static String serialize( Iterable<?> iterable) {
-            StringBuilder sb = new StringBuilder();
-            for (Object o : iterable) {
-                sb.append(o.toString());
-                sb.append(",");
+        public static Fast3DArray getCircle(int radius)
+        {
+            if( radius <= 0 )
+                return null;
+
+            Fast3DArray circle = new Fast3DArray(4 * radius * radius);
+
+            circle.add(0, 0, 0);
+            if( radius <= 1 ) {
+                return circle;
             }
-            return sb.toString();
+
+            if( radius % 2 == 0) {
+                radius++;
+            }
+
+            //if radius is 3, we just return 3x3 square
+            if( radius == 3)
+            {
+                for (int x = -1; x <= 1; x++) {
+                    for (int z = -1; z <= 1; z++) {
+                        circle.add(x, 0, z);
+                    }
+                }
+                return circle;
+            }
+
+            int radiusSquared = radius * radius;
+            for (int x = -radius; x <= radius; x++)
+            {
+                // Calculate y^2 for the current x
+                int zSquared = radiusSquared - x * x;
+
+                //Instead, we want all integer solutions where x^2 + y^2 <= r^2
+                for (int z = -radius; z <= radius; z++) {
+                    if (x * x + z * z <= radiusSquared) {
+                        circle.add(x, 0, z);
+                    }
+                }
+            }
+
+            return circle;
         }
 
-        /**
-         * Deserialize a string to an iterable object
-          */
 
-        public static Iterable<String> deserialize(CompoundTag tag, String property) {
-            return null;
+        /**
+         * Returns a 3D array of all vertices within a 2D square of provided length and width
+         * The y parameter is always 0.
+         * @param length
+         * @param width
+         * @return
+         */
+        public static Fast3DArray getSquare(int length, int width)
+        {
+            if( length <= 0 || width <= 0)
+                return null;
+
+            Fast3DArray square = new Fast3DArray(length * width + 1);
+
+            for (int x = -length; x <= length; x++)
+            {
+                for (int z = -width; z <= width; z++)
+                {
+                    square.add(x, 0, z);
+                }
+            }
+
+            return square;
+        }
+
+
+        public static Fast3DArray getCube(int length, int width, int height)
+        {
+            if( height <= 0 || length <= 0 || width <= 0)
+                return null;
+
+            Fast3DArray cube = new Fast3DArray(height * length * width);
+
+            for (int y = 0; y < height; y++)
+            {
+               cube.addAll( getSquare(length, width) );
+            }
+
+            return cube;
         }
 
 
     }
+    //END SHAPEUTIL
 
     public static class FileIO {
 
@@ -532,6 +616,15 @@ public class HBUtil {
             Z[size] = z;
             size++;
         }
+
+        public void addAll(Fast3DArray other)
+        {
+            for( int i = 0; i < other.size; i++)
+            {
+                add(other.X[i], other.Y[i], other.Z[i]);
+            }
+        }
+
 
         /**
          * Returns a new 3D array of all
