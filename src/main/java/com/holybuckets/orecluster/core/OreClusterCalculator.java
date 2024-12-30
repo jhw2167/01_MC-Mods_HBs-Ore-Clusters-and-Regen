@@ -464,12 +464,6 @@ public class OreClusterCalculator {
         }
         //END SECTIONS LOOP
 
-        //Add a dummy oak_log block to the chunk at chunk_world_pos + 8, 64, 8
-        Block log = Blocks.OAK_LOG;
-        if( oreVerticesByBlock.get(log) == null )
-            oreVerticesByBlock.put(log, new HBUtil.Fast3DArray(MAX_ORES));
-        oreVerticesByBlock.get(log).add(chunkWorldPos.getX() + 8, 128, chunkWorldPos.getZ() + 8);
-
         //Print the oreVertices array
         //LoggerProject.logDebug("002028","Finished all sections for  " + chunk.getId() + " , found " + oreVerticesByBlock );
 
@@ -562,29 +556,15 @@ public class OreClusterCalculator {
         return null;
     }
 
-    /**
-     * Takes a ManagedOreClusterChunk and generates a sequence of positions
-     * that will become the ore cluster in the world. These positions are
-     * added to ManagedOreClusterChunk::blockStateUpdates
-     *
-     * @param chunk
-     */
-    public void generateCluster(ManagedOreClusterChunk chunk)
-    {
-
-
-
-
-
-    }
-    //END GENERATE ORE CLUSTERS
 
     /**
      * Takes an oreConfig and a source position and generates a sequence of positions
      * that will become the ore cluster in the world.
      *
+     * This process is expensive and delaying load times
+     *
      * @param source
-     * @return
+     * @return List of BlockPos that make up the ore cluster
      */
     public List<BlockPos> generateCluster(Pair<Block, BlockPos> source)
     {
@@ -612,6 +592,7 @@ public class OreClusterCalculator {
 
         return blockPositions;
     }
+    //END GENERATE ORE CLUSTERS
 
 
 }
