@@ -1,7 +1,5 @@
 package com.holybuckets.orecluster.model;
 
-import com.google.gson.Gson;
-import com.holybuckets.foundation.GeneralConfig;
 import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.HBUtil.ChunkUtil;
 import com.holybuckets.foundation.model.ManagedChunk;
@@ -56,9 +54,9 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         NONE,
         DETERMINED,
         CLEANED,
-        PENDING_GENERATION,
+        PREGENERATED,
         GENERATED,
-        REGENERATED
+        HARVESTED
     }
 
     public static void registerManagedChunkData() {
@@ -70,6 +68,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     private String id;
     private ChunkPos pos;
     private ClusterStatus status;
+    private boolean isReady;
 
     private HashMap<Block, BlockPos> clusterTypes;
     private Map<Block, HBUtil.Fast3DArray> originalOres;
@@ -89,23 +88,10 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.id = null;
         this.pos = null;
         this.status = ClusterStatus.NONE;
+        this.isReady = false;
         this.clusterTypes = null;
         this.blockStateUpdates = new ConcurrentLinkedQueue<>();
 
-    }
-
-    //One for building with chunk
-    private ManagedOreClusterChunk(LevelAccessor level, LevelChunk chunk)
-    {
-        this(level);
-        this.pos = chunk.getPos();
-        this.id = ChunkUtil.getId( this.pos );
-
-        //Use getChgunkSource to get LevelChunk, then use capability to add this reference to the ManagedChunk
-        LevelChunk c = chunk;
-        c.getCapability(ManagedChunkCapabilityProvider.MANAGED_CHUNK).ifPresent(cap -> {
-            cap.setSubclass(ManagedOreClusterChunk.class, this);
-        });
     }
 
     //One for building with id
@@ -164,6 +150,8 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         return originalOres;
     }
 
+    public boolean isReady() { return isReady; }
+
     public Random getChunkRandom() {
       ManagedChunk parent = ManagedOreClusterChunk.getParent(level, id);
         if(parent == null)
@@ -195,6 +183,12 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.originalOres = originalOres;
     }
 
+    public void setReady(boolean ready) {
+        this.isReady = ready;
+    }
+
+    /** Other Methods **/
+
     public void addClusterTypes(Map<Block, BlockPos> clusterMap)
     {
         if( clusterMap == null )
@@ -215,6 +209,43 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     }
 
 
+    /**
+     * Check if any updatable blocks in the chunk have been changed
+     * @return true if the Chunk has been harvested. False if the chunk is not loaded or the chunk has not been cleaned.
+     */
+    public boolean checkClusterHarvested()
+    {
+        LevelChunk chunk = getChunk(false);
+        if(chunk == null)
+            return false;
+
+        if(this.status == ClusterStatus.HARVESTED)
+            return true;
+
+        if(this.status != ClusterStatus.GENERATED)
+            return false;
+
+        //If any block in the chunk does not equal a block in block state updates, set the chunk as harvested
+        for(Pair<Block, BlockPos> pair : this.blockStateUpdates)
+        {
+            Block block = pair.getLeft();
+            BlockPos pos = pair.getRight();
+            if(!chunk.getBlockState(pos).getBlock().equals( block ))
+            {
+                this.status = ClusterStatus.HARVESTED;
+                blockStateUpdates.clear();
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+
+    /** OVERRIDES **/
+
+    @Override
     public ManagedOreClusterChunk getStaticInstance(LevelAccessor level, String id)
     {
         if(id == null || level == null )
@@ -292,16 +323,20 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         return chunk.getStatus() == ClusterStatus.CLEANED;
     }
 
-    public static boolean isPendingGeneration(ManagedOreClusterChunk chunk) {
-        return chunk.getStatus() == ClusterStatus.PENDING_GENERATION;
+    public static boolean isPregenerated(ManagedOreClusterChunk chunk) {
+        return chunk.getStatus() == ClusterStatus.PREGENERATED;
     }
 
     public static boolean isGenerated(ManagedOreClusterChunk chunk) {
         return chunk.getStatus() == ClusterStatus.GENERATED;
     }
 
-    public static boolean isRegenerated(ManagedOreClusterChunk chunk) {
-        return chunk.getStatus() == ClusterStatus.REGENERATED;
+    public static boolean isHarvested(ManagedOreClusterChunk chunk) {
+        return chunk.getStatus() == ClusterStatus.HARVESTED;
+    }
+
+    public static boolean isReady(ManagedOreClusterChunk chunk) {
+        return chunk.isReady;
     }
 
 

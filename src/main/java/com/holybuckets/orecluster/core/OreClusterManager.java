@@ -101,8 +101,8 @@ public class OreClusterManager {
     private final ExecutorService threadPoolClusterDetermination;
     private final ThreadPoolExecutor threadPoolClusterCleaning;
     private final ThreadPoolExecutor threadPoolClusterGenerating;
-    private final ThreadPoolExecutor threadPoolChunkProcessing;
     private final ThreadPoolExecutor threadPoolChunkEditing;
+    //private final ThreadPoolExecutor threadPoolChunkProcessing;
 
 
 
@@ -137,15 +137,14 @@ public class OreClusterManager {
         this.threadPoolClusterGenerating = new ThreadPoolExecutor(1, 1,
             30L, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.DiscardPolicy());
 
-        //Thread pool with unlimited buffer, 3 threads max
-        //this.threadPoolChunkProcessing = Executors.newFixedThreadPool(1);
-
-        //I want a fixed threadpool with a blocking queue
+        /*
         this.threadPoolChunkProcessing = new ThreadPoolExecutor(1, 1,
             300L, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.DiscardPolicy());
+         */
 
         this.threadPoolChunkEditing = new ThreadPoolExecutor(1, 1,
             300L, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.DiscardPolicy());
+
 
         init(level);
         LoggerProject.logInit("002000", this.getClass().getName());
@@ -440,7 +439,6 @@ public class OreClusterManager {
 
         try
         {
-
             if( true ) {
                 //sleep(10000);
                 //return;
@@ -455,50 +453,108 @@ public class OreClusterManager {
                     continue;
                 }
 
-                //filter out chunks with status none or determined
-                final Set<ManagedOreClusterChunk.ClusterStatus> READY_STATUS = new HashSet<>(
-                    Arrays.asList(
-                    ManagedOreClusterChunk.ClusterStatus.CLEANED,
-                    ManagedOreClusterChunk.ClusterStatus.REGENERATED
-                    ));
+                handleChunkReadiness();
 
-                List<ManagedOreClusterChunk> readyChunks = loadedOreClusterChunks.values().stream().filter(
-                    chunk -> READY_STATUS.contains(chunk.getStatus())
-                    ).toList();
-
-                //DEBUG FILTER- filter for only chunks within a 4 chunk radius of 0,0
-                readyChunks = readyChunks.stream().filter(chunk -> {
-                    ChunkPos pos = HBUtil.ChunkUtil.getPos(chunk.getId());
-                    //return Math.abs(pos.x) < 4 && Math.abs(pos.z) < 4;
-                    return true;
-                }).toList();
+                List<ManagedOreClusterChunk> readyChunks = loadedOreClusterChunks.values().stream()
+                    .filter(c -> c.isReady())
+                    .toList();
 
                 for( ManagedOreClusterChunk chunk : readyChunks )
                 {
-                    if( chunk.hasChunk() == false )
-                        continue;
-
-                    if( chunk.getChunk(false).getStatus() != ChunkStatus.FULL )
-                        return;
-
                     Queue<Pair<Block, BlockPos>> blockUpdates = chunk.getBlockStateUpdates();
                     if( blockUpdates == null || blockUpdates.size() == 0 )
                         continue;
-
 
                     //LoggerProject.logDebug("002029.1","Editing chunk: " + chunk.getId() + " with " + blockUpdates.size() + " updates");
                     editManagedChunk(chunk, c -> {
                         LevelChunk levelChunk = c.getChunk(false);
                         boolean isSuccessful = ManagedChunk.updateChunkBlocks(levelChunk, c.getBlockStateUpdates());
                         if( isSuccessful ) {
-                            c.getBlockStateUpdates().clear();
                             c.setStatus(ManagedOreClusterChunk.ClusterStatus.GENERATED);
+                            c.setReady(false);
                         }
                     });
 
                 }
 
                 //sleep(10000);   //10 seconds
+            }
+
+        }
+        catch (Exception e) {
+            thrown = e;
+        }
+        finally {
+            LoggerProject.threadExited("002031",this, thrown);
+        }
+    }
+
+
+    private void handleChunkReadiness()
+    {
+        Throwable thrown = null;
+        try
+        {
+            if( true ) {
+                //sleep(10000);
+                //return;
+            }
+
+            while( managerRunning )
+            {
+                sleep(1000);
+
+                //Sleep if loaded chunks is empty, else iterate over them
+                if( loadedOreClusterChunks.isEmpty() )
+                {
+                    sleep(10);
+                    continue;
+                }
+
+                List<ManagedOreClusterChunk> availableChunks = loadedOreClusterChunks.values().stream()
+                    .filter(c -> c.hasChunk() && c.getChunk(false).getStatus() == ChunkStatus.FULL)
+                    .filter(c -> !c.isReady())
+                    .toList();
+
+                //Cleaned chunks that have not been harvested yet
+                List<ManagedOreClusterChunk> cleanedChunks = availableChunks.stream()
+                    .filter(c -> ManagedOreClusterChunk.isCleaned(c) )
+                    .filter(c -> !c.checkClusterHarvested())    //Checks if cluster has been interacted with by player
+                    .filter(c -> c.hasChunk())                 //must have loaded chunk
+                    .toList();
+
+                 //Pre-generated chunks that have not been harvested yet
+                List<ManagedOreClusterChunk> preGeneratedChunks = availableChunks.stream()
+                    .filter(c -> ManagedOreClusterChunk.isPregenerated(c) )
+                    .filter(c -> !c.isReady())
+                    .filter(c -> !c.checkClusterHarvested())    //Checks if cluster has been interacted with by player
+                    .filter(c -> c.hasChunk())                 //must have loaded chunk
+                    .toList();
+
+                //Any adjacentChunks to the player that are not harvested
+                /*
+                final List<ChunkAccess> PLAYER_CHUNKS = GeneralConfig.getPlayers();
+                //Get location of each player
+                //Get chunk at each location
+                //Determine adjacent chunks
+                //Put adjacent chunks into an array
+                //Filter all chunks that have been harvested
+                List<ManagedOreClusterChunk> adjacentChunks = loadedOreClusterChunks.values().stream()
+                    .filter(c -> ManagedOreClusterChunk.isCleaned(c) )
+                    .filter(c -> !c.isReady())
+                    .filter(c -> !c.checkClusterHarvested())    //Checks if cluster has been interacted with by player
+                    .filter(c -> c.hasChunk())                 //must have loaded chunk
+                    .toList();
+
+                */
+
+                //Join Lists and mark as ready
+                List<ManagedOreClusterChunk> readyChunks = new ArrayList<>();
+                readyChunks.addAll(cleanedChunks);
+                readyChunks.addAll(preGeneratedChunks);
+                //readyChunks.addAll(adjacentChunks);
+
+                readyChunks.forEach(c -> editManagedChunk(c, ch -> ch.setReady(true)) );
             }
 
         }
@@ -672,10 +728,14 @@ public class OreClusterManager {
         if( chunk == null || chunk.getChunk(false) == null )
             return;
 
-        LoggerProject.logDebug("002015","Generating clusters for chunk: " + chunk.getId());
-
         if(chunk.getClusterTypes() == null || chunk.getClusterTypes().size() == 0)
             return;
+
+        //DISABLED
+        if(true)
+            return;
+
+        LoggerProject.logDebug("002015","Generating clusters for chunk: " + chunk.getId());
 
         String SKIPPED = null;
         for( Block oreType : chunk.getClusterTypes().keySet() )
@@ -814,9 +874,14 @@ public class OreClusterManager {
 
 
 
-    public void shutdown() {
+    public void shutdown()
+    {
         managerRunning = false;
         threadPoolLoadedChunks.shutdown();
+        threadPoolClusterDetermination.shutdown();
+        threadPoolClusterCleaning.shutdown();
+        threadPoolClusterGenerating.shutdown();
+        threadPoolChunkEditing.shutdown();
     }
 
     /** STATIC METHODS **/
