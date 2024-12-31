@@ -416,7 +416,7 @@ public class OreClusterManager {
                 for (ManagedOreClusterChunk chunk : chunksToGenerate)
                 {
                     editManagedChunk(chunk, this::handleClusterGeneration);
-                    if( chunk.getStatus() == ManagedOreClusterChunk.ClusterStatus.GENERATED )
+                    if( ManagedOreClusterChunk.isPregenerated(chunk) )
                         chunksPendingGeneration.remove(chunk.getId());
                 }
 
@@ -446,6 +446,7 @@ public class OreClusterManager {
 
             while( managerRunning )
             {
+                //sleep(1000);
                 //Sleep if loaded chunks is empty, else iterate over them
                 if( loadedOreClusterChunks.isEmpty() )
                 {
@@ -462,7 +463,7 @@ public class OreClusterManager {
                 for( ManagedOreClusterChunk chunk : readyChunks )
                 {
                     Queue<Pair<Block, BlockPos>> blockUpdates = chunk.getBlockStateUpdates();
-                    if( blockUpdates == null || blockUpdates.size() == 0 )
+                    if( !chunk.isReady() || blockUpdates == null || blockUpdates.size() == 0 )
                         continue;
 
                     //LoggerProject.logDebug("002029.1","Editing chunk: " + chunk.getId() + " with " + blockUpdates.size() + " updates");
@@ -499,17 +500,11 @@ public class OreClusterManager {
                 //sleep(10000);
                 //return;
             }
+            //sleep(1000);
 
-            while( managerRunning )
+            //while( managerRunning )
             {
-                sleep(1000);
 
-                //Sleep if loaded chunks is empty, else iterate over them
-                if( loadedOreClusterChunks.isEmpty() )
-                {
-                    sleep(10);
-                    continue;
-                }
 
                 List<ManagedOreClusterChunk> availableChunks = loadedOreClusterChunks.values().stream()
                     .filter(c -> c.hasChunk() && c.getChunk(false).getStatus() == ChunkStatus.FULL)
@@ -731,9 +726,7 @@ public class OreClusterManager {
         if(chunk.getClusterTypes() == null || chunk.getClusterTypes().size() == 0)
             return;
 
-        //DISABLED
-        if(true)
-            return;
+
 
         LoggerProject.logDebug("002015","Generating clusters for chunk: " + chunk.getId());
 
@@ -754,8 +747,8 @@ public class OreClusterManager {
             clusterPos.forEach( pos -> chunk.addBlockStateUpdate(oreType, pos) );
         }
 
-        if( SKIPPED != null )
-            chunk.setStatus(ManagedOreClusterChunk.ClusterStatus.GENERATED);
+        if( SKIPPED == null )
+            chunk.setStatus(ManagedOreClusterChunk.ClusterStatus.PREGENERATED);
     }
 
     /**

@@ -348,13 +348,77 @@ public class HBUtil {
 
             Fast3DArray square = new Fast3DArray(length * width + 1);
 
-            for (int x = -length; x <= length; x++)
+           int modL = ( length % 2 == 0) ? 1 : 0;
+           int modW = ( width % 2 == 0) ? 1 : 0;
+
+            int xStart = -length / 2 + modL;
+            int zStart = -width / 2 + modW;
+
+    //consider edge cases for l/w = 1 or 2
+            if( length == 1 && width == 1)
             {
-                for (int z = -width; z <= width; z++)
+                square.add(0, 0, 0);
+                return square;
+            }
+
+            if( length == 1)
+            {
+                for( int z = zStart; z <= width / 2; z++)
+                {
+                    square.add(0, 0, z);
+                }
+                return square;
+            }
+
+            if( width == 1)
+            {
+                for( int x = xStart; x <= length / 2; x++)
+                {
+                    square.add(x, 0, 0);
+                }
+                return square;
+            }
+
+            if( length == 2 && width == 2)
+            {
+                square.add(-1, 0, -1);
+                square.add(-1, 0, 1);
+                square.add(1, 0, -1);
+                square.add(1, 0, 1);
+                return square;
+            }
+
+            if( length == 2)
+            {
+                for( int z = zStart; z <= width / 2; z++)
+                {
+                    square.add(-1, 0, z);
+                    square.add(1, 0, z);
+                }
+                return square;
+            }
+
+            if( width == 2)
+            {
+                for( int x = xStart; x <= length / 2; x++)
+                {
+                    square.add(x, 0, -1);
+                    square.add(x, 0, 1);
+                }
+                return square;
+            }
+
+            for( int x = xStart; x <= length / 2; x++)
+            {
+                for( int z = zStart; z <= width / 2; z++)
                 {
                     square.add(x, 0, z);
                 }
             }
+            //if l==3, xStart = -1, l/2 = 1, that works
+            //if l==4, xStart = -2, l/2 = 2, thats 5 verticies, we need 4
+
+
 
             return square;
         }
@@ -369,7 +433,11 @@ public class HBUtil {
 
             for (int y = 0; y < height; y++)
             {
-               cube.addAll( getSquare(length, width) );
+                Fast3DArray plane = getSquare(length, width);
+                for( int i = 0; i < plane.size; i++)
+                {
+                    cube.add(plane.X[i], y, plane.Z[i]);
+                }
             }
 
             return cube;
