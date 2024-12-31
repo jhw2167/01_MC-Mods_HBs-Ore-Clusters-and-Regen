@@ -188,6 +188,16 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     }
 
     /** Other Methods **/
+    public void addClusterTypes(List<Block> clusters)
+    {
+        if( clusters == null )
+            return;
+        Map<Block, BlockPos> clusterMap = new HashMap<>();
+        for(Block block : clusters) {
+            clusterMap.put(block, null);
+        }
+        this.addClusterTypes(clusterMap);
+    }
 
     public void addClusterTypes(Map<Block, BlockPos> clusterMap)
     {
@@ -315,6 +325,10 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         return ManagedChunk.getManagedChunk(level, id);
     }
 
+    public  static boolean isNoStatus(ManagedOreClusterChunk chunk) {
+        return chunk.getStatus() == ClusterStatus.NONE;
+    }
+
     public static boolean isDetermined(ManagedOreClusterChunk chunk) {
         return chunk.getStatus() == ClusterStatus.DETERMINED;
     }
@@ -349,7 +363,18 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
 
         CompoundTag details = new CompoundTag();
         details.putString("id", this.id);
+
+        if( isCleaned(this) || isPregenerated(this) )
+        {
+            if( blockStateUpdates.size() > 512 )
+            {
+                this.status = ClusterStatus.DETERMINED;
+                blockStateUpdates.clear();
+            }
+        }
+
         details.putString("status", this.status.toString());
+
 
         //Cluster Types
         {
@@ -373,10 +398,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         }
 
 
-
-
-        //blockStateUpdates
-
+        //blockStateUpdates - dont serialize over 10KB
         {
             if(this.blockStateUpdates == null || this.blockStateUpdates.size() == 0) {
                 details.putString("blockStateUpdates", "");
@@ -400,8 +422,8 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
                 String blockStateUpdates = BlockUtil.serializeBlockPairs(blocks);
                 details.putString("blockStateUpdates", blockStateUpdates);
             }
-        }
 
+        }
 
         LoggerProject.logDebug("003007", "Serializing ManagedOreChunk: " + details);
 
@@ -447,7 +469,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
             LoggerProject.logDebug("003008", "Deserializing clusterTypes: " + clusterTypes);
         }
 
-        //Block State Updates
+        //blockStateUpdates
         {
             String blockStateUpdates = tag.getString("blockStateUpdates");
             this.blockStateUpdates = new ConcurrentLinkedQueue<>();
@@ -466,13 +488,9 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
                     }
                 }
             }
-
-
-
             LoggerProject.logDebug("003009", "Deserializing blockStateUpdates: " + blockStateUpdates);
-
-
         }
+
 
 
     }

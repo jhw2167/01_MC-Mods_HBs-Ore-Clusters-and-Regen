@@ -241,18 +241,38 @@ jarJar {
 
 	- Finish and test BlockType serialization methods; wired up to blockPlacements and clusterTypes read in/out
 	- Added UpdateAll flags to setBlock methods to update all after last block was placed and update clients
-	- 
+	- Limited size of blockStateUpdates that may be deserialzed into chunk, there is a limit around 96kb
 
 30.  
 ---  
 
-	- Select cluster type chunks and attempt to build cluster cube
+	- Problem: All oreClusterManagedChunks are loaded into memory on startup, especially the initial 65k
+		- they are being redetermined
+		- Determination algorithm is quick, not really a problem
+		- Algorithm may not be accurate after 256x256 chunk area
+		- Large memory spike on startup, especially for large servers
+
+	- Solution
+		- Wait until all chunks are loaded in, deSerialized
+		- Then attempt to determine 
+
+	- Added thread OreClusterManager::threadInitDeserializedChunks to halt chunkDetermination until all initialized chunks were read in
+	- Add method call in loadedChunks to add clusters to existingClustersByType
+	- Fixed bug in initDeserialized chunks where initialized chunks array was comming as null and not being reassigned
+	- Put upper limit on blockStateUpdates of size 512, because otherwise serialization limit for managed chunks was reached
+	- 
 
 
-	- Shapes to add:
-		- Cube
-		- Anvil(?)
-		- bowl
+//Filter existing clusters by only clusters within radius of minX, minZ, maxX, maxZ
+        Iterator<String> it = localExistingClusters.iterator();
+        while( it.hasNext() )
+        {
+            String chunkId = it.next();
+            ChunkPos pos = ChunkUtil.getPos(chunkId);
+            if( pos.x < minX || pos.x > maxX || pos.z < minZ || pos.z > maxZ )
+                it.remove();
+        }
+	
 
 31.  
 ---  
@@ -355,7 +375,7 @@ jarJar {
 	
 	- Deserialization method should be synchronous, locked on objects to ensure other methods aren't running
 	- Performance isnt excellent, but it is pretty good, could be improved but intersecting noise generating alg to source ores
-	- 
+	- Improve positions serializer to store in int[], be 8x more memory efficient
 
 			
 
