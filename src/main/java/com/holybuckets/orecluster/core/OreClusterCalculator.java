@@ -42,9 +42,9 @@ public class OreClusterCalculator {
         this.existingClustersByType = manager.getExistingClustersByType();
     }
 
-    public Map<String, Map<Block, BlockPos>> calculateClusterLocations(List<String> chunks, Random rng)
+    public Map<String, List<Block>> calculateClusterLocations(List<String> chunks, Random rng)
     {
-        long startTime = System.nanoTime();
+        //long startTime = System.nanoTime();
 
         // Get list of all ore cluster types
         Map<Block, OreClusterConfigModel> clusterConfigs = C.getOreConfigs();
@@ -86,7 +86,7 @@ public class OreClusterCalculator {
          String startChunk =  chunks.get(0);
          int minSpacing = C.getDefaultConfig().minChunksBetweenOreClusters;
 
-        /** If the spacing is large, there will be fewer cluster chunks, so we can check all against
+        /** If the spacing between clusters is large, there will be fewer cluster chunks, so we can check all against
         *   all existing clusters instead of calculating the area around each chunk
         *   If the spacing is small, we will have many cluster chunks, better to check the radius
          */
@@ -101,48 +101,32 @@ public class OreClusterCalculator {
         //2. Determine area needed for spiral generation of recent chunks
          int batchDimensions = (int) Math.ceil( Math.sqrt( chunks.size() ) );
          int spiralRadius = batchDimensions + MIN_SPACING_VALIDATOR_CUTOFF_RADIUS;
-         int spiralArea = (int) Math.pow( spiralRadius, 2 );
-        //LinkedHashSet<String> recentlyLoadedChunks = manager.getRecentChunkIds( ChunkUtil.getPos( chunks.get(0)), spiralArea );
 
-        //Stream loadedOreClusterChunks into a linkedHashSet, filtering for any chunks that have clusters
-
-        LinkedHashSet<String> localExistingClusters = loadedChunks.entrySet().stream()
-            .filter( e -> e.getValue().getClusterTypes().size() > 0 )
-            .map( e -> e.getKey() )
+        //3. Stream existingClustersByType into a linkedHashSet, filtering for any chunks that have clusters
+        LinkedHashSet<String> localExistingClusters = existingClustersByType.values().stream()
+            .flatMap( Set::stream )
             .collect(Collectors.toCollection(LinkedHashSet::new));
          
 
-         if( !loadedChunks.isEmpty() )
+
+         int minX, minZ, maxX, maxZ;
+         minX = minZ = maxX = maxZ = 0;
+
+         for(String id : localExistingClusters )
          {
-             int minX, minZ, maxX, maxZ;
-             minX = minZ = maxX = maxZ = 0;
-
-             for(String id : loadedChunks.keySet() )
-             {
-                    ChunkPos pos = ChunkUtil.getPos(id);
-                    if( pos.x < minX )
-                        minX = pos.x;
-                    if( pos.x > maxX )
-                        maxX = pos.x;
-                    if( pos.z < minZ )
-                        minZ = pos.z;
-                    if( pos.z > maxZ )
-                        maxZ = pos.z;
-             }
-
-
-             //Filter existing clusters by only clusters within radius of minX, minZ, maxX, maxZ
-                Iterator<String> it = localExistingClusters.iterator();
-                while( it.hasNext() )
-                {
-                    String chunkId = it.next();
-                    ChunkPos pos = ChunkUtil.getPos(chunkId);
-                    if( pos.x < minX || pos.x > maxX || pos.z < minZ || pos.z > maxZ )
-                        it.remove();
-                }
+                ChunkPos pos = ChunkUtil.getPos(id);
+                if( pos.x < minX )
+                    minX = pos.x;
+                if( pos.x > maxX )
+                    maxX = pos.x;
+                if( pos.z < minZ )
+                    minZ = pos.z;
+                if( pos.z > maxZ )
+                    maxZ = pos.z;
          }
 
-        long step2Time = System.nanoTime();
+
+        //long step2Time = System.nanoTime();
         //LoggerBase.logDebug("Step 2 (Get recently loaded chunks and determine local existing clusters) took " + LoggerBase.getTime(step1Time, step2Time) + " ms");
 
         //3. Determine distribution of clusters as aggregate group over all chunks
@@ -199,8 +183,8 @@ public class OreClusterCalculator {
                 else
                 {
                     if( localExistingClusters.stream().anyMatch( c ->
-                            ChunkUtil.chunkDist( c, chunkId ) < minSpacing )
-                            ) {
+                            ChunkUtil.chunkDist( c, chunkId ) < minSpacing ))
+                    {
                         openSpaceForCluster = false;
                     }
 
@@ -220,13 +204,13 @@ public class OreClusterCalculator {
         //LoggerBase.logDebug("3. Cluster Placement Algorithm Complete");
         //LoggerBase.logDebug(chunksToBePopulated.toString());
 
-        long step3Time = System.nanoTime();
+        //long step3Time = System.nanoTime();
         //LoggerBase.logDebug("Step 3 (Determine distribution of clusters) took " + LoggerBase.getTime(step2Time, step3Time) + " ms");
 
         //4. Using the Map of aggregate clusters, pick chunks for each cluster type
 
         // Maps <ChunkId, <OreType, BlockPos>>
-        HashMap<String, Map<Block, BlockPos>> clusterPositions = new HashMap<>();
+        HashMap<String, List<Block>> clusterPositions = new HashMap<>();
 
         //Order OreCluster types by spawnRate ascending
         oreClusterTypes.sort(Comparator.comparingInt( o -> -1*clusterConfigs.get(o).oreClusterSpawnRate ));
@@ -326,12 +310,12 @@ public class OreClusterCalculator {
                          allChunksWithClusterType.add(candidateChunkId);
                          if (clusterPositions.containsKey(candidateChunkId))
                          {
-                             clusterPositions.get(candidateChunkId).put(oreType, null);
+                             clusterPositions.get(candidateChunkId).add(oreType);
                          }
                          else
                          {
-                             Map<Block, BlockPos> clusterMap = new HashMap<>();
-                             clusterMap.put(oreType, null);
+                             LinkedList<Block> clusterMap = new LinkedList<>();
+                             clusterMap.add(oreType);
                              clusterPositions.put(candidateChunkId, clusterMap);
                          }
                      }
