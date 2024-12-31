@@ -453,11 +453,12 @@ public class ManagedChunk implements IMangedChunkData {
                 //section.setBlockState(t.x, t.y, t.z, update.getLeft(), true);
                 //section.release();
 
-                level.setBlock(bPos, update.getLeft(), Block.UPDATE_IMMEDIATE );
+                //level.setBlock(bPos, update.getLeft(), Block.UPDATE_IMMEDIATE );
+                level.setBlock(bPos, update.getLeft(), 0 );
                 last = update;
             }
 
-            level.setBlock(last.getRight(), last.getLeft(), Block.UPDATE_ALL_IMMEDIATE | Block.UPDATE_CLIENTS );
+            //level.setBlock(last.getRight(), last.getLeft(), Block.UPDATE_ALL_IMMEDIATE | Block.UPDATE_CLIENTS );
         }
         catch (IllegalStateException e)
         {
