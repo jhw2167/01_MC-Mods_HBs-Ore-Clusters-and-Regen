@@ -260,22 +260,16 @@ jarJar {
 	- Add method call in loadedChunks to add clusters to existingClustersByType
 	- Fixed bug in initDeserialized chunks where initialized chunks array was comming as null and not being reassigned
 	- Put upper limit on blockStateUpdates of size 512, because otherwise serialization limit for managed chunks was reached
-	- 
 
-
-//Filter existing clusters by only clusters within radius of minX, minZ, maxX, maxZ
-        Iterator<String> it = localExistingClusters.iterator();
-        while( it.hasNext() )
-        {
-            String chunkId = it.next();
-            ChunkPos pos = ChunkUtil.getPos(chunkId);
-            if( pos.x < minX || pos.x > maxX || pos.z < minZ || pos.z > maxZ )
-                it.remove();
-        }
-	
 
 31.  
 ---  
+
+	- Added command to locate cluster
+	- 
+	- Added command to spawn cluster
+
+
 
 32.  
 ---  
