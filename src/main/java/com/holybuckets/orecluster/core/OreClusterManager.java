@@ -345,6 +345,9 @@ public class OreClusterManager {
     private void workerThreadDetermineClusters()
     {
         Throwable thrown = null;
+        if(!managerRunning)
+            return;
+
         try
         {
             while( managerRunning )
@@ -393,6 +396,10 @@ public class OreClusterManager {
     private void workerThreadCleanClusters()
     {
         Throwable thrown = null;
+        if(!managerRunning)
+            return;
+
+
         try
         {
             while( managerRunning )
@@ -441,6 +448,8 @@ public class OreClusterManager {
     private void workerThreadGenerateClusters()
     {
         Throwable thrown = null;
+        if(!managerRunning)
+            return;
 
         final Predicate<ManagedOreClusterChunk> IS_ADJACENT_CHUNKS_LOADED = chunk -> {
             ChunkPos pos = HBUtil.ChunkUtil.getPos(chunk.getId());
@@ -494,6 +503,8 @@ public class OreClusterManager {
     private void workerThreadEditChunk()
     {
         Throwable thrown = null;
+        if(!managerRunning)
+            return;
 
         try
         {

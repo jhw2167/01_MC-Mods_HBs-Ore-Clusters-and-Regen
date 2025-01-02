@@ -3,6 +3,7 @@ package com.holybuckets.foundation.event;
 import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.foundation.datastore.DataStore;
 import com.holybuckets.orecluster.OreClustersAndRegenMain;
+import net.minecraftforge.client.event.RegisterClientCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
@@ -34,11 +35,9 @@ public class FoundationsModEventHandler {
 
     @SubscribeEvent
     public static void onModConfigEvent(ModConfigEvent event) {
-        LoggerBase.logDebug( null,"002007", "Mod Config Event");
+        LoggerBase.logDebug( null,"009007", "Mod Config Event");
         EVENT_REGISTRAR.onModConfig(event);
     }
-
-
 
 
 }
