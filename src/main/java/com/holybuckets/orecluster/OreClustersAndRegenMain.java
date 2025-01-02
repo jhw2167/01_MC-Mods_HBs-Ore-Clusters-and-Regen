@@ -3,6 +3,7 @@ package com.holybuckets.orecluster;
 import com.holybuckets.foundation.event.EventRegistrar;
 import com.holybuckets.orecluster.command.CommandList;
 import com.holybuckets.orecluster.config.AllConfigs;
+import com.holybuckets.orecluster.core.OreClusterInterface;
 import com.holybuckets.orecluster.core.OreClusterManager;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
 import net.minecraft.client.Minecraft;
@@ -42,9 +43,11 @@ public class OreClustersAndRegenMain
     public static ModRealTimeConfig modRealTimeConfig = null;
     public static final Boolean DEBUG = true;
 
-
     /** Real Time Variables **/
     public static final Map<LevelAccessor, OreClusterManager> ORE_CLUSTER_MANAGER_BY_LEVEL = new HashMap<>();
+    static {
+        OreClusterInterface.initInstance( ORE_CLUSTER_MANAGER_BY_LEVEL );
+    }
 
     public OreClustersAndRegenMain()
     {

@@ -4,9 +4,16 @@ package com.holybuckets.orecluster.command;
 
 import com.holybuckets.foundation.event.CommandRegistry;
 import com.holybuckets.orecluster.LoggerProject;
+import com.holybuckets.orecluster.core.OreClusterInterface;
+import com.holybuckets.orecluster.model.OreClusterInfo;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
+
+import java.util.List;
 
 public class CommandList {
 
@@ -24,11 +31,30 @@ public class CommandList {
         {
             return Commands.literal(PREFIX)
                 .then(Commands.literal("locateClusters")
-                .executes(context -> execute()) );
+                .executes(context -> execute( context )) );
         }
 
-        private static int execute()
+        private static int execute(CommandContext<CommandSourceStack> context)
         {
+            OreClusterInterface interfacer = OreClusterInterface.getInstance();
+            if(interfacer == null)
+                return 1;
+
+            try {
+                ServerPlayer player = context.getSource().getPlayerOrException();
+                BlockPos playerPos = player.blockPosition();
+                List<OreClusterInfo> data = interfacer.locateOreClusters(
+                    player.level(), playerPos, null, 10);
+
+                for(OreClusterInfo cluster : data) {
+                    //TODO: Send message to player
+                }
+            }
+            catch (Exception e) {
+                LoggerProject.logError("010002", "Locate Clusters Command exception: ", e.getMessage());
+                return 1;
+            }
+
             LoggerProject.logDebug("010001", "Locate Clusters Command");
             return 0;
         }

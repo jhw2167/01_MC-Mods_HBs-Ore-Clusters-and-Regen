@@ -150,6 +150,10 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         return originalOres;
     }
 
+    public LevelAccessor getLevel() {
+        return level;
+    }
+
     public boolean isReady() { return isReady; }
 
     public Random getChunkRandom() {
