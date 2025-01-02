@@ -142,6 +142,17 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         return this.clusterTypes.size() > 0;
     }
 
+    public boolean hasReadyClusters() {
+        if(!this.hasClusters())
+            return false;
+
+        //check if all clusters have positions
+        boolean ready = this.clusterTypes.values().stream()
+            .allMatch( (pos) -> pos != null );
+
+        return ready;
+    }
+
     public Queue<Pair<Block, BlockPos>> getBlockStateUpdates() {
         return blockStateUpdates;
     }

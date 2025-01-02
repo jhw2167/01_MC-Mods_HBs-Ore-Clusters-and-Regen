@@ -273,9 +273,14 @@ jarJar {
 	- Added distance calculation as part of behavior to OreClusterInfo object
 
 
-
 32.  
 ---  
+
+	- Added Client package to foundations project
+	- Added Messager class to client package for sending feedback to users
+	- Added chunkunload request to forceLoading request to not overwhelm system, but it doesnt work
+	- Added positionToString utility for nicer output
+	- code has trouble saving chunks, glowstone occaisionally isnt placed
 
 33.  
 ---  
