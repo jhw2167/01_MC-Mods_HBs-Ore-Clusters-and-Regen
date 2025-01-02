@@ -92,6 +92,10 @@ public class ManagedChunk implements IMangedChunkData {
         return this.chunk;
     }
 
+    public LevelAccessor getLevel() {
+        return this.level;
+    }
+
     public String getId() {
         return this.id;
     }
@@ -359,8 +363,11 @@ public class ManagedChunk implements IMangedChunkData {
             return;
 
         String chunkId = HBUtil.ChunkUtil.getId(event.getChunk());
-        LevelChunk levelChunk = ManagedChunk.getChunk(level, chunkId, true);
+        LevelChunk levelChunk = ManagedChunk.getChunk(level, chunkId, false);
 
+        //Should never be null
+        if( levelChunk == null)
+         return;
 
         ManagedChunk loadedChunk = LOADED_CHUNKS.get(level).get(chunkId);
         if(  loadedChunk != null )

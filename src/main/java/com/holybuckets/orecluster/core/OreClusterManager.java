@@ -9,6 +9,7 @@ import com.holybuckets.orecluster.ModRealTimeConfig;
 import com.holybuckets.orecluster.OreClustersAndRegenMain;
 import com.holybuckets.orecluster.config.model.OreClusterConfigModel;
 import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
+import com.holybuckets.orecluster.model.OreClusterInfo;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
@@ -952,6 +953,10 @@ public class OreClusterManager {
                 manager.handleChunkUnloaded(event.getChunk());
             }
         }
+    }
+
+    public ManagedOreClusterChunk getManagedChunk(String chunkId) {
+        return loadedOreClusterChunks.get(chunkId);
     }
 
 
