@@ -2,6 +2,8 @@ package com.holybuckets.orecluster.command;
 
 //Project imports
 
+import com.holybuckets.foundation.HBUtil;
+import com.holybuckets.foundation.client.Messager;
 import com.holybuckets.foundation.event.CommandRegistry;
 import com.holybuckets.orecluster.LoggerProject;
 import com.holybuckets.orecluster.core.OreClusterInterface;
@@ -40,14 +42,16 @@ public class CommandList {
             if(interfacer == null)
                 return 1;
 
+            Messager messager = Messager.getInstance();
+
             try {
                 ServerPlayer player = context.getSource().getPlayerOrException();
                 BlockPos playerPos = player.blockPosition();
                 List<OreClusterInfo> data = interfacer.locateOreClusters(
-                    player.level(), playerPos, null, 10);
+                    player.level(), playerPos, null, 5);
 
                 for(OreClusterInfo cluster : data) {
-                    //TODO: Send message to player
+                    messager.sendChat(player, formatClusterMessage(cluster));
                 }
             }
             catch (Exception e) {
@@ -58,6 +62,15 @@ public class CommandList {
             LoggerProject.logDebug("010001", "Locate Clusters Command");
             return 0;
         }
+
+        private static String formatClusterMessage(OreClusterInfo cluster)
+        {
+            String ore = HBUtil.BlockUtil.blockToString(cluster.oreType);
+                ore = ore.substring( ore.lastIndexOf(":") + 1 );
+            String pos = HBUtil.BlockUtil.positionToString( cluster.position );
+            return "Cluster: " + ore + " at " + pos;
+        }
+
     }
     //END COMMAND
 

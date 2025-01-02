@@ -98,6 +98,14 @@ public class HBUtil {
             return b;
         }
 
+        public static String positionToString(BlockPos pos)
+        {
+            if( pos == null)
+                return null;
+            return "[" + pos.getX() + ", " + pos.getY() + ", " + pos.getZ() + "]";
+        }
+
+
 
         /**
          * Serialize a map of blocks and their positions to a string

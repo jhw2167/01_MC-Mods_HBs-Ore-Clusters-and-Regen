@@ -13,6 +13,7 @@ import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.foundation.modelInterface.IMangedChunkData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -22,9 +23,7 @@ import net.minecraft.world.level.chunk.*;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import org.apache.commons.lang3.tuple.Pair;
-import org.checkerframework.checker.units.qual.C;
 
-import javax.xml.crypto.Data;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -285,6 +284,19 @@ public class ManagedChunk implements IMangedChunkData {
         return HBUtil.ChunkUtil.getLevelChunk(level, p.x, p.z, forceLoad);
     }
 
+    public static void forceUnloadChunk(LevelAccessor level, String chunkId)
+    {
+        ManagedChunk c = getManagedChunk(level, chunkId);
+        LevelChunk chunk = c.getChunk(false);
+
+        if( chunk == null )
+            return;
+
+        if( level instanceof ServerLevel )
+            ((ServerLevel) level).unload( chunk );
+    }
+
+
     public static ManagedChunk getManagedChunk(LevelAccessor level, String id) throws NullPointerException
     {
         try {
@@ -464,7 +476,7 @@ public class ManagedChunk implements IMangedChunkData {
                 level.setBlock(bPos, update.getLeft(), 0 );
                 last = update;
             }
-
+            //level.getChunkSource().updateChunkForced(chunk.getPos(), false);
             //level.setBlock(last.getRight(), last.getLeft(), Block.UPDATE_ALL_IMMEDIATE | Block.UPDATE_CLIENTS );
         }
         catch (IllegalStateException e)
