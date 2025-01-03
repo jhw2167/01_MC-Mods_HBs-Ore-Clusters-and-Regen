@@ -286,19 +286,28 @@ jarJar {
 ---  
 
 	- Solve initialized chunks issue by front loading determined clusters into the array
-		- Add array tracking determined clusters
-		- Save array to level save data
-		- Read array in on Manager Initialization
-		- Determine clusters in that order while manager is off
-		- read array into Datastore on shutdown
+	- Add array tracking determined clusters
+	- Save array to level save data
+	- Read array in on Manager Initialization
+	- Determine clusters in that order while manager is off
+	- read array into Datastore on shutdown
 	
+34.  
+---  
+
+	- Set chunk unsaved == true after blockStateUpdates are made
+	- removed blockStateUpdates from being written out to NBT data for OreClusterManagedChunk
+	- Skips cleaning chunk if there are no veins to modify
+	- clears blockStateUpdates after successfully updating chunk
+	- Added ConcurrentSet class because I was tired of using HashMap
+
+
 	- Find a way to make clusters update instantly
 	- Add player tracker, load clusters again near player
 	- Check to ensure HARVEST state works
 
 
-34.  
----  
+
 
 35.  
 ---  
