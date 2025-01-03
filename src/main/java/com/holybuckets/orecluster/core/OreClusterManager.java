@@ -305,6 +305,11 @@ public class OreClusterManager {
             int i = 0;
         }
 
+        ChunkPos pos1 = HBUtil.ChunkUtil.getPos(chunkId);
+        if( Math.abs( pos1.x ) > 25 ||  Math.abs( pos1.z ) > 25 ) {
+            int i = 0;
+        }
+
         ManagedOreClusterChunk chunk = loadedOreClusterChunks.get(chunkId);
         if( chunk == null || chunk.getStatus() == ManagedOreClusterChunk.ClusterStatus.NONE )
         {
@@ -596,7 +601,7 @@ public class OreClusterManager {
 
 
                 List<ManagedOreClusterChunk> availableChunks = loadedOreClusterChunks.values().stream()
-                    .filter(c -> c.hasChunk() && c.getChunk(false).getStatus() == ChunkStatus.FULL)
+                    .filter(c -> c.hasChunk() )
                     .filter(c -> !c.isReady())
                     .toList();
 
