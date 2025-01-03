@@ -80,7 +80,7 @@ public class OreClusterInterface {
             return null;
 
         //2. Get list of all oreClusters
-        Map<Block, HashSet<String>> clusters = manager.getExistingClustersByType();
+        Map<Block, Set<String>> clusters = manager.getExistingClustersByType();
 
         //3. Create list of all valid Clusters from each chunk, filtering by oreType if necessary
         List<String> validClusterChunkIds = new ArrayList<>();
@@ -92,7 +92,7 @@ public class OreClusterInterface {
         }
         else
         {
-            HashSet<String> clusterChunkIds = clusters.get(oreType);
+            Set<String> clusterChunkIds = clusters.get(oreType);
             if(clusterChunkIds != null)
                 validClusterChunkIds.addAll(clusterChunkIds);
         }

@@ -29,7 +29,7 @@ public class OreClusterCalculator {
     private OreClusterManager manager;
     private ModRealTimeConfig C;
     private Map<String, ManagedOreClusterChunk> loadedChunks;
-    private ConcurrentHashMap<Block, HashSet<String>> existingClustersByType;
+    private ConcurrentHashMap<Block, Set<String>> existingClustersByType;
 
 
 

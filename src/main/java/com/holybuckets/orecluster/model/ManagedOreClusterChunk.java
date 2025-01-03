@@ -50,15 +50,18 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     private static final String CLASS_ID = "003";
     private static final String NBT_KEY_HEADER = "managedOreClusterChunk";
     
-    public static final String TEST_ID = "0,0";
+    public static final String TEST_ID = "14,-6";
+
 
     public static enum ClusterStatus {
         NONE,
         DETERMINED,
         CLEANED,
         PREGENERATED,
+        REGENERATED,
         GENERATED,
-        HARVESTED
+        HARVESTED,
+        COMPLETE
     }
 
     public static void registerManagedChunkData() {
@@ -274,6 +277,10 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         return false;
     }
 
+    public boolean hasBlockUpdates() {
+        return this.blockStateUpdates != null && this.blockStateUpdates.size() > 0;
+    }
+
 
 
     /** OVERRIDES **/
@@ -305,6 +312,10 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.level = event.getLevel();
         OreClusterManager.onChunkLoad(event, this);
     }
+
+        public void handleChunkLoaded() {
+            OreClusterManager.onChunkLoad( level, this);
+        }
 
     @Override
     public void handleChunkUnloaded(ChunkEvent.Unload event)
@@ -364,12 +375,20 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         return chunk.getStatus() == ClusterStatus.PREGENERATED;
     }
 
+    public static boolean isRegenerated(ManagedOreClusterChunk chunk) {
+        return chunk.getStatus() == ClusterStatus.REGENERATED;
+    }
+
     public static boolean isGenerated(ManagedOreClusterChunk chunk) {
         return chunk.getStatus() == ClusterStatus.GENERATED;
     }
 
     public static boolean isHarvested(ManagedOreClusterChunk chunk) {
         return chunk.getStatus() == ClusterStatus.HARVESTED;
+    }
+
+    public static boolean isComplete(ManagedOreClusterChunk chunk) {
+        return chunk.getStatus() == ClusterStatus.COMPLETE;
     }
 
     public static boolean isReady(ManagedOreClusterChunk chunk) {
@@ -391,16 +410,11 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
             int i = 0;
         }
 
-        if( blockStateUpdates.size() > 512 )
-        {
-            blockStateUpdates.clear();
-            if( isCleaned(this) || isPregenerated(this) ) {
-                this.status = ClusterStatus.DETERMINED;
-            }
-        }
 
-
-        details.putString("status", this.status.toString());
+        if( this.hasBlockUpdates() )
+            details.putString("status", ClusterStatus.DETERMINED.toString());
+        else
+            details.putString("status", this.status.toString() );
 
 
         //Cluster Types
@@ -426,6 +440,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
 
 
         //blockStateUpdates - dont serialize over 10KB
+        /*
         {
             if(this.blockStateUpdates == null || this.blockStateUpdates.size() == 0) {
                 details.putString("blockStateUpdates", "");
@@ -451,6 +466,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
             }
 
         }
+        */
 
         LoggerProject.logDebug("003007", "Serializing ManagedOreChunk: " + details);
 
@@ -501,6 +517,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         }
 
         //blockStateUpdates
+        /*
         {
             String blockStateUpdates = tag.getString("blockStateUpdates");
             this.blockStateUpdates = new ConcurrentLinkedQueue<>();
@@ -521,10 +538,12 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
             }
             LoggerProject.logDebug("003009", "Deserializing blockStateUpdates: " + blockStateUpdates);
         }
+        */
 
-
+        this.handleChunkLoaded();
 
     }
+
 
 
 }

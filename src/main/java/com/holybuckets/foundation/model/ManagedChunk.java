@@ -486,7 +486,7 @@ public class ManagedChunk implements IMangedChunkData {
             return false;
         }
 
-
+        chunk.setUnsaved(true);
         return true;
     }
 
