@@ -78,6 +78,15 @@ public class OreClusterManager {
 
     public static final String CLASS_ID = "002";    //value used in logs
     public static final GeneralConfig GENERAL_CONFIG = GeneralConfig.getInstance();
+    
+    // Worker thread control map
+    private static final Map<String, Boolean> WORKER_THREAD_ENABLED = new HashMap<>() {{
+        put("workerThreadLoadedChunk", true);
+        put("workerThreadDetermineClusters", true);
+        put("workerThreadCleanClusters", true);
+        put("workerThreadGenerateClusters", true);
+        put("workerThreadEditChunk", true);
+    }};
 
     /** Variables **/
     private Integer LOADS = 0;
@@ -266,6 +275,9 @@ public class OreClusterManager {
      */
     private void workerThreadLoadedChunk()
     {
+        if (!WORKER_THREAD_ENABLED.get("workerThreadLoadedChunk")) {
+            return;
+        }
         threadStartTimes.put("workerThreadLoadedChunk", System.currentTimeMillis());
         try
         {
@@ -361,6 +373,9 @@ public class OreClusterManager {
 
     private void workerThreadDetermineClusters() 
     {
+        if (!WORKER_THREAD_ENABLED.get("workerThreadDetermineClusters")) {
+            return;
+        }
         threadStartTimes.put("workerThreadDetermineClusters", System.currentTimeMillis());
         Throwable thrown = null;
         if(!this.managerRunning)
@@ -415,6 +430,9 @@ public class OreClusterManager {
      */
     private void workerThreadCleanClusters()
     {
+        if (!WORKER_THREAD_ENABLED.get("workerThreadCleanClusters")) {
+            return;
+        }
         threadStartTimes.put("workerThreadCleanClusters", System.currentTimeMillis());
         Throwable thrown = null;
         if(!managerRunning)
@@ -468,6 +486,9 @@ public class OreClusterManager {
      */
     private void workerThreadGenerateClusters()
     {
+        if (!WORKER_THREAD_ENABLED.get("workerThreadGenerateClusters")) {
+            return;
+        }
         threadStartTimes.put("workerThreadGenerateClusters", System.currentTimeMillis());
         long startTime = System.nanoTime();
         Throwable thrown = null;
@@ -523,6 +544,9 @@ public class OreClusterManager {
 
     private void workerThreadEditChunk()
     {
+        if (!WORKER_THREAD_ENABLED.get("workerThreadEditChunk")) {
+            return;
+        }
         threadStartTimes.put("workerThreadEditChunk", System.currentTimeMillis());
         Throwable thrown = null;
         if(!managerRunning)
