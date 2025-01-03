@@ -103,9 +103,9 @@ public class OreClusterCalculator {
          int spiralRadius = batchDimensions + MIN_SPACING_VALIDATOR_CUTOFF_RADIUS;
 
         //3. Stream existingClustersByType into a linkedHashSet, filtering for any chunks that have clusters
-        LinkedHashSet<String> localExistingClusters = existingClustersByType.values().stream()
-            .flatMap( Set::stream )
-            .collect(Collectors.toCollection(LinkedHashSet::new));
+        LinkedHashSet<String> localExistingClusters = new LinkedHashSet<>();
+        existingClustersByType.values().stream()
+            .forEach( ids -> localExistingClusters.addAll(ids));
          
 
 

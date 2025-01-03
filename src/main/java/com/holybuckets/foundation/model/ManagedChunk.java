@@ -463,7 +463,7 @@ public class ManagedChunk implements IMangedChunkData {
                 //level.setBlockAndUpdate(bPos, update.getLeft());
                 level.setBlock(bPos, update.getLeft(), Block.UPDATE_NONE );
             }
-            //level.getChunkSource().updateChunkForced(chunk.getPos(), false);
+            level.getChunkSource().updateChunkForced(chunk.getPos(), false);
             //level.setBlock(last.getRight(), last.getLeft(), Block.UPDATE_ALL_IMMEDIATE | Block.UPDATE_CLIENTS );
         }
         catch (IllegalStateException e)

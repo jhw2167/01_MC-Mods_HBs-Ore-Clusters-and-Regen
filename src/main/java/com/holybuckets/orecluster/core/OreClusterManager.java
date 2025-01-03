@@ -1,6 +1,7 @@
 package com.holybuckets.orecluster.core;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.holybuckets.foundation.GeneralConfig;
 import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.HBUtil.*;
@@ -16,6 +17,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -31,6 +33,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static com.holybuckets.orecluster.model.ManagedOreClusterChunk.TEST_ID;
 import static java.lang.Thread.sleep;
 
 /**
@@ -213,11 +216,18 @@ public class OreClusterManager {
 
         //HERE
         JsonArray ids = levelData.get("determinedSourceChunks").getAsJsonArray();
-        ids.forEach( (id) -> {
-            ChunkPos pos = ChunkUtil.getPos(id.getAsString());
+        List<String> chunkIds = ids.asList().stream().map(JsonElement::getAsString).toList();
+        for( String id : chunkIds)
+        {
+            ChunkPos pos = HBUtil.ChunkUtil.getPos(id);
             HBUtil.ChunkUtil.getLevelChunk(level, pos.x, pos.z, true);
-            handleChunkDetermination(ModRealTimeConfig.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL, id.getAsString());
-        } );
+            try {
+                handleChunkDetermination(ModRealTimeConfig.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL, id);
+            } catch (Exception e) {
+                LoggerProject.logError("002001.1", "Error in threadInitSerializedChunks, continuing: " + e.getMessage());
+            }
+
+        }
 
         this.initializing = false;
         this.managerRunning = true;
@@ -290,6 +300,10 @@ public class OreClusterManager {
      */
     private void handleLoadedChunk(String chunkId)
     {
+        if( chunkId.equals(TEST_ID) ) {
+            int i = 0;
+        }
+
         ManagedOreClusterChunk chunk = loadedOreClusterChunks.get(chunkId);
         if( chunk == null || chunk.getStatus() == ManagedOreClusterChunk.ClusterStatus.NONE )
         {
@@ -515,14 +529,25 @@ public class OreClusterManager {
                     continue;
                 }
 
+                if( loadedOreClusterChunks.containsKey(TEST_ID)
+                && ManagedOreClusterChunk.isPregenerated(loadedOreClusterChunks.get(TEST_ID)) )
+                {
+                    int i = 0;
+                }
+
                 handleChunkReadiness();
 
                 List<ManagedOreClusterChunk> readyChunks = loadedOreClusterChunks.values().stream()
                     .filter(c -> c.isReady())
                     .toList();
 
+
                 for( ManagedOreClusterChunk chunk : readyChunks )
                 {
+                    if( chunk.getId().equals(TEST_ID) ) {
+                        int i = 0;
+                    }
+
                     Queue<Pair<Block, BlockPos>> blockUpdates = chunk.getBlockStateUpdates();
                     if( !chunk.isReady() || blockUpdates == null || blockUpdates.size() == 0 )
                         continue;
@@ -570,6 +595,7 @@ public class OreClusterManager {
                     .filter(c -> ManagedOreClusterChunk.isCleaned(c) )
                     .filter(c -> !c.hasClusters())              //If it still needs to generate clusters, skip
                     .filter(c -> c.hasChunk())                 //must have loaded chunk
+                    .filter(c -> !c.checkClusterHarvested())    //Checks if cluster has been interacted with by player
                     .toList();
 
                  //Pre-generated chunks that have not been harvested yet
@@ -647,6 +673,9 @@ public class OreClusterManager {
         // #3. Add clusters to determinedClusters
         for( String id: chunkIds)
         {
+            if( id.equals(TEST_ID)) {
+                int i = 0;
+            }
         //Create clusters for chunks that aren't loaded yet
             ManagedOreClusterChunk chunk = loadedOreClusterChunks.getOrDefault(id, ManagedOreClusterChunk.getInstance(level, id) );
             this.loadedOreClusterChunks.put(id, chunk);
@@ -726,6 +755,14 @@ public class OreClusterManager {
             //5. Set the chunk status to CLEANED
             chunk.setStatus(ManagedOreClusterChunk.ClusterStatus.CLEANED);
 
+            //6. Add a gold_block to blockStateUpdates
+            if(true)
+            {
+                LevelChunk c = chunk.getChunk(false);
+                if( c == null ) return;
+                BlockPos pos = c.getPos().getWorldPosition();
+                chunk.addBlockStateUpdate(Blocks.GOLD_BLOCK, new BlockPos(pos.getX(), 128, pos.getZ()));
+            }
             LoggerProject.logError("002027", "Cleaning chunk: " + chunk.getId() + " complete");
 
     }
@@ -795,6 +832,10 @@ public class OreClusterManager {
      */
     private void handleChunkManifestation(ManagedOreClusterChunk chunk)
     {
+        if( chunk.getId().equals(TEST_ID) ) {
+            int i = 0;
+        }
+
         LoggerProject.logDebug("002033","Editing chunk: " + chunk.getId());
         LevelChunk levelChunk = chunk.getChunk(false);
         boolean isSuccessful = ManagedChunk.updateChunkBlocks(levelChunk, chunk.getBlockStateUpdates());

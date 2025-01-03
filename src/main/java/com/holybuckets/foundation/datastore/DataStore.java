@@ -13,6 +13,7 @@ import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.event.server.ServerLifecycleEvent;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 
+import javax.annotation.Nullable;
 import javax.lang.model.type.ArrayType;
 import java.io.File;
 import java.util.HashMap;
@@ -32,9 +33,10 @@ public class DataStore implements IStringSerializable {
     private final Map<String, ModSaveData> STORE;
     private String currentWorldId;
 
-    private DataStore()
+    private DataStore(String worldId)
     {
         super();
+        this.currentWorldId = worldId;
         STORE = new HashMap<>();
         String json = HBUtil.FileIO.loadJsonConfigs(DATA_STORE_FILE, DATA_STORE_FILE, new DefaultDataStore());
         this.deserialize(json);
@@ -72,9 +74,12 @@ public class DataStore implements IStringSerializable {
     }
     public static void initWorldOnConfigLoad(ModConfigEvent event)
     {
-
+        //Loading on world Start, Reloading, Unloading on World End
         //if(event.getConfig().getFileName() != "hbs_utility-server.toml")
         if( !(event.getConfig().getFileName().equals(OreClustersAndRegenMain.MODID + "-server.toml")) )
+            return;
+
+        if( event instanceof ModConfigEvent.Unloading )
             return;
 
         //on new world loading, set to null
@@ -82,8 +87,7 @@ public class DataStore implements IStringSerializable {
         {
             String path = event.getConfig().getFullPath().toString();
             String[] dirs =  path.split("\\\\");
-            INSTANCE.currentWorldId = dirs[dirs.length - 3];
-            INSTANCE = new DataStore();
+            INSTANCE = new DataStore( dirs[dirs.length - 3] );
         }
 
     }
@@ -167,9 +171,8 @@ public class DataStore implements IStringSerializable {
     }
 
     /** STATIC METHODS **/
+    @Nullable
     public static DataStore getInstance() {
-        if (INSTANCE == null)
-            INSTANCE = new DataStore();
         return INSTANCE;
     }
 
@@ -194,7 +197,7 @@ public class DataStore implements IStringSerializable {
             INSTANCE.save();
 
         //Clear all fields
-        INSTANCE.currentWorldId = null;
+        //INSTANCE.currentWorldId = null;
         //INSTANCE.STORE.clear();
         INSTANCE = null;
     }
@@ -203,7 +206,7 @@ public class DataStore implements IStringSerializable {
         EventRegistrar.getInstance().registerOnLevelUnload(DataStore::onWorldUnload, false);
     }
     private static void onWorldUnload(LevelEvent.Unload unload) {
-        INSTANCE.save();
+        //INSTANCE.save();
     }
 
 
