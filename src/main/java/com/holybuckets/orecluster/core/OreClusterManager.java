@@ -104,6 +104,7 @@ public class OreClusterManager {
     //Threads
     private boolean managerRunning = false;
     private boolean initializing = false;
+    private final ConcurrentHashMap<String, Long> threadStartTimes = new ConcurrentHashMap<>();
     private final ExecutorService threadPoolLoadedChunks;
     private final ExecutorService threadPoolClusterDetermination;
     private final ThreadPoolExecutor threadPoolClusterCleaning;
@@ -254,7 +255,7 @@ public class OreClusterManager {
      */
     private void workerThreadLoadedChunk()
     {
-
+        threadStartTimes.put("workerThreadLoadedChunk", System.currentTimeMillis());
         try
         {
             while( !chunksPendingHandling.isEmpty() )
@@ -328,8 +329,9 @@ public class OreClusterManager {
 
     }
 
-    private void workerThreadDetermineClusters()
+    private void workerThreadDetermineClusters() 
     {
+        threadStartTimes.put("workerThreadDetermineClusters", System.currentTimeMillis());
         Throwable thrown = null;
         if(!this.managerRunning)
             return;
@@ -383,6 +385,7 @@ public class OreClusterManager {
      */
     private void workerThreadCleanClusters()
     {
+        threadStartTimes.put("workerThreadCleanClusters", System.currentTimeMillis());
         Throwable thrown = null;
         if(!managerRunning)
             return;
@@ -435,6 +438,7 @@ public class OreClusterManager {
      */
     private void workerThreadGenerateClusters()
     {
+        threadStartTimes.put("workerThreadGenerateClusters", System.currentTimeMillis());
         long startTime = System.nanoTime();
         Throwable thrown = null;
         if(!managerRunning)
@@ -489,6 +493,7 @@ public class OreClusterManager {
 
     private void workerThreadEditChunk()
     {
+        threadStartTimes.put("workerThreadEditChunk", System.currentTimeMillis());
         Throwable thrown = null;
         if(!managerRunning)
             return;
