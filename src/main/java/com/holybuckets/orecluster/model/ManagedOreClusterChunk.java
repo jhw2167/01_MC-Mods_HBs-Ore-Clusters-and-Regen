@@ -257,6 +257,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
             BlockPos pos = pair.getRight();
             if(!chunk.getBlockState(pos).getBlock().equals( block ))
             {
+                LoggerProject.logDebug("003011", "Cluster Harvested: " + BlockUtil.positionToString(pos));
                 this.status = ClusterStatus.HARVESTED;
                 blockStateUpdates.clear();
                 return true;
@@ -381,7 +382,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
 
         if( isCleaned(this) || isPregenerated(this) )
         {
-            if( blockStateUpdates.size() > 512 )
+            if( blockStateUpdates.size() > 256 )
             {
                 this.status = ClusterStatus.DETERMINED;
                 blockStateUpdates.clear();

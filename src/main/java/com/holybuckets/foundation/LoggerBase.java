@@ -91,6 +91,8 @@ public class LoggerBase {
         FILTER_RULES.put("002025", new LogEntry(null, null, null, null, 0.01f));
         FILTER_RULES.put("002026", new LogEntry(null, null, null, null, 0.01f));
         FILTER_RULES.put("002027", new LogEntry(null, null, null, null, 0.01f));
+        FILTER_RULES.put("002015", new LogEntry(null, null, null, null, 0.01f));
+        FILTER_RULES.put("002033", new LogEntry(null, null, null, null, 0.01f));
 
     }
 

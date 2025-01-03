@@ -9,6 +9,7 @@ import com.holybuckets.foundation.modelInterface.IStringSerializable;
 import com.holybuckets.orecluster.OreClustersAndRegenMain;
 import jdk.jfr.Unsigned;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.event.server.ServerLifecycleEvent;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 
@@ -76,9 +77,15 @@ public class DataStore implements IStringSerializable {
         if( !(event.getConfig().getFileName().equals(OreClustersAndRegenMain.MODID + "-server.toml")) )
             return;
 
-        String path = event.getConfig().getFullPath().toString();
-        String[] dirs =  path.split("\\\\");
-        INSTANCE.currentWorldId = dirs[dirs.length - 3];
+        //on new world loading, set to null
+        if( event instanceof ModConfigEvent.Loading )
+        {
+            String path = event.getConfig().getFullPath().toString();
+            String[] dirs =  path.split("\\\\");
+            INSTANCE.currentWorldId = dirs[dirs.length - 3];
+            INSTANCE = new DataStore();
+        }
+
     }
 
     /**
@@ -155,6 +162,10 @@ public class DataStore implements IStringSerializable {
         return json.toString();
     }
 
+    private void save() {
+        HBUtil.FileIO.serializeJsonConfigs(DATA_STORE_FILE, this.serialize());
+    }
+
     /** STATIC METHODS **/
     public static DataStore getInstance() {
         if (INSTANCE == null)
@@ -162,9 +173,6 @@ public class DataStore implements IStringSerializable {
         return INSTANCE;
     }
 
-    private void save() {
-        HBUtil.FileIO.serializeJsonConfigs(DATA_STORE_FILE, this.serialize());
-    }
 
     static {
         EventRegistrar.getInstance().registerOnServerStop(DataStore::shutdown);
@@ -187,8 +195,17 @@ public class DataStore implements IStringSerializable {
 
         //Clear all fields
         INSTANCE.currentWorldId = null;
-        INSTANCE.STORE.clear();
+        //INSTANCE.STORE.clear();
+        INSTANCE = null;
     }
+
+    static {
+        EventRegistrar.getInstance().registerOnLevelUnload(DataStore::onWorldUnload, false);
+    }
+    private static void onWorldUnload(LevelEvent.Unload unload) {
+        INSTANCE.save();
+    }
+
 
 
 

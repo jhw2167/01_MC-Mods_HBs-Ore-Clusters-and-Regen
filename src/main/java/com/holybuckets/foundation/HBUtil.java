@@ -1,6 +1,9 @@
 package com.holybuckets.foundation;
 
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.holybuckets.foundation.database.DatabaseManager;
 import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.foundation.modelInterface.IStringSerializable;
@@ -553,6 +556,10 @@ public class HBUtil {
             return true;
         }
 
+        public static JsonElement arrayToJson(String[] arr) {
+            Gson gson = new GsonBuilder().serializeNulls().create();
+            return gson.toJsonTree(arr);
+        }
     }
     //END FILE IO
     public static class TripleInt {
@@ -584,6 +591,7 @@ public class HBUtil {
         public static TripleInt sectionIndicies;
         public static int sectionIndex;
         public static final int SECTION_SZ = 16;
+        public boolean DNE = false;
 
         public WorldPos(BlockPos pos, LevelChunk chunk) {
             blockPos = pos;
@@ -600,6 +608,15 @@ public class HBUtil {
 
         public void setWorldPos(BlockPos pos, LevelChunk chunk)
         {
+            try {
+                chunk.getBlockState(pos);
+            } catch (Exception e) {
+                LoggerProject.logError("004003", "Error setting world position, block state not found at position: " + pos.toString());
+                DNE = true;
+                return;
+            }
+
+
             blockPos = pos;
 
             //Convert worldPos to sectionIndicies
