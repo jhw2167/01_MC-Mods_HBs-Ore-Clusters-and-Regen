@@ -380,14 +380,14 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         CompoundTag details = new CompoundTag();
         details.putString("id", this.id);
 
-        if( isCleaned(this) || isPregenerated(this) )
+        if( blockStateUpdates.size() > 512 )
         {
-            if( blockStateUpdates.size() > 256 )
-            {
+            blockStateUpdates.clear();
+            if( isCleaned(this) || isPregenerated(this) ) {
                 this.status = ClusterStatus.DETERMINED;
-                blockStateUpdates.clear();
             }
         }
+
 
         details.putString("status", this.status.toString());
 
