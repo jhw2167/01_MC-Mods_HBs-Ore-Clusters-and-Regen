@@ -49,6 +49,8 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
 
     private static final String CLASS_ID = "003";
     private static final String NBT_KEY_HEADER = "managedOreClusterChunk";
+    
+    public static final String TEST_ID = "0,0";
 
     public static enum ClusterStatus {
         NONE,
@@ -240,6 +242,10 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
      */
     public boolean checkClusterHarvested()
     {
+        if( this.id.equals(TEST_ID)) {
+            int i = 0;
+        }
+
         LevelChunk chunk = getChunk(false);
         if(chunk == null)
             return false;
@@ -247,8 +253,9 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         if(this.status == ClusterStatus.HARVESTED)
             return true;
 
-        if(this.status != ClusterStatus.GENERATED)
+        if( this.status != ClusterStatus.GENERATED )
             return false;
+
 
         //If any block in the chunk does not equal a block in block state updates, set the chunk as harvested
         for(Pair<Block, BlockPos> pair : this.blockStateUpdates)
@@ -380,6 +387,10 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         CompoundTag details = new CompoundTag();
         details.putString("id", this.id);
 
+        if( this.id.equals(TEST_ID)) {
+            int i = 0;
+        }
+
         if( blockStateUpdates.size() > 512 )
         {
             blockStateUpdates.clear();
@@ -455,6 +466,10 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
 
         this.id = tag.getString("id");
         this.status = ClusterStatus.valueOf( tag.getString("status") );
+
+        if( this.id.equals(TEST_ID)) {
+            int i = 0;
+        }
 
         //Cluster Types
         {
