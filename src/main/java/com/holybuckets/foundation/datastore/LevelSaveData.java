@@ -58,6 +58,11 @@ public class LevelSaveData {
         properties.put(key, data);
     }
 
+    /**
+     * Gets a property from the level data
+     * @param jsonProperty
+     * @return null if property does not exist
+     */
     public JsonElement get(String jsonProperty) {
         return properties.get(jsonProperty);
     }

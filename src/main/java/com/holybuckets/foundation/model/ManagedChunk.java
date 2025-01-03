@@ -336,7 +336,7 @@ public class ManagedChunk implements IMangedChunkData {
         if( chunksIds == null )
         {
             String[] ids = new String[0];
-            levelData.addProperty("chunkIds", GSON_BUILDER.toJsonTree(ids));
+            levelData.addProperty("chunkIds", HBUtil.FileIO.arrayToJson(ids));
             chunksIds = levelData.get("chunkIds");
         }
 
@@ -359,8 +359,7 @@ public class ManagedChunk implements IMangedChunkData {
 
         Map<String, Object> initChunks = INITIALIZED_CHUNKS.get(level);
         String[] chunkIds = initChunks.keySet().toArray(new String[0]);
-
-        levelData.addProperty("chunkIds", GSON_BUILDER.toJsonTree(chunkIds));
+        levelData.addProperty("chunkIds", HBUtil.FileIO.arrayToJson(chunkIds) );
 
         /**
          * Because of the Json tree, or some other reason no ids are written out to datastore
@@ -445,6 +444,9 @@ public class ManagedChunk implements IMangedChunkData {
         if( chunk == null || updates == null || updates.size() == 0 )
             return false;
 
+        if( chunk.getLevel().isClientSide() )
+            return false;
+
         if( chunk.getStatus() != ChunkStatus.FULL )
             return false;
 
@@ -452,29 +454,14 @@ public class ManagedChunk implements IMangedChunkData {
 
         try
         {
-            BlockPos worldPos = chunk.getPos().getWorldPosition();
-            Map<Integer, LevelChunkSection> sections = new HashMap<>();
             Level level = chunk.getLevel();
             Pair<BlockState, BlockPos> last = null;
 
-            int i = 0;
-            for(LevelChunkSection s : chunk.getSections()) {
-                sections.put(i++, s);
-            }
             for(Pair<BlockState, BlockPos> update : updates)
             {
-                //chunk.setBlockState(update.getRight(), update.getLeft(), false);
                 BlockPos bPos = update.getRight();
-                //HolyBucketsUtility.WorldPos wPos = new HolyBucketsUtility.WorldPos(bPos, chunk);
-                //LevelChunkSection section = sections.get(wPos.getSectionIndex());
-                //HolyBucketsUtility.TripleInt t = wPos.getIndices();
-                //section.acquire();
-                //section.setBlockState(t.x, t.y, t.z, update.getLeft(), true);
-                //section.release();
-
-                //level.setBlock(bPos, update.getLeft(), Block.UPDATE_IMMEDIATE );
-                level.setBlock(bPos, update.getLeft(), 0 );
-                last = update;
+                //level.setBlockAndUpdate(bPos, update.getLeft());
+                level.setBlock(bPos, update.getLeft(), Block.UPDATE_NONE );
             }
             //level.getChunkSource().updateChunkForced(chunk.getPos(), false);
             //level.setBlock(last.getRight(), last.getLeft(), Block.UPDATE_ALL_IMMEDIATE | Block.UPDATE_CLIENTS );
@@ -497,13 +484,6 @@ public class ManagedChunk implements IMangedChunkData {
             LoggerBase.logError(null, "003024", error.toString());
 
             return false;
-        }
-        finally
-        {
-            //Release all locks
-            for(LevelChunkSection s : chunk.getSections()) {
-                //s.release();
-            }
         }
 
 

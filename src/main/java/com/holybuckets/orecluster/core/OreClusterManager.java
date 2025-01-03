@@ -245,7 +245,7 @@ public class OreClusterManager {
     public void handleChunkUnloaded(ChunkAccess chunk)
     {
         String chunkId = ChunkUtil.getId(chunk);
-        loadedOreClusterChunks.remove(chunkId);
+        //loadedOreClusterChunks.remove(chunkId);
         this.UNLOADS++;
     }
 
@@ -336,7 +336,6 @@ public class OreClusterManager {
         if(!this.managerRunning)
             return;
 
-
         try
         {
             while( this.managerRunning )
@@ -353,6 +352,7 @@ public class OreClusterManager {
                 while ( status.ordinal() < ManagedOreClusterChunk.ClusterStatus.DETERMINED.ordinal())
                 {
                     handleChunkDetermination(ModRealTimeConfig.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL, chunkId);
+                    status = loadedOreClusterChunks.get(chunkId).getStatus();
                     this.threadPoolClusterCleaning.submit(this::workerThreadCleanClusters);
                 }
 
@@ -528,14 +528,7 @@ public class OreClusterManager {
                         continue;
 
                     //LoggerProject.logDebug("002029.1","Editing chunk: " + chunk.getId() + " with " + blockUpdates.size() + " updates");
-                    editManagedChunk(chunk, c -> {
-                        LevelChunk levelChunk = c.getChunk(false);
-                        c.setReady(false);
-                        boolean isSuccessful = ManagedChunk.updateChunkBlocks(levelChunk, c.getBlockStateUpdates());
-                        if( isSuccessful ) {
-                            c.setStatus(ManagedOreClusterChunk.ClusterStatus.GENERATED);
-                        }
-                    });
+                    editManagedChunk(chunk, this::handleChunkManifestation);
 
                 }
 
@@ -575,16 +568,15 @@ public class OreClusterManager {
                 //Cleaned chunks that have not been harvested yet
                 List<ManagedOreClusterChunk> cleanedChunks = availableChunks.stream()
                     .filter(c -> ManagedOreClusterChunk.isCleaned(c) )
-                    .filter(c -> !c.checkClusterHarvested())    //Checks if cluster has been interacted with by player
+                    .filter(c -> !c.hasClusters())              //If it still needs to generate clusters, skip
                     .filter(c -> c.hasChunk())                 //must have loaded chunk
                     .toList();
 
                  //Pre-generated chunks that have not been harvested yet
                 List<ManagedOreClusterChunk> preGeneratedChunks = availableChunks.stream()
                     .filter(c -> ManagedOreClusterChunk.isPregenerated(c) )
-                    .filter(c -> !c.isReady())
-                    .filter(c -> !c.checkClusterHarvested())    //Checks if cluster has been interacted with by player
-                    .filter(c -> c.hasChunk())                 //must have loaded chunk
+                    .filter(c -> c.hasChunk())                              //must have loaded chunk
+                    .filter(c -> !c.checkClusterHarvested())                //Checks if cluster has been interacted with by player
                     .toList();
 
                 //Any adjacentChunks to the player that are not harvested
@@ -701,7 +693,7 @@ public class OreClusterManager {
         if( chunk.getChunk(false).getStatus() != ChunkStatus.FULL )
             return;
 
-        //LoggerProject.logDebug("002025", "Cleaning chunk: " + chunk.getId());
+        LoggerProject.logDebug("002025", "Cleaning chunk: " + chunk.getId());
 
         try {
 
@@ -796,18 +788,22 @@ public class OreClusterManager {
 
     /**
      * Alters the chunk to place blocks in the world as necessary to build clusters or reduce
+     *
      * @param chunk
+     * doEdit
+     * editChunk
      */
     private void handleChunkManifestation(ManagedOreClusterChunk chunk)
     {
-        //1. Get clusters for chunk
+        LoggerProject.logDebug("002033","Editing chunk: " + chunk.getId());
+        LevelChunk levelChunk = chunk.getChunk(false);
+        boolean isSuccessful = ManagedChunk.updateChunkBlocks(levelChunk, chunk.getBlockStateUpdates());
 
+        if( isSuccessful ) {
+            chunk.setReady(false);
+            chunk.setStatus(ManagedOreClusterChunk.ClusterStatus.GENERATED);
+        }
 
-        //2. Generate clusters in world
-
-        //3. Write data to chunk NBT data
-
-        //4. Release hold on resource
     }
 
 
@@ -890,7 +886,7 @@ public class OreClusterManager {
      * @return
      */
     @ThreadSafe
-    private Optional<ManagedOreClusterChunk> editManagedChunk(ManagedOreClusterChunk chunk, Consumer<ManagedOreClusterChunk> consumer)
+    private synchronized Optional<ManagedOreClusterChunk> editManagedChunk(ManagedOreClusterChunk chunk, Consumer<ManagedOreClusterChunk> consumer)
     {
         if (chunk == null)
             return Optional.empty();
@@ -898,12 +894,9 @@ public class OreClusterManager {
         if( chunk.getLock().isLocked() )
             return Optional.empty();
 
-        synchronized (chunk)
-        {
-            chunk.getLock().lock();
-            consumer.accept(chunk);
-            chunk.getLock().unlock();
-        }
+        chunk.getLock().lock();
+        consumer.accept(chunk);
+        chunk.getLock().unlock();
 
         return Optional.ofNullable(chunk);
     }
