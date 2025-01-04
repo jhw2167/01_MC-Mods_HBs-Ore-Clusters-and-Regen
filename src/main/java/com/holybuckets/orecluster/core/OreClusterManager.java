@@ -108,6 +108,7 @@ public class OreClusterManager {
 
 
     private final LinkedHashSet<String> determinedSourceChunks;
+    private final ConcurrentSet<String> determinedChunks;
     private final ConcurrentHashMap<String, ManagedOreClusterChunk> loadedOreClusterChunks;
 
     private final ConcurrentHashMap<Block, Set<String> > existingClustersByType;
@@ -716,6 +717,7 @@ public class OreClusterManager {
             chunk.addClusterTypes(clusters.get(id));
             chunk.setStatus(ManagedOreClusterChunk.ClusterStatus.DETERMINED);
             this.chunksPendingCleaning.put(id, chunk);
+            this.determinedChunks.add(id);
         }
         LoggerProject.logDebug("002010","Added " + clusters.size() + " clusters to determinedChunks");
 
