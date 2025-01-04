@@ -311,7 +311,18 @@ jarJar {
 	- Fixed bug where client blocks would not update since they need to be explicitly set like serverLevel block
 	
 
+	- Fixed issue that randomized clusterSpawn with hashcode and caused ore clusters to be random between world loads
 	- Chunks are still continuosly being loaded
+	- SOLUTION: We only load chunks that are currently loaded in ManagedChunks paradigm, unless we are requesting to forceLoad
+	- Removed forceUpdateChunks in ManagedChunk.updateBlockState section
+	- getBatchedChunkIds now takes a String chunkid that it converts to a position, a loaded chunk is not needed
+	- added back determinedClusters LinkedHashSet to track all clusters that have been determined
+
+	- Test above
+
+
+	Helpful to find ore overlap
+	existingClustersByType.get(Blocks.IRON_ORE).stream().filter( id -> existingClustersByType.get(Blocks.DEEPSLATE_DIAMOND_ORE).contains(id) ).toArray()
 
 	- Determine bottleneck in chunk processing and cluster building
 	- Block Processing is slow, need to add more threads

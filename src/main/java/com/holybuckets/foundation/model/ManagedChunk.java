@@ -44,7 +44,6 @@ public class ManagedChunk implements IMangedChunkData {
     private String id;
     private ChunkPos pos;
     private LevelAccessor level;
-    private LevelChunk chunk;
     private int tickWritten;
     private int tickLoaded;
     private boolean isLoaded;
@@ -71,7 +70,6 @@ public class ManagedChunk implements IMangedChunkData {
         this.level = level;
 
         this.tickLoaded = GENERAL_CONFIG.getSERVER().getTickCount();
-        this.chunk = chunk;
         this.initSubclassesFromMemory(level, id);
 
         LOADED_CHUNKS.get(this.level).put(this.id, this);
@@ -85,12 +83,8 @@ public class ManagedChunk implements IMangedChunkData {
     }
 
     //set chunk to null on chunkUnload
-    public LevelChunk getChunk(boolean forceLoad)
-    {
-        if( this.chunk == null ) {
-            this.setChunk(level, id, forceLoad);
-        }
-        return this.chunk;
+    public LevelChunk getChunk(boolean forceLoad) {
+        return ManagedChunk.getChunk(this.level, this.id, forceLoad);
     }
 
     public LevelAccessor getLevel() {
@@ -140,10 +134,6 @@ public class ManagedChunk implements IMangedChunkData {
         }
         managedChunkData.put(classObject, data);
         return true;
-    }
-
-    public void setChunk(LevelAccessor level, String id, boolean forceLoad) {
-        this.chunk = ManagedChunk.getChunk(level, id, forceLoad);
     }
 
 
@@ -264,7 +254,6 @@ public class ManagedChunk implements IMangedChunkData {
     @Override
     public void handleChunkUnloaded(ChunkEvent.Unload event)
     {
-        this.chunk = null;
         for(IMangedChunkData data : managedChunkData.values()) {
              data.handleChunkUnloaded(event);
          }
@@ -284,7 +273,7 @@ public class ManagedChunk implements IMangedChunkData {
     {
         if(!forceLoad)
         {
-            if( !INITIALIZED_CHUNKS.get(level).contains(chunkId) )
+            if( !LOADED_CHUNKS.get(level).containsKey(chunkId) )
                 return null;
         }
 
@@ -434,7 +423,10 @@ public class ManagedChunk implements IMangedChunkData {
             return;
 
         ChunkAccess chunk = event.getChunk();
-        ManagedChunk c = getManagedChunk(level, HBUtil.ChunkUtil.getId(chunk));
+        String id = HBUtil.ChunkUtil.getId(chunk);
+        ManagedChunk c = LOADED_CHUNKS.get(level).remove(id);
+        if( c == null )
+            return;
         c.handleChunkUnloaded(event);
     }
 
@@ -464,7 +456,6 @@ public class ManagedChunk implements IMangedChunkData {
         {
             ClientLevel clientLevel = (ClientLevel) GeneralConfig.getInstance().getLevel("CLIENT");
             Level level = chunk.getLevel();
-            Pair<BlockState, BlockPos> last = null;
 
             for(Pair<BlockState, BlockPos> update : updates)
             {
@@ -473,11 +464,10 @@ public class ManagedChunk implements IMangedChunkData {
                 level.setBlock(bPos, update.getLeft(), Block.UPDATE_IMMEDIATE );
                 clientLevel.setBlock(bPos, update.getLeft(), Block.UPDATE_IMMEDIATE );
             }
-            level.getChunkSource().updateChunkForced(chunk.getPos(), false);
+            //level.getChunkSource().updateChunkForced(chunk.getPos(), false);
             //Attempt to force update on client
-            clientLevel.getChunkSource().updateChunkForced(chunk.getPos(), false);
+            //clientLevel.getChunkSource().updateChunkForced(chunk.getPos(), false);
 
-            //level.setBlock(last.getRight(), last.getLeft(), Block.UPDATE_ALL_IMMEDIATE | Block.UPDATE_CLIENTS );
         }
         catch (IllegalStateException e)
         {

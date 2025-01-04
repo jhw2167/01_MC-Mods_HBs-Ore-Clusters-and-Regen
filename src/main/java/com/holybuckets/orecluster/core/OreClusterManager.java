@@ -233,7 +233,9 @@ public class OreClusterManager {
             ChunkPos pos = HBUtil.ChunkUtil.getPos(id);
             HBUtil.ChunkUtil.getLevelChunk(level, pos.x, pos.z, true);
             try {
-                handleChunkDetermination(ModRealTimeConfig.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL, id);
+                while( !this.determinedChunks.contains(id) ) {
+                    handleChunkDetermination(ModRealTimeConfig.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL, id);
+                }
             } catch (Exception e) {
                 LoggerProject.logError("002001.1", "Error in threadInitSerializedChunks, continuing: " + e.getMessage());
             }
@@ -394,11 +396,8 @@ public class OreClusterManager {
                 String chunkId = chunksPendingDeterminations.poll();
 
                 //LoggerProject.logDebug("002017", "workerThreadDetermineClusters for chunkId: " + chunkId);
-                ManagedOreClusterChunk.ClusterStatus status = loadedOreClusterChunks.get(chunkId).getStatus();
-                while ( status.ordinal() < ManagedOreClusterChunk.ClusterStatus.DETERMINED.ordinal())
-                {
+                while( !this.determinedChunks.contains(chunkId) ) {
                     handleChunkDetermination(ModRealTimeConfig.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL, chunkId);
-                    status = loadedOreClusterChunks.get(chunkId).getStatus();
                     this.threadPoolClusterCleaning.submit(this::workerThreadCleanClusters);
                 }
 

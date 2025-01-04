@@ -123,7 +123,7 @@ public class OreClusterCalculator {
                     minZ = pos.z;
                 if( pos.z > maxZ )
                     maxZ = pos.z;
-         }
+          }
 
 
         //long step2Time = System.nanoTime();
@@ -383,10 +383,13 @@ public class OreClusterCalculator {
 
     /**
      * CLEAN CLUSTERS
+     * @return boolean false if cleaning failed
      */
-    public void cleanChunkFindAllOres(ManagedOreClusterChunk chunk, final Set<Block> COUNTABLE_ORES)
+    public boolean cleanChunkFindAllOres(ManagedOreClusterChunk chunk, final Set<Block> COUNTABLE_ORES)
     {
-        LevelChunk levelChunk = chunk.getChunk(true);
+        LevelChunk levelChunk = chunk.getChunk(false);
+        if( levelChunk == null )
+            return false;
         LevelChunkSection[] sections = levelChunk.getSections();
 
         final int SECTION_SZ = 16;
@@ -450,7 +453,7 @@ public class OreClusterCalculator {
 
         //Print the oreVertices array
         //LoggerProject.logDebug("002028","Finished all sections for  " + chunk.getId() + " , found " + oreVerticesByBlock );
-
+        return true;
     }
 
 
