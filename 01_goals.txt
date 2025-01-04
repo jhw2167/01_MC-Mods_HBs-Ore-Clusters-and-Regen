@@ -302,15 +302,24 @@ jarJar {
 	- Added ConcurrentSet class because I was tired of using HashMap
 
 
-	- Find a way to make clusters update instantly
-	- Add player tracker, load clusters again near player
-	- Check to ensure HARVEST state works
-
-
-
-
 35.  
 ---  
+	
+	- Testing cluster generation with NO veins to clean	- did not significantly speed chunkLoading
+	- Testing client level to force update from server	- did not update blocks in client rendering frame
+	- Fixed bug where chunks would continously be loaded because getLevelChunk was pulling from chunk source cache
+	- Fixed bug where client blocks would not update since they need to be explicitly set like serverLevel block
+	
+
+	- Chunks are still continuosly being loaded
+
+	- Determine bottleneck in chunk processing and cluster building
+	- Block Processing is slow, need to add more threads
+	- Add client Class to HBFoundations, enable it to send stream of blocks to update Client Render
+
+	- Add player tracker to datastore
+	- Check to ensure HARVEST state works
+
 
 36.  
 ---  

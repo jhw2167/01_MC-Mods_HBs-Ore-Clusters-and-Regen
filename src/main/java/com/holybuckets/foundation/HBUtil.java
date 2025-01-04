@@ -11,10 +11,12 @@ import com.holybuckets.orecluster.LoggerProject;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.tuple.Pair;
@@ -198,6 +200,8 @@ public class HBUtil {
         }
 
         public static String toId(LevelAccessor level) {
+            if(level.isClientSide())
+                return "CLIENT";
             return level.dimensionType().effectsLocation().toString();
         }
     }
@@ -281,10 +285,20 @@ public class HBUtil {
          */
         public static LevelChunk getLevelChunk(LevelAccessor level, int x, int z, boolean forceLoad)
         {
-            LevelChunk c = level.getChunkSource().getChunkNow(x, z);
-            if( c == null && forceLoad)
-                c = level.getChunkSource().getChunk( x, z, true);
-            return c;
+
+            if( Math.abs( x ) > 25 ||  Math.abs( z ) > 25 ) {
+                 int i = 0;
+            }
+
+            if( forceLoad )
+            {
+                return level.getChunkSource().getChunk( x, z, true);
+            } else
+            {
+                //GetChunkNow is special, other methods block during world creation
+                return level.getChunkSource().getChunkNow( x, z );
+            }
+
         }
 
 

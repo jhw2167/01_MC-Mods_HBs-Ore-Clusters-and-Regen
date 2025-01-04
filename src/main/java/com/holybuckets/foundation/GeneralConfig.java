@@ -85,7 +85,10 @@ public class GeneralConfig {
     {
         // Capture the world seed, use logical server
         LevelAccessor level = event.getLevel();
-        if (!level.isClientSide())
+        if( level.isClientSide() ) {
+            instance.LEVELS.put(HBUtil.LevelUtil.toId(level), level);
+        }
+        else
         {
             MinecraftServer server = level.getServer();
             instance.WORLD_SEED = server.overworld().getSeed();

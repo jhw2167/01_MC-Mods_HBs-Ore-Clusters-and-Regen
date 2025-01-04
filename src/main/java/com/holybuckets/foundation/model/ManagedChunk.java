@@ -6,11 +6,13 @@ import com.google.gson.JsonElement;
 import com.holybuckets.foundation.GeneralConfig;
 import com.holybuckets.foundation.datastore.DataStore;
 import com.holybuckets.foundation.datastore.LevelSaveData;
+import com.holybuckets.foundation.datastructure.ConcurrentSet;
 import com.holybuckets.foundation.event.EventRegistrar;
 import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.foundation.modelInterface.IMangedChunkData;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -36,7 +38,7 @@ public class ManagedChunk implements IMangedChunkData {
     public static final GeneralConfig GENERAL_CONFIG = GeneralConfig.getInstance();
     public static final Map<Class<? extends IMangedChunkData>, Supplier<IMangedChunkData>> MANAGED_SUBCLASSES = new ConcurrentHashMap<>();
     public static final Map<LevelAccessor, Map<String, ManagedChunk>> LOADED_CHUNKS = new ConcurrentHashMap<>();
-    public static final Map<LevelAccessor, Map<String, Object>> INITIALIZED_CHUNKS = new ConcurrentHashMap<>();
+    public static final Map<LevelAccessor, Set<String>> INITIALIZED_CHUNKS = new ConcurrentHashMap<>();
     public static final Gson GSON_BUILDER = new GsonBuilder().serializeNulls().create();
 
     private String id;
@@ -73,7 +75,7 @@ public class ManagedChunk implements IMangedChunkData {
         this.initSubclassesFromMemory(level, id);
 
         LOADED_CHUNKS.get(this.level).put(this.id, this);
-        INITIALIZED_CHUNKS.get(this.level).put(this.id, this);
+        INITIALIZED_CHUNKS.get(this.level).add(this.id);
     }
 
 
@@ -264,7 +266,7 @@ public class ManagedChunk implements IMangedChunkData {
     {
         this.chunk = null;
         for(IMangedChunkData data : managedChunkData.values()) {
-              data.handleChunkUnloaded(event);
+             data.handleChunkUnloaded(event);
          }
         this.isLoaded = false;
     }
@@ -280,6 +282,12 @@ public class ManagedChunk implements IMangedChunkData {
      */
     public static LevelChunk getChunk(LevelAccessor level, String chunkId, boolean forceLoad)
     {
+        if(!forceLoad)
+        {
+            if( !INITIALIZED_CHUNKS.get(level).contains(chunkId) )
+                return null;
+        }
+
         ChunkPos p = HBUtil.ChunkUtil.getPos(chunkId);
         return HBUtil.ChunkUtil.getLevelChunk(level, p.x, p.z, forceLoad);
     }
@@ -329,7 +337,7 @@ public class ManagedChunk implements IMangedChunkData {
         if(LOADED_CHUNKS.get(level) == null)
         {
             LOADED_CHUNKS.put(level, new ConcurrentHashMap<>());
-            INITIALIZED_CHUNKS.put(level,  new ConcurrentHashMap<>());
+            INITIALIZED_CHUNKS.put(level,  new ConcurrentSet<>());
         }
 
         JsonElement chunksIds = levelData.get("chunkIds");
@@ -340,9 +348,9 @@ public class ManagedChunk implements IMangedChunkData {
             chunksIds = levelData.get("chunkIds");
         }
 
-        Map<String, Object> initChunks = INITIALIZED_CHUNKS.get(level);
+        Set<String> initChunks = INITIALIZED_CHUNKS.get(level);
         chunksIds.getAsJsonArray().forEach( chunkId -> {
-            initChunks.put(chunkId.getAsString(), "");
+            initChunks.add(chunkId.getAsString());
         });
 
     }
@@ -357,8 +365,8 @@ public class ManagedChunk implements IMangedChunkData {
         DataStore ds = DataStore.getInstance();
         LevelSaveData levelData = ds.getOrCreateLevelSaveData( HBUtil.NAME, level);
 
-        Map<String, Object> initChunks = INITIALIZED_CHUNKS.get(level);
-        String[] chunkIds = initChunks.keySet().toArray(new String[0]);
+        Set<String> initChunks = INITIALIZED_CHUNKS.get(level);
+        String[] chunkIds = initChunks.toArray(new String[0]);
         levelData.addProperty("chunkIds", HBUtil.FileIO.arrayToJson(chunkIds) );
 
         /**
@@ -385,7 +393,7 @@ public class ManagedChunk implements IMangedChunkData {
         {
             LoggerBase.logDebug(null, "003008.1", "ManagedChunk already loaded with id: " + chunkId);
         }
-        else if (INITIALIZED_CHUNKS.get(level).containsKey(chunkId) )
+        else if (INITIALIZED_CHUNKS.get(level).contains(chunkId))
         {
             LoggerBase.logDebug(null, "003008.2", "Skipping for initialized Managed Chunk: " + chunkId);
             //Block until chunk arrives in loaded chunks, timeout after 30s, report error
@@ -454,6 +462,7 @@ public class ManagedChunk implements IMangedChunkData {
 
         try
         {
+            ClientLevel clientLevel = (ClientLevel) GeneralConfig.getInstance().getLevel("CLIENT");
             Level level = chunk.getLevel();
             Pair<BlockState, BlockPos> last = null;
 
@@ -461,9 +470,13 @@ public class ManagedChunk implements IMangedChunkData {
             {
                 BlockPos bPos = update.getRight();
                 //level.setBlockAndUpdate(bPos, update.getLeft());
-                level.setBlock(bPos, update.getLeft(), Block.UPDATE_NONE );
+                level.setBlock(bPos, update.getLeft(), Block.UPDATE_IMMEDIATE );
+                clientLevel.setBlock(bPos, update.getLeft(), Block.UPDATE_IMMEDIATE );
             }
             level.getChunkSource().updateChunkForced(chunk.getPos(), false);
+            //Attempt to force update on client
+            clientLevel.getChunkSource().updateChunkForced(chunk.getPos(), false);
+
             //level.setBlock(last.getRight(), last.getLeft(), Block.UPDATE_ALL_IMMEDIATE | Block.UPDATE_CLIENTS );
         }
         catch (IllegalStateException e)
