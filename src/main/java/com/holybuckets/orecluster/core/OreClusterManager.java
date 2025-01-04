@@ -140,7 +140,7 @@ public class OreClusterManager {
         this.existingClustersByType = new ConcurrentHashMap<>();
         this.loadedOreClusterChunks = new ConcurrentHashMap<>();
         this.determinedSourceChunks = new LinkedHashSet<>();
-
+        this.determinedChunks = new ConcurrentSet<>();
         this.chunksPendingHandling = new LinkedBlockingQueue<>();
         this.chunksPendingDeterminations = new LinkedBlockingQueue<>();
         this.chunksPendingCleaning = new ConcurrentHashMap<>();
