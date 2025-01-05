@@ -241,7 +241,10 @@ public class OreClusterManager {
             HBUtil.ChunkUtil.getLevelChunk(level, pos.x, pos.z, true);
             try {
                 while( !this.determinedChunks.contains(id) ) {
+                    Long start = System.nanoTime();
                     handleChunkDetermination(ModRealTimeConfig.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL, id);
+                    Long end = System.nanoTime();
+                    THREAD_TIMES.get("handleChunkDetermination").add((end - start) / 1_000_000); // Convert to milliseconds
                 }
             } catch (Exception e) {
                 LoggerProject.logError("002001.1", "Error in threadInitSerializedChunks, continuing: " + e.getMessage());
@@ -727,7 +730,6 @@ public class OreClusterManager {
         LoggerProject.logDebug("002010","Added " + clusters.size() + " clusters to determinedChunks");
         
         long endTime = System.nanoTime();
-        THREAD_TIMES.get("handleChunkDetermination").add((endTime - startTime) / 1_000_000); // Convert to milliseconds
         //LoggerProject.logDebug("handlePrepareNewCluster #3  " + LoggerProject.getTime(step2Time, step3Time) + " ms");
 
         // #4. Add clusters to existingClustersByType
