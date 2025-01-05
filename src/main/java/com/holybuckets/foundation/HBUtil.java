@@ -206,6 +206,8 @@ public class HBUtil {
         }
     }
 
+    private static LevelChunk threadedChunkResult = null;
+
     public static class ChunkUtil {
 
         public static String getId(ChunkAccess chunk) {
@@ -277,7 +279,8 @@ public class HBUtil {
         /**
          * Loads the targeted chunk, forceloading if necessary. Force loading may
          * cause a circular dependency during worldLoad, first call is getChunkNow call
-         * to protect against this.
+         * to protect against this. If not force loading, uses a threaded approach with
+         * 10ms timeout to prevent deadlocks during world load.
          * @param level
          * @param x
          * @param z
@@ -285,7 +288,6 @@ public class HBUtil {
          */
         public static LevelChunk getLevelChunk(LevelAccessor level, int x, int z, boolean forceLoad)
         {
-
             if( Math.abs( x ) > 25 ||  Math.abs( z ) > 25 ) {
                  int i = 0;
             }
@@ -293,16 +295,30 @@ public class HBUtil {
             if( forceLoad )
             {
                 return level.getChunkSource().getChunk( x, z, true);
-            } else
-            {
-                //GetChunkNow is special, other methods block during world creation
-                LevelChunk c = level.getChunkSource().getChunkNow( x, z );
-                if( c != null )
-                    return c;
-
-                return level.getChunkSource().getChunk( x, z, false);
             }
 
+            // Try non-blocking getChunkNow first
+            LevelChunk c = level.getChunkSource().getChunkNow( x, z );
+            if( c != null )
+                return c;
+
+            // If that fails, try getChunk in a separate thread with timeout
+            threadedChunkResult = null;
+            Thread chunkLoader = new Thread(() -> {
+                threadedChunkResult = level.getChunkSource().getChunk( x, z, false);
+            });
+            chunkLoader.start();
+
+            try {
+                chunkLoader.join(10); // Wait up to 10ms
+                if(chunkLoader.isAlive()) {
+                    chunkLoader.interrupt();
+                    return null;
+                }
+                return threadedChunkResult;
+            } catch (InterruptedException e) {
+                return null;
+            }
         }
 
 
