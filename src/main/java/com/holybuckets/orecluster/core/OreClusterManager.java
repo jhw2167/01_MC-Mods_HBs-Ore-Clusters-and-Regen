@@ -404,10 +404,12 @@ public class OreClusterManager {
                     continue;
                 }
                 String chunkId = chunksPendingDeterminations.poll();
-
-                //LoggerProject.logDebug("002017", "workerThreadDetermineClusters for chunkId: " + chunkId);
+                
                 while( !this.determinedChunks.contains(chunkId) ) {
+                    long startTime = System.nanoTime();
                     handleChunkDetermination(ModRealTimeConfig.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL, chunkId);
+                    long endTime = System.nanoTime();
+                    THREAD_TIMES.get("handleChunkDetermination").add((endTime - startTime) / 1_000_000);
                     this.threadPoolClusterCleaning.submit(this::workerThreadCleanClusters);
                 }
 
@@ -467,13 +469,15 @@ public class OreClusterManager {
                 for (ManagedOreClusterChunk chunk : chunksToClean)
                 {
                         try {
+                            long startTime = System.nanoTime();
                             editManagedChunk(chunk, this::handleChunkCleaning);
+                            long endTime = System.nanoTime();
+                            THREAD_TIMES.get("handleChunkCleaning").add((endTime - startTime) / 1_000_000);
                         }
                         catch (Exception e) {
                             e.printStackTrace();
                             LoggerProject.logError("002030","Error cleaning chunk: " + chunk.getId() + " message: "  );
                         }
-
                 }
 
             }
@@ -532,7 +536,10 @@ public class OreClusterManager {
 
                 for (ManagedOreClusterChunk chunk : chunksToGenerate)
                 {
+                    long startTime = System.nanoTime();
                     editManagedChunk(chunk, this::handleChunkClusterPreGeneration);
+                    long endTime = System.nanoTime();
+                    THREAD_TIMES.get("handleChunkClusterPreGeneration").add((endTime - startTime) / 1_000_000);
                     if( ManagedOreClusterChunk.isPregenerated(chunk) )
                         chunksPendingPreGeneration.remove(chunk.getId());
                 }
@@ -599,8 +606,10 @@ public class OreClusterManager {
                     if( !chunk.isReady() )
                         continue;
 
-                    //LoggerProject.logDebug("002029.1","Editing chunk: " + chunk.getId() + " with " + blockUpdates.size() + " updates");
+                    long startTime = System.nanoTime();
                     editManagedChunk(chunk, this::handleChunkManifestation);
+                    long endTime = System.nanoTime();
+                    THREAD_TIMES.get("handleChunkManifestation").add((endTime - startTime) / 1_000_000);
 
                 }
 
@@ -695,7 +704,6 @@ public class OreClusterManager {
      */
     private void handleChunkDetermination(int batchSize, String chunkId) 
     {
-        long startTime = System.nanoTime();
 
         LoggerProject.logDebug("002008", "Queued " + chunkId + " for cluster determination");
         determinedSourceChunks.add(chunkId);
@@ -758,7 +766,6 @@ public class OreClusterManager {
      */
     private void handleChunkCleaning(ManagedOreClusterChunk chunk)
     {
-        long startTime = System.nanoTime();
 
         if( chunk == null|| chunk.getChunk(false) == null )
             return;
@@ -820,9 +827,6 @@ public class OreClusterManager {
             chunksPendingCleaning.remove(chunk.getId());
 
             LoggerProject.logError("002027", "Cleaning chunk: " + chunk.getId() + " complete");
-
-            long endTime = System.nanoTime();
-            THREAD_TIMES.get("handleChunkCleaning").add((endTime - startTime) / 1_000_000);
     }
     catch(Exception e) {
         StringBuilder error = new StringBuilder();
@@ -850,7 +854,6 @@ public class OreClusterManager {
      */
     private void handleChunkClusterPreGeneration(ManagedOreClusterChunk chunk)
     {
-        long startTime = System.nanoTime();
         
         if( chunk == null || chunk.getChunk(false) == null )
             return;
@@ -881,9 +884,6 @@ public class OreClusterManager {
 
         if( SKIPPED == null )
             chunk.setStatus(ManagedOreClusterChunk.ClusterStatus.PREGENERATED);
-            
-        long endTime = System.nanoTime();
-        THREAD_TIMES.get("handleChunkClusterPreGeneration").add((endTime - startTime) / 1_000_000);
     }
 
     /**
@@ -895,7 +895,6 @@ public class OreClusterManager {
      */
     private void handleChunkManifestation(ManagedOreClusterChunk chunk)
     {
-        long startTime = System.nanoTime();
         LoggerProject.logDebug("002033","Editing chunk: " + chunk.getId());
 
         if( chunk.getId().equals(TEST_ID) ) {
@@ -925,9 +924,6 @@ public class OreClusterManager {
                 loadedOreClusterChunks.remove(chunk.getId());
             }
         }
-        
-        long endTime = System.nanoTime();
-        THREAD_TIMES.get("handleChunkManifestation").add((endTime - startTime) / 1_000_000);
     }
 
 
