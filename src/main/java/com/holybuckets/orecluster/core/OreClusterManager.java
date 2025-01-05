@@ -738,7 +738,7 @@ public class OreClusterManager {
         LoggerProject.logDebug("002010","Added " + clusters.size() + " clusters to determinedChunks");
         
         long endTime = System.nanoTime();
-        //LoggerProject.logDebug("handlePrepareNewCluster #3  " + LoggerProject.getTime(step2Time, step3Time) + " ms");
+        THREAD_TIMES.get("handleChunkDetermination").add((endTime - startTime) / 1_000_000); // Convert to milliseconds
 
         // #4. Add clusters to existingClustersByType
         for( Map.Entry<String, List<Block>> clusterChunk : clusters.entrySet())
