@@ -88,6 +88,8 @@ public class OreClusterManager {
         put("workerThreadEditChunk", true);
     }};
 
+    private final Map<String, List<Long>> THREAD_TIMES = new HashMap<>();
+
     /** Variables **/
     private Integer LOADS = 0;
     private Integer UNLOADS = 0;
@@ -400,7 +402,6 @@ public class OreClusterManager {
                     handleChunkDetermination(ModRealTimeConfig.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL, chunkId);
                     this.threadPoolClusterCleaning.submit(this::workerThreadCleanClusters);
                 }
-
 
                 //MAX
                 LoggerProject.logDebug("002020", "workerThreadDetermineClusters, after handleChunkDetermination for chunkId: " + chunkId);
