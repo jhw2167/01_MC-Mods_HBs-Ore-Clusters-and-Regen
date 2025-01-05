@@ -296,7 +296,11 @@ public class HBUtil {
             } else
             {
                 //GetChunkNow is special, other methods block during world creation
-                return level.getChunkSource().getChunkNow( x, z );
+                LevelChunk c = level.getChunkSource().getChunkNow( x, z );
+                if( c != null )
+                    return c;
+
+                return level.getChunkSource().getChunk( x, z, false);
             }
 
         }
