@@ -73,6 +73,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
     private String id;
     private ChunkPos pos;
     private ClusterStatus status;
+    private long timeLoaded;
     private boolean isReady;
 
     private HashMap<Block, BlockPos> clusterTypes;
@@ -93,6 +94,7 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         this.id = null;
         this.pos = null;
         this.status = ClusterStatus.NONE;
+        this.timeLoaded = System.currentTimeMillis();
         this.isReady = false;
         this.clusterTypes = null;
         this.blockStateUpdates = new ConcurrentLinkedQueue<>();
@@ -166,13 +168,14 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
         return originalOres;
     }
 
-    public LevelAccessor getLevel() {
-        return level;
-    }
+    public LevelAccessor getLevel() { return level; }
+
+    public Long getTimeLoaded() { return timeLoaded; }
 
     public boolean isReady() { return isReady; }
 
-    public Random getChunkRandom() {
+    public Random getChunkRandom()
+    {
       ManagedChunk parent = ManagedOreClusterChunk.getParent(level, id);
         if(parent == null)
             return null;
@@ -205,6 +208,13 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
 
     public void setReady(boolean ready) {
         this.isReady = ready;
+    }
+
+    /**
+     * Updates time loaded with the current system time in milliseconds
+     */
+    public void updateTimeLoaded() {
+        this.timeLoaded = System.currentTimeMillis();
     }
 
     /** Other Methods **/
@@ -393,6 +403,10 @@ public class ManagedOreClusterChunk implements IMangedChunkData {
 
     public static boolean isReady(ManagedOreClusterChunk chunk) {
         return chunk.isReady;
+    }
+
+    public static boolean isLoaded(ManagedOreClusterChunk chunk) {
+        return ManagedChunk.isLoaded( chunk.getLevel(), chunk.getId() );
     }
 
 

@@ -313,18 +313,38 @@ jarJar {
 
 	- Fixed issue that randomized clusterSpawn with hashcode and caused ore clusters to be random between world loads
 	- Chunks are still continuosly being loaded
-	- SOLUTION: We only load chunks that are currently loaded in ManagedChunks paradigm, unless we are requesting to forceLoad
+	- SOLUTION: We only load chunks that are currently 'LOADED' in ManagedChunks paradigm, unless we are requesting to forceLoad
 	- Removed forceUpdateChunks in ManagedChunk.updateBlockState section
 	- getBatchedChunkIds now takes a String chunkid that it converts to a position, a loaded chunk is not needed
 	- added back determinedClusters LinkedHashSet to track all clusters that have been determined
 
 	- Test above
 
+	TIME TESTING:
+	--------
+	DET	-	13	-	9ms	- 1
+	CLN	-	16k	-	69k ms	- 4.2	- 55ms per chunk that does not take 0 time, up to 722ms later (4000)
+	GEN	-		-		- 1.6
+	MAN	-	2500	-	44k	- 18ms	- 55ms per chunk that does not take 0 time
+	
+	- Cleaning is the most important dimension to fix and we can fix that
+	- Watch the loadedOreClusterChunks size for memory savings
+		- time spent in determined state
+		- time spent since chunk last loaded
+		- 
+
+	- setBlock on the client level causes exception with concurrently modifying chunks at the client level
+	- Determined bottleneck in chunk processing and cluster building as cleaning and editing
+	- There are significant variation in editing and cleaning chunk times
+	- Added Map to OreClusterManager to track processing times
+	- Added thread to track oreClusterChunk lifetimes and kill them after 300s
+
+	- Added a method to save Datastore JSON configs every 30s
+
 
 	Helpful to find ore overlap
 	existingClustersByType.get(Blocks.IRON_ORE).stream().filter( id -> existingClustersByType.get(Blocks.DEEPSLATE_DIAMOND_ORE).contains(id) ).toArray()
 
-	- Determine bottleneck in chunk processing and cluster building
 	- Block Processing is slow, need to add more threads
 	- Add client Class to HBFoundations, enable it to send stream of blocks to update Client Render
 

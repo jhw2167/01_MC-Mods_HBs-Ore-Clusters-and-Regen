@@ -12,6 +12,7 @@ import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.LoggerBase;
 import com.holybuckets.foundation.exception.InvalidId;
 import com.holybuckets.foundation.modelInterface.IMangedChunkData;
+import com.holybuckets.orecluster.model.ManagedOreClusterChunk;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -74,6 +75,12 @@ public class ManagedChunk implements IMangedChunkData {
 
         LOADED_CHUNKS.get(this.level).put(this.id, this);
         INITIALIZED_CHUNKS.get(this.level).add(this.id);
+    }
+
+    public static boolean isLoaded(LevelAccessor level, String id) {
+        if(level == null || id == null)
+            return false;
+        return LOADED_CHUNKS.get(level).containsKey(id);
     }
 
 
@@ -296,13 +303,10 @@ public class ManagedChunk implements IMangedChunkData {
 
     public static ManagedChunk getManagedChunk(LevelAccessor level, String id) throws NullPointerException
     {
-        try {
-            return LOADED_CHUNKS.get(level).get(id);
-        }
-        catch (NullPointerException e) {
-            LoggerBase.logError(null, "003003", "Error getting static instance of ManagedChunk with id: " + id);
-        }
-        return null;
+        if(level == null || id == null)
+            return null;
+
+        return LOADED_CHUNKS.get(level).get(id);
     }
 
     static {
@@ -462,7 +466,7 @@ public class ManagedChunk implements IMangedChunkData {
                 BlockPos bPos = update.getRight();
                 //level.setBlockAndUpdate(bPos, update.getLeft());
                 level.setBlock(bPos, update.getLeft(), Block.UPDATE_IMMEDIATE );
-                clientLevel.setBlock(bPos, update.getLeft(), Block.UPDATE_IMMEDIATE );
+                //clientLevel.setBlock(bPos, update.getLeft(), Block.UPDATE_IMMEDIATE );
             }
             //level.getChunkSource().updateChunkForced(chunk.getPos(), false);
             //Attempt to force update on client

@@ -35,6 +35,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.holybuckets.orecluster.model.ManagedOreClusterChunk.TEST_ID;
+import static com.holybuckets.orecluster.model.ManagedOreClusterChunk.isLoaded;
 import static java.lang.Thread.sleep;
 
 /**
@@ -125,14 +126,15 @@ public class OreClusterManager {
     //Threads
     private boolean managerRunning = false;
     private boolean initializing = false;
-    private final ConcurrentHashMap<String, Long> threadStartTimes = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Long> threadstarts = new ConcurrentHashMap<>();
+    private final Thread threadInitSerializedChunks = new Thread(this::threadInitSerializedChunks);
+    private final Thread threadWatchManagedOreChunkLifetime = new Thread(this::threadWatchManagedOreChunkLifetime);
+
     private final ExecutorService threadPoolLoadedChunks;
     private final ExecutorService threadPoolClusterDetermination;
     private final ThreadPoolExecutor threadPoolClusterCleaning;
     private final ThreadPoolExecutor threadPoolClusterGenerating;
     private final ThreadPoolExecutor threadPoolChunkEditing;
-    private final Thread threadInitSerializedChunks = new Thread(this::threadInitSerializedChunks);
-
     //private final ThreadPoolExecutor threadPoolChunkProcessing;
 
 
@@ -216,6 +218,7 @@ public class OreClusterManager {
         );
 
        this.threadInitSerializedChunks.start();
+       this.threadWatchManagedOreChunkLifetime.start();
 
     }
 
@@ -257,6 +260,54 @@ public class OreClusterManager {
     }
 
     /**
+     * Description: Sweeps loaded ore cluster chunks for any that
+     * have been loaded for more than 300s and are still in DETERMINED status
+     * @param chunk
+     * chunkLifetime
+     * chunkDelete
+     * chunkExpire
+     */
+     private static final Long MAX_DETERMINED_CHUNK_LIFETIME_MILLIS = 150_000L;
+     private static final Long SLEEP_TIME_MILLIS = 30_000L;
+    private void threadWatchManagedOreChunkLifetime()
+    {
+        try {
+            while(managerRunning)
+            {
+                if( loadedOreClusterChunks.isEmpty() )
+                {
+                    sleep(10);
+                    continue;
+                }
+
+                //1. Update time loaded for all currently loaded chunks
+                loadedOreClusterChunks.values().stream()
+                    .filter(ManagedOreClusterChunk::isLoaded)
+                    .forEach(ManagedOreClusterChunk::updateTimeLoaded);
+
+
+                Long time = System.currentTimeMillis();
+                List<String> expired_chunks = new ArrayList<>();
+                loadedOreClusterChunks.values().stream()
+                    .filter(c -> !isLoaded(c))
+                    .filter(c -> time - c.getTimeLoaded() > MAX_DETERMINED_CHUNK_LIFETIME_MILLIS)
+                    .forEach(c -> expired_chunks.add(c.getId()));
+
+                for( String id : expired_chunks ) {
+                    loadedOreClusterChunks.remove(id);
+                }
+
+                sleep(SLEEP_TIME_MILLIS);
+            }
+        }
+        catch (Exception e) {
+            LoggerProject.logError("002002", "Error in threadWatchManagedOreChunkLifetime: " + e.getMessage());
+        }
+
+    }
+
+
+    /**
      * Description: Handles newly loaded chunks
      * @param chunk
      */
@@ -291,7 +342,7 @@ public class OreClusterManager {
         if (!WORKER_THREAD_ENABLED.get("workerThreadLoadedChunk")) {
             return;
         }
-        threadStartTimes.put("workerThreadLoadedChunk", System.currentTimeMillis());
+        threadstarts.put("workerThreadLoadedChunk", System.currentTimeMillis());
         try
         {
             while( !chunksPendingHandling.isEmpty() )
@@ -389,7 +440,7 @@ public class OreClusterManager {
         if (!WORKER_THREAD_ENABLED.get("workerThreadDetermineClusters")) {
             return;
         }
-        threadStartTimes.put("workerThreadDetermineClusters", System.currentTimeMillis());
+        threadstarts.put("workerThreadDetermineClusters", System.currentTimeMillis());
         Throwable thrown = null;
         if(!this.managerRunning)
             return;
@@ -406,10 +457,10 @@ public class OreClusterManager {
                 String chunkId = chunksPendingDeterminations.poll();
                 
                 while( !this.determinedChunks.contains(chunkId) ) {
-                    long startTime = System.nanoTime();
+                    long start = System.nanoTime();
                     handleChunkDetermination(ModRealTimeConfig.ORE_CLUSTER_DTRM_BATCH_SIZE_TOTAL, chunkId);
-                    long endTime = System.nanoTime();
-                    THREAD_TIMES.get("handleChunkDetermination").add((endTime - startTime) / 1_000_000);
+                    long end = System.nanoTime();
+                    THREAD_TIMES.get("handleChunkDetermination").add((end - start) / 1_000_000);
                     this.threadPoolClusterCleaning.submit(this::workerThreadCleanClusters);
                 }
 
@@ -444,7 +495,7 @@ public class OreClusterManager {
         if (!WORKER_THREAD_ENABLED.get("workerThreadCleanClusters")) {
             return;
         }
-        threadStartTimes.put("workerThreadCleanClusters", System.currentTimeMillis());
+        threadstarts.put("workerThreadCleanClusters", System.currentTimeMillis());
         Throwable thrown = null;
         if(!managerRunning)
             return;
@@ -457,7 +508,8 @@ public class OreClusterManager {
 
                 ManagedOreClusterChunk.ClusterStatus DETERMINED = ManagedOreClusterChunk.ClusterStatus.DETERMINED;
                 Queue<ManagedOreClusterChunk> chunksToClean = chunksPendingCleaning.values().stream()
-                    .filter(chunk -> chunk.getStatus() == DETERMINED && chunk.hasChunk())
+                    .filter(ManagedOreClusterChunk::isDetermined)
+                    .filter(c -> c.hasChunk())
                     .collect(Collectors.toCollection(LinkedList::new));
 
                 if( chunksToClean.size() == 0 ) {
@@ -469,10 +521,10 @@ public class OreClusterManager {
                 for (ManagedOreClusterChunk chunk : chunksToClean)
                 {
                         try {
-                            long startTime = System.nanoTime();
+                            long start = System.nanoTime();
                             editManagedChunk(chunk, this::handleChunkCleaning);
-                            long endTime = System.nanoTime();
-                            THREAD_TIMES.get("handleChunkCleaning").add((endTime - startTime) / 1_000_000);
+                            long end = System.nanoTime();
+                            THREAD_TIMES.get("handleChunkCleaning").add((end - start) / 1_000_000);
                         }
                         catch (Exception e) {
                             e.printStackTrace();
@@ -501,8 +553,7 @@ public class OreClusterManager {
         if (!WORKER_THREAD_ENABLED.get("workerThreadGenerateClusters")) {
             return;
         }
-        threadStartTimes.put("workerThreadGenerateClusters", System.currentTimeMillis());
-        long startTime = System.nanoTime();
+        threadstarts.put("workerThreadGenerateClusters", System.currentTimeMillis());
         Throwable thrown = null;
         if(!managerRunning)
             return;
@@ -536,11 +587,14 @@ public class OreClusterManager {
 
                 for (ManagedOreClusterChunk chunk : chunksToGenerate)
                 {
-                    long startTime = System.nanoTime();
+                    long start = System.nanoTime();
                     editManagedChunk(chunk, this::handleChunkClusterPreGeneration);
-                    long endTime = System.nanoTime();
-                    THREAD_TIMES.get("handleChunkClusterPreGeneration").add((endTime - startTime) / 1_000_000);
-                    if( ManagedOreClusterChunk.isPregenerated(chunk) )
+                    long end = System.nanoTime();
+                    THREAD_TIMES.get("handleChunkClusterPreGeneration").add((end - start) / 1_000_000);
+
+                    if( ManagedOreClusterChunk.isPregenerated(chunk) ) {
+
+                    }
                         chunksPendingPreGeneration.remove(chunk.getId());
                 }
 
@@ -562,7 +616,7 @@ public class OreClusterManager {
         if (!WORKER_THREAD_ENABLED.get("workerThreadEditChunk")) {
             return;
         }
-        threadStartTimes.put("workerThreadEditChunk", System.currentTimeMillis());
+        threadstarts.put("workerThreadEditChunk", System.currentTimeMillis());
         Throwable thrown = null;
         if(!managerRunning)
             return;
@@ -603,13 +657,14 @@ public class OreClusterManager {
                          int i = 0;
                     }
 
-                    if( !chunk.isReady() )
+                    //Sometimes things get through
+                    if( !chunk.isReady() || !chunk.hasChunk() )
                         continue;
 
-                    long startTime = System.nanoTime();
+                    long start = System.nanoTime();
                     editManagedChunk(chunk, this::handleChunkManifestation);
-                    long endTime = System.nanoTime();
-                    THREAD_TIMES.get("handleChunkManifestation").add((endTime - startTime) / 1_000_000);
+                    long end = System.nanoTime();
+                    THREAD_TIMES.get("handleChunkManifestation").add((end - start) / 1_000_000);
 
                 }
 
@@ -712,7 +767,7 @@ public class OreClusterManager {
         //LoggerProject.logDebug("002008", "Queued " + chunkIds.size() + " chunks for cluster determination");
 
 
-        //LoggerProject.logDebug("handlePrepareNewCluster #1  " + LoggerProject.getTime(startTime, step1Time) + " ms");
+        //LoggerProject.logDebug("handlePrepareNewCluster #1  " + LoggerProject.getTime(start, step1Time) + " ms");
 
 
         //Map<ChunkId, Clusters>
@@ -736,9 +791,7 @@ public class OreClusterManager {
             this.determinedChunks.add(id);
         }
         LoggerProject.logDebug("002010","Added " + clusters.size() + " clusters to determinedChunks");
-        
-        long endTime = System.nanoTime();
-        THREAD_TIMES.get("handleChunkDetermination").add((endTime - startTime) / 1_000_000); // Convert to milliseconds
+
 
         // #4. Add clusters to existingClustersByType
         for( Map.Entry<String, List<Block>> clusterChunk : clusters.entrySet())
@@ -750,8 +803,8 @@ public class OreClusterManager {
         }
 
 
-        long endTime = System.nanoTime();
-        //LoggerProject.logDebug("handlePrepareNewCluster #4  " + LoggerProject.getTime(step3Time, endTime) + " ms");
+        long end = System.nanoTime();
+        //LoggerProject.logDebug("handlePrepareNewCluster #4  " + LoggerProject.getTime(step3Time, end) + " ms");
     }
 
     /**
@@ -768,9 +821,6 @@ public class OreClusterManager {
     {
 
         if( chunk == null|| chunk.getChunk(false) == null )
-            return;
-
-        if( chunk.getChunk(false).getStatus() != ChunkStatus.FULL )
             return;
 
         LoggerProject.logDebug("002025", "Cleaning chunk: " + chunk.getId());
@@ -851,6 +901,10 @@ public class OreClusterManager {
      * added to ManagedOreClusterChunk::blockStateUpdates
      *
      * @param chunk
+     * handleChunkClusterGeneration
+     * clusterGeneration
+     * clusterPregeneration
+     * generation
      */
     private void handleChunkClusterPreGeneration(ManagedOreClusterChunk chunk)
     {
@@ -1033,6 +1087,7 @@ public class OreClusterManager {
         threadPoolClusterGenerating.shutdown();
         threadPoolChunkEditing.shutdown();
         threadInitSerializedChunks.interrupt();
+        threadWatchManagedOreChunkLifetime.interrupt();
 
         //Create new Mod Datastore, if one does not exist for this mod,
         //read determinedSourceChunks into an array and save it to levelSavedata
