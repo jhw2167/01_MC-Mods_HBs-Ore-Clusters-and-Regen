@@ -2,7 +2,8 @@
 *.sh
 run/*
 .idea/*
-out*.txt
+out.txt
+out1.txt
 
 # From https://github.com/github/gitignore/blob/master/Gradle.gitignore
 .gradle
