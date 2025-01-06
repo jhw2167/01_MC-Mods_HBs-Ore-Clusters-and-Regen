@@ -43,6 +43,8 @@ public class GeneralConfig {
      **/
     private static GeneralConfig instance;
     private final DataStore DATA_STORE;
+    private Thread watchThread;
+    private volatile boolean running = true;
 
     private MinecraftServer SERVER;
     private final Map<String, LevelAccessor> LEVELS;
@@ -60,6 +62,8 @@ public class GeneralConfig {
         this.PLAYER_LOADED = false;
         this.DATA_STORE = DataStore.getInstance();
         this.LEVELS = new HashMap<>();
+        this.running = true;
+        startWatchThread();
 
         instance = this;
     }
@@ -168,6 +172,41 @@ public class GeneralConfig {
          worldData.getOrCreateLevelSaveData(level);
      }
 
+
+    /**
+     * SAVE METHODS - register class to save method
+     */
+
+    private void startWatchThread() {
+        watchThread = new Thread(() -> {
+            while (running) {
+                try {
+                    Thread.sleep(30000); // 30 seconds
+                    if (running) {
+                        EventRegistrar.getInstance().dataSaveEvent();
+                    }
+                } catch (InterruptedException e) {
+                    // Interrupted, exit the thread
+                    break;
+                }
+            }
+        });
+        watchThread.setDaemon(true);
+        watchThread.setName("GeneralConfig-AutoSave");
+        watchThread.start();
+    }
+
+    public void shutdown() {
+        running = false;
+        if (watchThread != null) {
+            watchThread.interrupt();
+            try {
+                watchThread.join(1000); // Wait up to 1 second for thread to finish
+            } catch (InterruptedException e) {
+                // Ignore interruption during shutdown
+            }
+        }
+    }
 
 }
 //END CLASS

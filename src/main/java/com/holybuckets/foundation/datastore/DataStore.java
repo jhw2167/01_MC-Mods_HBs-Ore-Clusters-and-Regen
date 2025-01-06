@@ -32,8 +32,6 @@ public class DataStore implements IStringSerializable {
     private static final File DATA_STORE_FILE = new File("hb_datastore.json");
     private final Map<String, ModSaveData> STORE;
     private String currentWorldId;
-    private Thread watchThread;
-    private volatile boolean running = true;
 
     private DataStore(String worldId)
     {
@@ -42,7 +40,7 @@ public class DataStore implements IStringSerializable {
         STORE = new HashMap<>();
         String json = HBUtil.FileIO.loadJsonConfigs(DATA_STORE_FILE, DATA_STORE_FILE, new DefaultDataStore());
         this.deserialize(json);
-        startWatchThread();
+        EventRegistrar.getInstance().registerOnDataSave(this::save);
     }
 
 
@@ -219,17 +217,7 @@ public class DataStore implements IStringSerializable {
 
             worldData.addProperty("worldSpawn", parse(config.getWORLD_SPAWN()) );
 
-            // Stop the watch thread
-            INSTANCE.running = false;
-            if (INSTANCE.watchThread != null) {
-                INSTANCE.watchThread.interrupt();
-                try {
-                    INSTANCE.watchThread.join(1000); // Wait up to 1 second for thread to finish
-                } catch (InterruptedException e) {
-                    // Ignore interruption during shutdown
-                }
-            }
-
+            GeneralConfig.getInstance().shutdown();
             INSTANCE.save();
 
             //Clear all fields

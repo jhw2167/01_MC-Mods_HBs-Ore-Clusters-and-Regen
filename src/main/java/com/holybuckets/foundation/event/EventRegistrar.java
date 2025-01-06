@@ -43,6 +43,7 @@ public class EventRegistrar {
     private final Deque<Consumer<ModConfigEvent>> ON_MOD_CONFIG = new ArrayDeque<>();
     private final Deque<Consumer<ServerLifecycleEvent>> ON_SERVER_START = new ArrayDeque<>();
     private final Deque<Consumer<ServerLifecycleEvent>> ON_SERVER_STOP = new ArrayDeque<>();
+    private final Deque<Runnable> ON_DATA_SAVE = new ArrayDeque<>();
 
 
     /**
@@ -166,6 +167,21 @@ public class EventRegistrar {
     /** ############### **/
 
 
+    /** Custom Events **/
+
+    public void dataSaveEvent()
+    {
+        for (Runnable function : ON_DATA_SAVE) {
+            function.run();
+        }
+    }
+
+    /** ############### **/
+
+
+
+
+
     /**
      * Getters
      */
@@ -231,6 +247,14 @@ public class EventRegistrar {
     public void registerOnServerStop(Consumer<ServerLifecycleEvent> function) { registerOnServerStop(function, false); }
     public void registerOnServerStop(Consumer<ServerLifecycleEvent> function, boolean priority) {
         generalRegister(function, ON_SERVER_STOP, priority);
+    }
+
+    public void registerOnDataSave(Runnable function) { registerOnDataSave(function, false); }
+    public void registerOnDataSave(Runnable function, boolean priority) {
+        if (priority)
+            ON_DATA_SAVE.addFirst(function);
+        else
+            ON_DATA_SAVE.add(function);
     }
 
 
