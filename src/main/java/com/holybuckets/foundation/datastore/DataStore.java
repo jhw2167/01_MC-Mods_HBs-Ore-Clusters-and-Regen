@@ -45,26 +45,6 @@ public class DataStore implements IStringSerializable {
         startWatchThread();
     }
 
-    private void startWatchThread() {
-        watchThread = new Thread(this::threadWatchSave);
-        watchThread.setDaemon(true);
-        watchThread.setName("DataStore-AutoSave");
-        watchThread.start();
-    }
-
-    private void threadWatchSave() {
-        while (running) {
-            try {
-                Thread.sleep(30000); // 30 seconds
-                if (running) {
-                    save();
-                }
-            } catch (InterruptedException e) {
-                // Interrupted, exit the thread
-                break;
-            }
-        }
-    }
 
     // Constructor for default data store
     private DataStore(ModSaveData data)
@@ -192,6 +172,27 @@ public class DataStore implements IStringSerializable {
 
     private void save() {
         HBUtil.FileIO.serializeJsonConfigs(DATA_STORE_FILE, this.serialize());
+    }
+
+    private void startWatchThread() {
+        watchThread = new Thread(this::threadWatchSave);
+        watchThread.setDaemon(true);
+        watchThread.setName("DataStore-AutoSave");
+        watchThread.start();
+    }
+
+    private void threadWatchSave() {
+        while (running) {
+            try {
+                Thread.sleep(30000); // 30 seconds
+                if (running) {
+                    save();
+                }
+            } catch (InterruptedException e) {
+                // Interrupted, exit the thread
+                break;
+            }
+        }
     }
 
     /** STATIC METHODS **/

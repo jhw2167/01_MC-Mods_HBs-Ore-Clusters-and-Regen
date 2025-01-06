@@ -354,18 +354,7 @@ public class ManagedChunk implements IMangedChunkData {
         if(level.isClientSide())
             return;
 
-        //Write out initialzed chunks to levelSaveData
-        DataStore ds = DataStore.getInstance();
-        LevelSaveData levelData = ds.getOrCreateLevelSaveData( HBUtil.NAME, level);
-
-        Set<String> initChunks = INITIALIZED_CHUNKS.get(level);
-        String[] chunkIds = initChunks.toArray(new String[0]);
-        levelData.addProperty("chunkIds", HBUtil.FileIO.arrayToJson(chunkIds) );
-
-        /**
-         * Because of the Json tree, or some other reason no ids are written out to datastore
-         */
-
+        save(level);
     }
 
     public static void onChunkLoad( final ChunkEvent.Load event )
@@ -416,8 +405,7 @@ public class ManagedChunk implements IMangedChunkData {
         }
 
         loadedChunk.handleChunkLoaded(event);
-
-
+        save(level);
     }
 
     public static void onChunkUnload( final ChunkEvent.Unload event )
@@ -493,7 +481,6 @@ public class ManagedChunk implements IMangedChunkData {
             return false;
         }
 
-        chunk.setUnsaved(true);
         return true;
     }
 
@@ -517,6 +504,19 @@ public class ManagedChunk implements IMangedChunkData {
     {
         MANAGED_SUBCLASSES.put(classObject, data);
     }
+
+    private static void save( LevelAccessor level )
+    {
+        //Write out initialzed chunks to levelSaveData
+        DataStore ds = DataStore.getInstance();
+        LevelSaveData levelData = ds.getOrCreateLevelSaveData( HBUtil.NAME, level);
+
+        Set<String> initChunks = INITIALIZED_CHUNKS.get(level);
+        String[] chunkIds = initChunks.toArray(new String[0]);
+        levelData.addProperty("chunkIds", HBUtil.FileIO.arrayToJson(chunkIds) );
+
+    }
+
 
 
     /** SERIALIZERS **/

@@ -318,6 +318,8 @@ public class OreClusterManager {
         chunksPendingHandling.add(managedChunk.getId());
         threadPoolLoadedChunks.submit(this::workerThreadLoadedChunk);
         threadPoolChunkEditing.submit(this::workerThreadEditChunk);
+
+        this.save();
         //LoggerProject.logInfo("002001", "Chunk " + chunkId + " added to queue size " + chunksPendingHandling.size());
 
     }
@@ -1080,7 +1082,10 @@ public class OreClusterManager {
 
     public void shutdown()
     {
+        this.save();
+
         managerRunning = false;
+
         threadPoolLoadedChunks.shutdown();
         threadPoolClusterDetermination.shutdown();
         threadPoolClusterCleaning.shutdown();
@@ -1089,9 +1094,18 @@ public class OreClusterManager {
         threadInitSerializedChunks.interrupt();
         threadWatchManagedOreChunkLifetime.interrupt();
 
+    }
+
+    /**
+     * Description: Saves the determinedSourceChunks to levelSavedata
+      */
+    private void save()
+    {
         //Create new Mod Datastore, if one does not exist for this mod,
         //read determinedSourceChunks into an array and save it to levelSavedata
         DataStore ds = DataStore.getInstance();
+        if (ds == null)
+            return;
         LevelSaveData levelData = ds.getOrCreateLevelSaveData(OreClustersAndRegenMain.MODID, level);
         String[] ids = determinedSourceChunks.toArray(new String[0]);
         levelData.addProperty("determinedSourceChunks", HBUtil.FileIO.arrayToJson(ids));
