@@ -32,6 +32,8 @@ public class DataStore implements IStringSerializable {
     private static final File DATA_STORE_FILE = new File("hb_datastore.json");
     private final Map<String, ModSaveData> STORE;
     private String currentWorldId;
+    private Thread watchThread;
+    private volatile boolean running = true;
 
     private DataStore(String worldId)
     {
@@ -40,6 +42,28 @@ public class DataStore implements IStringSerializable {
         STORE = new HashMap<>();
         String json = HBUtil.FileIO.loadJsonConfigs(DATA_STORE_FILE, DATA_STORE_FILE, new DefaultDataStore());
         this.deserialize(json);
+        startWatchThread();
+    }
+
+    private void startWatchThread() {
+        watchThread = new Thread(this::threadWatchSave);
+        watchThread.setDaemon(true);
+        watchThread.setName("DataStore-AutoSave");
+        watchThread.start();
+    }
+
+    private void threadWatchSave() {
+        while (running) {
+            try {
+                Thread.sleep(30000); // 30 seconds
+                if (running) {
+                    save();
+                }
+            } catch (InterruptedException e) {
+                // Interrupted, exit the thread
+                break;
+            }
+        }
     }
 
     // Constructor for default data store
@@ -182,24 +206,36 @@ public class DataStore implements IStringSerializable {
     }
     public static void shutdown(ServerLifecycleEvent s)
     {
-        WorldSaveData worldData = INSTANCE.getOrCreateWorldSaveData(HBUtil.NAME);
-        GeneralConfig config = GeneralConfig.getInstance();
+        if (INSTANCE != null) {
+            WorldSaveData worldData = INSTANCE.getOrCreateWorldSaveData(HBUtil.NAME);
+            GeneralConfig config = GeneralConfig.getInstance();
 
-        {
-            Long prevTicks = worldData.get("totalTicks").getAsLong();
-            Long currentTicks = Integer.toUnsignedLong( config.getSERVER().getTickCount() );
-            worldData.addProperty("totalTicks", parse(prevTicks + currentTicks) );
-        }
+            {
+                Long prevTicks = worldData.get("totalTicks").getAsLong();
+                Long currentTicks = Integer.toUnsignedLong( config.getSERVER().getTickCount() );
+                worldData.addProperty("totalTicks", parse(prevTicks + currentTicks) );
+            }
 
-        worldData.addProperty("worldSpawn", parse(config.getWORLD_SPAWN()) );
+            worldData.addProperty("worldSpawn", parse(config.getWORLD_SPAWN()) );
 
-        if(INSTANCE != null)
+            // Stop the watch thread
+            INSTANCE.running = false;
+            if (INSTANCE.watchThread != null) {
+                INSTANCE.watchThread.interrupt();
+                try {
+                    INSTANCE.watchThread.join(1000); // Wait up to 1 second for thread to finish
+                } catch (InterruptedException e) {
+                    // Ignore interruption during shutdown
+                }
+            }
+
             INSTANCE.save();
 
-        //Clear all fields
-        //INSTANCE.currentWorldId = null;
-        //INSTANCE.STORE.clear();
-        INSTANCE = null;
+            //Clear all fields
+            //INSTANCE.currentWorldId = null;
+            //INSTANCE.STORE.clear();
+            INSTANCE = null;
+        }
     }
 
     static {
