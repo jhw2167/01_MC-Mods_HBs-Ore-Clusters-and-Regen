@@ -40,7 +40,7 @@ public class DataStore implements IStringSerializable {
         STORE = new HashMap<>();
         String json = HBUtil.FileIO.loadJsonConfigs(DATA_STORE_FILE, DATA_STORE_FILE, new DefaultDataStore());
         this.deserialize(json);
-        EventRegistrar.getInstance().registerOnDataSave(this::save);
+        EventRegistrar.getInstance().registerOnDataSave(this::save, false);
     }
 
 

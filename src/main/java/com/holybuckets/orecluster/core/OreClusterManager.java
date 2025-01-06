@@ -7,7 +7,9 @@ import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.HBUtil.*;
 import com.holybuckets.foundation.datastore.DataStore;
 import com.holybuckets.foundation.datastore.LevelSaveData;
+import com.holybuckets.foundation.datastructure.ConcurrentLinkedSet;
 import com.holybuckets.foundation.datastructure.ConcurrentSet;
+import com.holybuckets.foundation.event.EventRegistrar;
 import com.holybuckets.foundation.model.ManagedChunk;
 import com.holybuckets.orecluster.LoggerProject;
 import com.holybuckets.orecluster.ModRealTimeConfig;
@@ -115,7 +117,7 @@ public class OreClusterManager {
     //<chunkId, <oreType, Vec3i>>
 
 
-    private final LinkedHashSet<String> determinedSourceChunks;
+    private final ConcurrentLinkedSet<String> determinedSourceChunks;
     private final ConcurrentSet<String> determinedChunks;
     private final ConcurrentHashMap<String, ManagedOreClusterChunk> loadedOreClusterChunks;
 
@@ -148,7 +150,7 @@ public class OreClusterManager {
 
         this.existingClustersByType = new ConcurrentHashMap<>();
         this.loadedOreClusterChunks = new ConcurrentHashMap<>();
-        this.determinedSourceChunks = new LinkedHashSet<>();
+        this.determinedSourceChunks = new ConcurrentLinkedSet<>();
         this.determinedChunks = new ConcurrentSet<>();
         this.chunksPendingHandling = new LinkedBlockingQueue<>();
         this.chunksPendingDeterminations = new LinkedBlockingQueue<>();
@@ -219,6 +221,8 @@ public class OreClusterManager {
 
        this.threadInitSerializedChunks.start();
        this.threadWatchManagedOreChunkLifetime.start();
+
+        EventRegistrar.getInstance().registerOnDataSave(this::save, true);
 
     }
 
@@ -319,7 +323,6 @@ public class OreClusterManager {
         threadPoolLoadedChunks.submit(this::workerThreadLoadedChunk);
         threadPoolChunkEditing.submit(this::workerThreadEditChunk);
 
-        this.save();
         //LoggerProject.logInfo("002001", "Chunk " + chunkId + " added to queue size " + chunksPendingHandling.size());
 
     }

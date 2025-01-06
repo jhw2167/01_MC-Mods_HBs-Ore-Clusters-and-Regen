@@ -29,6 +29,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class ManagedChunk implements IMangedChunkData {
@@ -346,6 +347,7 @@ public class ManagedChunk implements IMangedChunkData {
             initChunks.add(chunkId.getAsString());
         });
 
+        EventRegistrar.getInstance().registerOnDataSave(() -> save(level), true);
     }
 
     public static void onWorldUnload( final LevelEvent.Unload event )
@@ -405,7 +407,6 @@ public class ManagedChunk implements IMangedChunkData {
         }
 
         loadedChunk.handleChunkLoaded(event);
-        save(level);
     }
 
     public static void onChunkUnload( final ChunkEvent.Unload event )
