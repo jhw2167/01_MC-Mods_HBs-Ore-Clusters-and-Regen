@@ -1,4 +1,369 @@
-commit 2ef20547d5d5c96e53028ebc2f8379d61f48559c
+commit 349463c4b826185c22b35e998ef3243693b34dbb
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Wed Jan 8 18:40:09 2025 -0600
+
+    Managing properties and misc files
+
+commit ec4a00eeef736a74e9d63b5f2a78802855d937a3
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Mon Jan 6 03:32:53 2025 -0600
+
+    -Ammended leftover changes from rebased commits
+
+commit 2a131e1399247a17f359c41e74b6cf88a619f6ca
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Mon Jan 6 02:58:05 2025 -0600
+
+    modified ignore to remove out.txt files
+
+commit 739ba2a0a53bc8ebfd3f5dbc298f7a6a79bdd594
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Mon Jan 6 01:41:09 2025 -0600
+
+            - Generalized the save function so that all classes can register to it
+    - The save event is registered via EventRegistrar and triggered by GeneralConfig object
+    - ManagedChunk, OreClusterManagedChunk and DataStore are subscribed to the saveData operation
+
+commit 085fa1296117841f2a8df7cdd8dd3eb7bce85fc7
+Author: jhw2167 (aider) <jhw2167@columbia.edu>
+Date:   Mon Jan 6 01:03:39 2025 -0600
+
+    feat: Add ConcurrentLinkedSet with thread-safe, ordered set implementation
+
+commit 4a57014918a7126ae4f5780082c5c5b4b09cadce
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Mon Jan 6 03:25:56 2025 -0600
+
+    Completed rebase, dropped infringing commits, updates to stay in line with most recent changes, main branch
+
+commit 258f7a0cda26b8c1753e766444a65bd40126b0b7
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Mon Jan 6 00:04:30 2025 -0600
+
+    - Added a method to save Datastore JSON configs every 30s
+    - Added save method to oreClusterManager and ManagedChunk classes each time a chunk is loaded
+
+commit 9ff0a546ba2b265c43cdf2904b68ed666b2f115e
+Author: jhw2167 (aider) <jhw2167@columbia.edu>
+Date:   Sun Jan 5 23:42:43 2025 -0600
+
+    feat: Add threaded auto-save mechanism for DataStore every 30 seconds
+
+commit 33d38e4af0fc61334df29fa5258cbd646fbf87e2
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Sun Jan 5 23:32:11 2025 -0600
+
+    - setBlock on the client level causes exception with concurrently modifying chunks at the client level
+    - Determined bottleneck in chunk processing and cluster building as cleaning and editing
+    - There are significant variation in editing and cleaning chunk times
+    - Added Map to OreClusterManager to track processing times
+    - Added thread to track oreClusterChunk lifetimes and kill them after 300s
+
+commit be9a22fca7db4be48dd48e18fb114eabd567dadc
+Author: jhw2167 (aider) <jhw2167@columbia.edu>
+Date:   Sun Jan 5 16:46:33 2025 -0600
+
+    refactor: Implement threaded chunk loading with 10ms timeout to prevent deadlocks
+
+commit aacfbc02ffe703d35c1ce22928c7684381d9accd
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Sun Jan 5 16:46:27 2025 -0600
+
+    fix: Improve chunk loading fallback mechanism in HBUtil
+
+commit d86d9a413ff7a366b88c3f2b83139c1fb209e40c
+Author: jhw2167 (aider) <jhw2167@columbia.edu>
+Date:   Sun Jan 5 15:56:31 2025 -0600
+
+    refactor: Add thread timing measurement for chunk determination
+
+commit 77b6a9ca4069fb3417fe8301e8da8745f717f9f1
+Author: jhw2167 (aider) <jhw2167@columbia.edu>
+Date:   Sun Jan 5 15:56:19 2025 -0600
+
+    refactor: Move timing code to worker threads for performance tracking
+
+commit e414a4f695126184cb05c0a6cdec4e33377b4667
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Sun Jan 5 15:56:17 2025 -0600
+
+    refactor: Add performance tracking for chunk determination method
+
+commit 75e813cf80bc1eb80dc962a7cfc7e95b804683b3
+Author: jhw2167 (aider) <jhw2167@columbia.edu>
+Date:   Sun Jan 5 15:52:10 2025 -0600
+
+    feat: Implement timing tracking for worker thread methods
+
+commit d423bf4d6a64d13545f8e7608e794be54a1cf1b8
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Sun Jan 5 15:52:08 2025 -0600
+
+    refactor: Add thread times tracking map to OreClusterManager
+
+commit 47c37c3c829d8e969484d3b4a1f10bcde4a20a9f
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Sat Jan 4 03:16:08 2025 -0600
+
+    - Fixed issue that randomized clusterSpawn with hashcode and caused ore clusters to be random between world loads
+    - Chunks are still continuosly being loaded
+    - SOLUTION: We only load chunks that are currently loaded in ManagedChunks paradigm, unless we are requesting to forceLoad
+    - Removed forceUpdateChunks in ManagedChunk.updateBlockState section
+    - getBatchedChunkIds now takes a String chunkid that it converts to a position, a loaded chunk is not needed
+    - added back determinedClusters LinkedHashSet to track all clusters that have been determined
+
+commit 5e10d438af605760e1f8f9d1c2c9610ffa83b93b
+Author: jhw2167 (aider) <jhw2167@columbia.edu>
+Date:   Sat Jan 4 03:13:14 2025 -0600
+
+    feat: Add determinedChunks as a ConcurrentSet in OreClusterManager
+
+commit 4e838c181526335f55d54f7cb2a4f2c044a375fd
+Author: jhw2167 (aider) <jhw2167@columbia.edu>
+Date:   Sat Jan 4 03:12:56 2025 -0600
+
+    feat: Add ConcurrentSet to track determined chunks in OreClusterManager
+
+commit 827e35fe4d92f2d8da8eac2693b8ab2a8a4f9b50
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Sat Jan 4 03:12:55 2025 -0600
+
+    refactor: Simplify chunk processing and improve cluster generation logic
+
+commit 957fc487f77f3669d0ecdceeae7b366df036421e
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Sat Jan 4 00:26:05 2025 -0600
+
+     - Testing cluster generation with NO veins to clean- did not significantly speed chunkLoading
+    - Testing client level to force update from server- did not update blocks in client rendering frame
+    - Fixed bug where chunks would continously be loaded because getLevelChunk was pulling from chunk source cache
+    - Fixed bug where client blocks would not update since they need to be explicitly set like serverLevel block
+
+commit 7942365c2ed3db592143c7de8398b510412e6ecb
+Author: jhw2167 (aider) <jhw2167@columbia.edu>
+Date:   Fri Jan 3 15:00:46 2025 -0600
+
+    feat: Add static HashMap to control worker thread execution for testing
+
+commit 4e07cd9fe2234693a09d7ca6ff679791e268305a
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Fri Jan 3 15:00:45 2025 -0600
+
+    refactor: Modify chunk filtering and add boundary check in OreClusterManager
+
+commit a579469ac35fee033d4dc821c7242fa9d1e4bb2b
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Fri Jan 3 12:25:36 2025 -0600
+
+    - Set chunk unsaved == true after blockStateUpdates are made
+    - removed blockStateUpdates from being written out to NBT data for OreClusterManagedChunk
+    - Skips cleaning chunk if there are no veins to modify
+    - clears blockStateUpdates after successfully updating chunk
+    - Added ConcurrentSet class because I was tired of using HashMap
+
+commit 6e88d827c9df03eec6fe4c5dcb36211efb6729ce
+Author: jhw2167 (aider) <jhw2167@columbia.edu>
+Date:   Fri Jan 3 12:20:42 2025 -0600
+
+    feat: Implement generic ConcurrentSet using ConcurrentHashMap
+
+commit 527921a655424f571b062d6ad1105900f83495c9
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Fri Jan 3 12:20:40 2025 -0600
+
+    feat: Add ConcurrentSet class skeleton for concurrent data structure
+
+commit ac5b9f467a7713365947c5c23fe5d22b78c88fc5
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Fri Jan 3 01:17:09 2025 -0600
+
+    fixed a bug with the Datastore not refresing between world exists and entrances
+    - adde support for tracking an individual chunk through the world in OreClusterManager or OreClusterManagedchunk
+
+commit 9faa065fe47288d0bca20bab514bb65496fff7b7
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Thu Jan 2 22:36:46 2025 -0600
+
+    -Updated ManagedOreClusterChunk serialize method to clear block state updates for ANY chunk with excess data (over 512 blockStateUpdates)
+
+commit 9e8ccf2bd5618cdc06a96d4c2a36f82f05a6c569
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Thu Jan 2 22:32:57 2025 -0600
+
+    - Solve initialized chunks issue by front loading determined clusters into the array
+    - Add array tracking determined clusters
+    - Save array to level save data
+    - Read array in on Manager Initialization
+    - Determine clusters in that order while manager is off
+    - read array into Datastore on shutdown
+
+commit 766ed35827a42567b116ddd5ff9ca16feda48dde
+Author: jhw2167 (aider) <jhw2167@columbia.edu>
+Date:   Thu Jan 2 19:05:10 2025 -0600
+
+    feat: Add thread start time tracking for worker methods in OreClusterManager
+
+commit df43c85615ae7d2601d3f3556eba398173a813ba
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Thu Jan 2 19:05:08 2025 -0600
+
+    refactor: Refactor OreClusterManager with improved chunk handling and initialization
+
+commit 0e26ff5780158c6e0f2f5454edee41d8db10b1e0
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Thu Jan 2 02:54:54 2025 -0600
+
+    - Added Client package to foundations project
+    - Added Messager class to client package for sending feedback to users
+    - Added chunkunload request to forceLoading request to not overwhelm system, but it doesnt work
+    - Added positionToString utility for nicer output
+    - code has trouble saving chunks, glowstone occaisionally isnt placed
+
+commit 37eeeb6095f2f89976022bcc0946378349d83d73
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Thu Jan 2 00:51:51 2025 -0600
+
+    - Implemented locateOreClusters algorithm
+    - Implemented interface for locateOreClusters algorithm
+    - Debuged issue with initialized chunks not fully being read in during world start
+
+commit eedb3ea71181611df2469ce493eded7cecf6d3d5
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Wed Jan 1 22:17:08 2025 -0600
+
+    -Added CommandRegistry class to foundations
+    -Added commandList class to mod OreClusters class
+    - added registry structure for list classes to add commands to the registry
+    - Refined forge event registry class to register events properly
+
+commit b332e9f68d49368ec8b5f580799b769832ab3ba1
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Tue Dec 31 16:38:36 2024 -0600
+
+    - Added thread OreClusterManager::threadInitDeserializedChunks to halt chunkDetermination until all initialized chunks were read in
+    - Add method call in loadedChunks to add clusters to existingClustersByType
+    - Fixed bug in initDeserialized chunks where initialized chunks array was comming as null and not being reassigned
+    - Put upper limit on blockStateUpdates of size 512, because otherwise serialization limit for managed chunks was reached
+
+commit bd9f851754cc1070dcc8ca0084448410d7f74942
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Tue Dec 31 00:26:56 2024 -0600
+
+    -Added additional checks to oreClusterChunk readiness checking for chunk editing
+    - fixed bug in getSquare and getCube shapes that did not account for boundary condition dimensions and made squares twice as large
+    - fixed bug in getCube which did not associated a different height with each square
+
+commit d06d9ce09ddc7b4e88da80141207fcde9bdd2c4b
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Sun Dec 29 19:51:46 2024 -0600
+
+    - Added handling for chunk readiness method which determines when a
+    chunk is ready to be updated in the world
+    - Algorithm for generateClusters is causing lag
+    - Need GeneralConfig support for obtaining the player array
+
+commit 6f5ffa2fa523cdfa020a9d116a40ade973f62f9f
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Sat Dec 28 00:03:03 2024 -0800
+
+    -Adding behavior to OreClusterCalculator to calculate clusters in the world
+    -Added shapeUtils class to HBUtils that calculates circles, squares and cubic objects in an integer plane
+    - Added util to add chunks by id
+    - Added workerThreadGenerateClusters method and handleGenerateClusters thread to process clusters
+    - Currently, workerThread is not being stopped by debug mode, it does not appear that replacement is running in world or clusters are being determined, need to trace back steps and determine where blocker exception is
+
+commit 1ce5e29d2297c8d1cc537e48b49df01184837620
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Tue Dec 24 17:31:13 2024 -1000
+
+    - Finish and test BlockType serialization methods; wired up to blockPlacements and clusterTypes read in/out
+    - Added UpdateAll flags to setBlock methods to update all after last block was placed and update clients
+
+commit f5278545bc0a435e522fc25a2fe16fa62ba64c0f
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Mon Dec 23 22:26:27 2024 -1000
+
+    -Moved blockpair serialization logic to BlockUtil class
+
+commit 1ea70e05409a9230d1e0a7ea4137972e7edb40b6
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Mon Dec 23 11:34:39 2024 -1000
+
+    - Turn on chunk section parsing and test for speed and accuracy again
+    - Speed is good, lag is minimal, but existent
+    - Consistent issue where blocks are placed but not rendered in the world for the client, will need to reload clients view
+    - Turned off automatic forceloading of chunks and instead makes user pass a boolean to indicate if chunk should be force loaded
+    - Added code to ensure ManagedOreClusterChunks are removed from loadedChunks array when unloaded
+
+commit 3d84dc1ecba163ed9e7f70a6784e02e8206f47f3
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Sun Dec 22 16:17:15 2024 -1000
+
+    -Fixed issue where DefautlDatastore caused stackOverflow calling default constructor and DeSerializaing loop
+    -Fixed issue where malformedJSON was not written correctly, causing critical error. Now JSON writes correctly so user can see their error
+
+commit 826bb27df8a77efd24a01c2f7625b84c8e9450c7
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Sat Dec 21 22:10:37 2024 -1000
+
+    - cleaned up datastore, added worldSave and levelSave Objects
+    - DataStore reads LevelSave, WorldSave, and ModSave data properties out of file
+    - We can read initialized chunks out of the configs
+    - Fixed error where deserialization was not occuring due to blockStateUpdates not being parsed correctly
+    - Changed delimitter for blockStateUpdates to '=' from ':' which is used for Minecraft block groups
+    - Fixed error where blockStateUpdates was null on deserialization
+    - Updated MANAGED_SUBCLASSES to take a supplier function so the same Managed Subclass chunk was not used to init all new subclasses. A new one is supplied each call.
+    - Removed halt on editManagedChunk that cause the function to auto return
+    - Commented out loggers 002025 and 002028
+    - Fixed issue with DataStore where it did not write out properties on first world load
+    - Altered ChunkUtils.getLevelChunk function to check getChunkNow() before getChunk(... forceLoad==true) because the latter caused circular dependency on world load
+
+commit e912035758b569378fc66153045bb3d00d4b7cb6
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Wed Dec 18 18:09:33 2024 -0800
+
+    - Added more server events to the event registrar
+    - Added ModlifecylceEvent, Registration event, ModConfig Event, and Server Stop and Start Events
+    - Added ability for DataStore to write data on server shutdown
+    - Added ability for ManagedChunk to write INITIALIZED_CHUNK data to datastore and read in when it is loaded. Needs fixing
+
+commit 80dbcc017362d7ea13b8e17faedb22c5f38cd60e
+Author: jhw2167 (aider) <jhw2167@columbia.edu>
+Date:   Wed Dec 18 17:40:54 2024 -0800
+
+    refactor: Remove empty serverLifecycleEvent method from FoundationsForgeEventHandler
+
+commit ad813b42d80fb23497d035fe837d7aed9fccf0d4
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Wed Dec 18 17:40:53 2024 -0800
+
+    refactor: Remove server lifecycle event handling logic
+
+commit a8fa30a146eb72add1fe0447e6584b761a7f96a7
+Author: jhw2167 (aider) <jhw2167@columbia.edu>
+Date:   Wed Dec 18 17:36:39 2024 -0800
+
+    feat: Add server start and stop event support to EventRegistrar
+
+commit d12a789ba662969157f84bbc1cd6b0a157a46158
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Wed Dec 18 17:36:37 2024 -0800
+
+    feat: Add support for mod config, lifecycle, and registry events
+
+commit d24f506efa121c6db9dd689c9b43e88f5fdbbe11
+Author: jhw2167 (aider) <jhw2167@columbia.edu>
+Date:   Wed Dec 18 17:07:57 2024 -0800
+
+    feat: Add support for ModLifecycleEvent, RegisterEvent, and ModConfigEvent in EventRegistrar
+
+commit d70f52f4ad2cccf8c57234a36be0415c893baa47
+Author: jhw2167 <jhw2167@columbia.edu>
+Date:   Wed Dec 18 17:07:53 2024 -0800
+
+    refactor: Rename config variable to EVENT_REGISTRAR for clarity
+
+commit 0ed79b2504401868b1e47889a82bb6f4c7f4aaf3
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Tue Dec 17 01:47:16 2024 -0600
 
@@ -6,7 +371,7 @@ Date:   Tue Dec 17 01:47:16 2024 -0600
     - Fixed bug where JSON objects did not serialze correctly during initialization of world data properties
     - Code compiles and runs, chunk scaning/cleaning disabled temporarily. Also look into serialization method next and see if we can get it to work properly, now with level keyset from levelSaveData
 
-commit 3431733f71feeb1abfe34df17f34e4800b025133
+commit 8f4f3cb87993d84724f0d8a2c7f8daa5813386ff
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Mon Dec 16 22:40:04 2024 -0600
 
@@ -14,20 +379,20 @@ Date:   Mon Dec 16 22:40:04 2024 -0600
     - added initWorld method to datastore
     - added initWorld call to onModConfigEvent
 
-commit b1f917b4f9788b7a53acb34316d81529d5792555
+commit 293f3678b2d577a3c21d7c67079b795a8dc10376
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Mon Dec 16 17:46:37 2024 -0600
 
     Cleaned up datastore, worldSave and levelsave objects, preparing for test
 
-commit 5d185c4895a04f6935006a9d69c0083f8f60bcbf
+commit c0be6ba2c92eb1df16d208d09cd38442b603a221
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Mon Dec 16 16:06:20 2024 -0600
 
     - Added event registrar class
     - Removed registration elements from config class, renamed to GeneralConfig class
 
-commit 3fe24acf799bcf5a1acde728e1a919cc40204dc5
+commit 1f73acb7e73aee0cf0fdbb29d1644b78dd8cc3fe
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Mon Dec 16 14:27:10 2024 -0600
 
@@ -35,14 +400,14 @@ Date:   Mon Dec 16 14:27:10 2024 -0600
     - Added nested levelSaveData class
     - Looking to initialize classes on world event loading
 
-commit 22b645839ea0d152f5ff30249989dbf916445c94
+commit c9f2b9c3345149881bdd27755a71c7d0d07d6e61
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Mon Dec 16 13:55:09 2024 -0600
 
     -Refactored HBUtility loadJsonConfigs file to support default file objects and work for DataStore JSON object as well as JsonOreConfigs
     - DataStore serializes correctly and will open a default at the default file location
 
-commit 6c0631cd98c218067c2b07d7fca98f6aecf5432a
+commit beb6347ba93ac3f158b38c3cbec3f1b9d71b59e4
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Mon Dec 16 02:09:25 2024 -0600
 
@@ -52,7 +417,7 @@ Date:   Mon Dec 16 02:09:25 2024 -0600
     - Renamed HBUtility to HBUtil for brevity
     - added json support for reading json configs in and out for DataStore
 
-commit c59b7db7efd515e0fbfae8661625744db8469b88
+commit 866f6a0ecb380ab6676bede7fd01ee1f019f673e
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sun Dec 15 23:45:12 2024 -0600
 
@@ -60,7 +425,7 @@ Date:   Sun Dec 15 23:45:12 2024 -0600
     - i get config conflicts when attempting to load foundationsConfig, so I will create a workaround for the time being
     - Will need to create foundations as its own library mod soon
 
-commit 6c7885a689c0fbfeb5e3ca5159f694d07c2022e0
+commit f565473686200067996abe7714321b1ecebf7e3e
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sun Dec 15 23:29:28 2024 -0600
 
@@ -69,13 +434,13 @@ Date:   Sun Dec 15 23:29:28 2024 -0600
     - Created CServer class to establish CFoundation as server side configurations
     - Registed mod context under OreClustersMain because foundations doesnt have a main yet
 
-commit de4a2cec71c23f617c75eaf164d0bab6a0868fe2
+commit 8a4ccb3ca923e15a4b639bb92c2d3741b3988ccf
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sun Dec 15 22:02:13 2024 -0600
 
     -Refactored HolyBuckets Foundation configModel and configModelBase into the config package
 
-commit 73f12562bf3b0b2f904c3f6a5caa0346ccfa6edf
+commit 6d4155dc6c9dc8b532367a9fd53f86f1b800a211
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sun Dec 15 16:20:11 2024 -0600
 
@@ -83,13 +448,13 @@ Date:   Sun Dec 15 16:20:11 2024 -0600
     - removed some ids from being excluded from the logs in Loggerbase
     - re enabled handlceClustersOnLoad in managed Orechunk
 
-commit 2cf0ec55c80f55678ebf0c4e6f86001682e52b7b
+commit 620d6cbf34cf35809e9046c9705297d8efe1d26c
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sun Dec 15 14:19:01 2024 -0600
 
     updated gitignore
 
-commit 01c385ec671bfeac9777f6c494c7a6cd511da541
+commit d2aceeba74fabce4e639c66aec57359db8923000
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sun Dec 15 14:16:52 2024 -0600
 
@@ -98,26 +463,26 @@ Date:   Sun Dec 15 14:16:52 2024 -0600
     - turned off cleanChunkClusters by parsing over sections
     - need to revert commits and determine where my world lost the ability to save
 
-commit f3c7bdb44550dedb4c593513cb5edef28639ad29
+commit 5a0be2c31d1f95b7ef6c5820b5fca9c33203d3d7
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sun Dec 15 13:47:45 2024 -0600
 
     -Generation is extremely slow with infinite replacement and parsing over all blocks, also blockState updates do not visually register while chunk is loaded and do not serialize. May need to set chunks to dirty or turn off serialization
 
-commit f0a754c29ce2275aeba3c1e61dcfa5465395862c
+commit b4ccf7764eea6298a0dbb86fe9e48b2cd42dcf70
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sat Dec 14 20:17:27 2024 -0600
 
     -Fixed errors regarding loaded chunks not following expected pipeline through managed chunk. There are two outstanding errors regarding not all chunks updating their blocks and chunks not serializing their changes. Moreover, a large number of chunks are being loaded on each run
 
-commit 99303f0f53442caa6ea18111ec44e7641f3fd64e
+commit 2bc294ed0afb39b900e93e5a231d375c91c7e09e
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sat Dec 14 18:15:07 2024 -0600
 
     Reconfiguring ManagedChunk to add more structure to initialization and retrieval methods. onChunkLoads need to cascade through the ManagedChunk so I am not storing references everywhere without care. Removed some utility methods that retrieved a chunk.
     - onChunkLoad is not firing for managed chunk
 
-commit f76474034bb7df12822960aef712ded2d2113ff3
+commit f466cd0ca3f310b5cd2a84c2b6b80cebb362b124
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sat Dec 14 02:42:05 2024 -0600
 
@@ -134,7 +499,7 @@ Date:   Sat Dec 14 02:42:05 2024 -0600
     - Fixed Index OOB error when gaussian returned negative value.
     - reworked determinedClusters into chunkPendingCleaning queue
 
-commit 2a5eceaf9138cf1f58c1badabf2e5544b3bac241
+commit 4cba1ec528321ed7f84fc6fea4f66d050a7943dc
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Fri Dec 13 21:17:38 2024 -0600
 
@@ -146,7 +511,7 @@ Date:   Fri Dec 13 21:17:38 2024 -0600
     - commented out some loggers, added new logger to clean ores to detect total count of sought after ores in a chunk
     - Preparing to support serializing of Managed chunks so they aren't recalculated on world load
 
-commit 0f34b0ecd8a1e3c4cd8ba79926c6402d985f9103
+commit 43fe24b181409025186c6c83a8460fefaa2c7de1
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Thu Dec 12 23:54:03 2024 -0600
 
@@ -155,7 +520,7 @@ Date:   Thu Dec 12 23:54:03 2024 -0600
     - Add ManagedOreClusterchunk method getRandom to return a random specific to that chunk and the set subseed
     - Need to fix illegalState Exception thrown when I attempt to edit a chunk while the server is ticking
 
-commit f4201aab9c687c6beffbcb18966dee0270dbcbf1
+commit 7bf8bad0b90c9d07d6df3136f30a5261d3d27fc7
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sat Dec 7 23:49:24 2024 -0600
 
@@ -165,7 +530,7 @@ Date:   Sat Dec 7 23:49:24 2024 -0600
     - Added OreClusterJsonConfig class to simplify JSON read/writes for complex objects and add a structure for future JSON classes
     - Added interface IStringSerialize to enforce serialize and deserealize methods in an object
 
-commit bb7aa81fd5564e2096c7383286727b33299f8848
+commit dd967927bff4511fce640d1be6bc910a970bc521
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Fri Dec 6 01:12:53 2024 -0600
 
@@ -174,13 +539,13 @@ Date:   Fri Dec 6 01:12:53 2024 -0600
     - added several logging statements for error handling
     - added default String List of ore clusters to be written out for the user if file not found
 
-commit d4369075c7fece03b6a3eea39e69a222554e2e5b
+commit 2311b002c0cb4d2947d4030da2e0d619d79e7f45
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Thu Dec 5 22:48:26 2024 -0600
 
     -Fixed error where cleanable blocks sometimes spawn at reduced rates
 
-commit dfa698b194dd0a66670bfbf9c05fa90b6a8b23b6
+commit e41f224882977b7bee6da583c32d501e3971094f
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Thu Dec 5 22:00:01 2024 -0600
 
@@ -188,7 +553,7 @@ Date:   Thu Dec 5 22:00:01 2024 -0600
     - Added IllegalStateException handling to chunkEdits
     - Added lock to ManagedOreChunk and editManagedChunk now checks to see if chunk is accessible or quits early, returning empty
 
-commit 9a351f7c752b98d37dd33bc04e9d76242ba83113
+commit 695e5ca863fa1c6ae37f81929d6f6dbb02cc55d7
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Wed Dec 4 03:19:52 2024 -0600
 
@@ -198,20 +563,20 @@ Date:   Wed Dec 4 03:19:52 2024 -0600
     - converted blockStateUpdates in oreManager to a concurrent queue
     - added method in OreClusterManager to attempt to  updated loaded chunks every few seconds
 
-commit 1aa020a4327b097b5358e0896d605ac8f401aa7c
+commit 5dc5d643d10fc31f1b63cd3b08bc21c936acd485
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Tue Dec 3 22:47:17 2024 -0600
 
     - Added default ore block to replaceableEmpty blocks
     - Updated config comments
 
-commit 2a3b31e78e7ee24a5b81a7c5a13e19702acac019
+commit ae079d08bc6c73b79b39112e361142229d6600d8
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Tue Dec 3 21:18:30 2024 -0600
 
     -Fixed issue where cleanClusters was exciting early due to null pointer exception
 
-commit 11fdecebcf12b7222ebe161216462a3974fcf6fc
+commit 5950d5daf5b558bd41390fb77cc2e1236bbb4486
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sat Nov 30 00:14:57 2024 -0800
 
@@ -220,19 +585,19 @@ Date:   Sat Nov 30 00:14:57 2024 -0800
     - removed blockStateUpdate code from handleClusterCleaning, will be done it its own thread
     - updated cluster cleaning threadPool to use less threads, and block
 
-commit ed84264306ba93529307a41eeab0b29ddd8d1550
+commit 029d68b67a3a99c0157a0fa9055dda8b46c1ab1c
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Fri Nov 29 22:00:05 2024 -0800
 
     Determiend correct Y offset so ore blocks are replaced correctly in the world. General replacement formula works for single block
 
-commit 60971c0c9ac4d2b08ab975b66d67701a0f5791b6
+commit 2bc755fa363aa7d0ebbf9bec8552169787f07ca2
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Fri Nov 29 16:50:54 2024 -0800
 
     -handleCleanClusters successfully parses the world and replaces blocks, just at the incorrect indices, unfortunately
 
-commit 680e2375e02476e52d40e4c8a4658529de0af31f
+commit e3c2d9aeccc0c48ac589307ac625b08ff17672aa
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Thu Nov 28 23:09:52 2024 -0800
 
@@ -240,7 +605,7 @@ Date:   Thu Nov 28 23:09:52 2024 -0800
     -Added new random sequencer for cluster generation
     -Added new field in ManagedChunkOreCluster to track remaining ores to clean in the chunk
 
-commit 23b17e9e683a811371f32d1475b2616aac5a41cb
+commit f1f8cf31ab82dad0735b391b1b8e6d1023605f24
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Thu Nov 28 22:10:24 2024 -0800
 
@@ -248,7 +613,7 @@ Date:   Thu Nov 28 22:10:24 2024 -0800
     -Added BlockUtil Class and added methods to convert between string and Block type for minecraft
     - Added basic processing for chunk cleaning
 
-commit 7ef93fbfcf7d99b844d3e8fab7288447a553018c
+commit b597c3a7675c61d089a90bc24381e3bacff3424c
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Wed Nov 27 23:01:57 2024 -0800
 
@@ -256,13 +621,13 @@ Date:   Wed Nov 27 23:01:57 2024 -0800
     - Added special exclude HashSets to loggerbase to deal with logging message overflow
     - Ensured chunk generation works in the nether and the end dimension
 
-commit 620ef2c1f38c43385ab5fbafd35943b050a65269
+commit e413f3b1bb63ddc7f214971c25e851a775c11c36
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Mon Nov 25 00:46:07 2024 -0600
 
     -Looking to start chunk cleaning and cluster building process
 
-commit 730ef32ea1bfa6a2ad0a32c946270c13c450e143
+commit c695a57e4b3ebc7580a3a94c3d71ccdf73eab870
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sun Nov 24 16:28:31 2024 -0600
 
@@ -271,51 +636,51 @@ Date:   Sun Nov 24 16:28:31 2024 -0600
     - Gson now uses static serializeNull gson object to write data out to string
     - Introduced more loggers to detect if serialization was being performed correctly
 
-commit 396d5849f79bb74636400e5c05d0d01c1379efdc
+commit 1e60e65b222dc771df56408506e6fa05ceea4a97
 Author: jhw2167 (aider) <jhw2167@columbia.edu>
 Date:   Sat Nov 23 15:42:37 2024 -0600
 
     feat: Add logging sampling with configurable filters and rate
 
-commit 793f1719fcb675bdc5e0f6db7ae9988088e96855
+commit 524e1babfb4791d0fff2953d8d9a1da83ab7b1b7
 Author: jhw2167 (aider) <jhw2167@columbia.edu>
 Date:   Sat Nov 23 15:37:12 2024 -0600
 
     feat: Add log filtering capabilities with type, id, prefix, and content methods
 
-commit 011c02820a8622141d473e0e4bd6c4e74ca2e70f
+commit 96531dcf192ed4afcc15c4840af5517de4cd202d
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sat Nov 23 15:37:11 2024 -0600
 
     refactor: Adjust formatting for buildBaseClientMessage method
 
-commit bdacd18dd79607e9b6967653caefafb46a67be92
+commit f5a9817cdd1e361bb580043a5aef0d95af26b444
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Fri Nov 22 16:07:06 2024 -0600
 
     -Added more data to serialization method of ManagedOreClusterChunk
     - Need to Push ManagedOreClusterChunk onto the static array
 
-commit 4b88f5c02af74ebdb56dc3a70048ed5e4b01287f
+commit 051821b4473e1e8444942e67f7ca9b204fbb7a15
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Fri Nov 22 15:25:28 2024 -0600
 
     - The managed chunk capability API reads and writes REAL data now
     - The next step is to upgrade the type of data stored
 
-commit e0eb2a843f600690d4f1186414c70c2f0dd367f4
+commit 84a39c09dbcab194042b62e27cf62f87d0d8502c
 Author: jhw2167 (aider) <jhw2167@columbia.edu>
 Date:   Fri Nov 22 12:03:15 2024 -0600
 
     refactor: Rework ManagedChunk to use HashMap for managing chunk data subclasses
 
-commit cbc9e7adc17116ffefc1ea767d65281e300d3f12
+commit 925db364712e3f5fb8da55cc0fe9cf3507d5b497
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Fri Nov 22 12:03:13 2024 -0600
 
     refactor: Modify ManagedChunk to support dynamic subclass management
 
-commit 689e0f7a8a7353e4b73af8a340bd95e9d3304532
+commit 58265baf8ce5d3eec219d4298dcdeda76fd62841
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Fri Nov 22 03:12:35 2024 -0600
 
@@ -323,25 +688,25 @@ Date:   Fri Nov 22 03:12:35 2024 -0600
     - Successfully saw a wrapper loaded with a string
     - Have not successfully seen a ManagedOreCluster reference appropriately bound to its ManagedChunkParent
 
-commit f1723f055e48ba975cab062599096ff47bec2ed1
+commit 11ef40cb84673bef7c8adc4dd9607053c20c7891
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Fri Nov 22 01:01:59 2024 -0600
 
     -Fixed error where Intellij misinterpreted GeneralRealTimeConfig.java because an extra curly brace was added
 
-commit aaf83de0fc271160bc865ff5ae7af52c67163f91
+commit 96532307c1a50c33629b7d809c16718882e65cae
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Fri Nov 22 00:55:40 2024 -0600
 
     -Refining serialization behavior with ore clusters
 
-commit 47dcdc1125ff30cb8ee0d75d8e68886fd5059e9b
+commit f6bd60da5b41d8b18e71200e82651c58da9768bf
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Thu Nov 21 02:08:11 2024 -0600
 
     -Added loggers to support chunk loading and unloading debugging
 
-commit 596e2b096b634416f56ffda4875bb97744c54087
+commit 980f86e8b958636a3cda2f32a70322ba0d4297c5
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Thu Nov 21 00:32:29 2024 -0600
 
@@ -352,7 +717,7 @@ Date:   Thu Nov 21 00:32:29 2024 -0600
     - Cleaned up excess code in event watchers
     - Code compiles and runs
 
-commit 813d4dcf204b60f70bd8b13f04fe22edb80c5e58
+commit ac4c2856fd7c3fe463ab8f75f790fb39db991773
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Wed Nov 20 16:31:03 2024 -0600
 
@@ -362,13 +727,13 @@ Date:   Wed Nov 20 16:31:03 2024 -0600
     - Converted ManagedChunk in OreClustersAndRegen Mod to a version specificed for OreClusters
     - Added static reference to loadedChunks to an individual managedChunk can load data from the globally managed state
 
-commit 2ca206f0a355f06a99fa198ed2c5a4385b010788
+commit 5846437fea376c885aec2f15c45ab661ad83d9b2
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Fri Nov 15 03:00:05 2024 -0600
 
     For tonight, the gradle has won the day
 
-commit 11cb460c833f4ce8c25d2ba6ac53df66fd7d202d
+commit 0726439c62ff6baba379060e42f57c1832ad780d
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Thu Nov 14 18:48:29 2024 -0600
 
@@ -378,20 +743,20 @@ Date:   Thu Nov 14 18:48:29 2024 -0600
     - Added DatabaseQueryExecutor class
     - Java doccing methods as necessary and will ensure classes run correctly and database is setup correctly
 
-commit 370b9629ef1ddeef542012edcbeac45b5dbe89c8
+commit 4f595d778e3e037bd95af7bced87fd1863fbea84
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Tue Nov 12 00:16:51 2024 -0600
 
     -Fixed bug with getRecentChunkIds method that failed to return chunks out of bounds without throwing an exception for null valued concurrentHashMap values
 
-commit 57881f22ddf622ae370a3144fcb3151102f1e0d1
+commit 1f5c932703dd6f83fbc8b018847882440cde70c0
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Mon Nov 11 22:06:41 2024 -0600
 
     -Updated logs to support cluster determination in chunks better
     - added method to MangedChunk to check if chunk has clusters
 
-commit abf881d2d2a1971655d4ea73504b3ada085cb446
+commit 1d2d14c2935a6abcf354d08eb77e9b17868ff758
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Mon Nov 11 19:54:54 2024 -0600
 
@@ -399,14 +764,14 @@ Date:   Mon Nov 11 19:54:54 2024 -0600
     - Added logId and classId values to all logging statements in actionable classes
     - fixed bug in MangedChunk.java that failed to check for null value when combining maps
 
-commit 3672fe7f3cfcf273bb594e413d8599b1714017cc
+commit 20b97242228dc1ac1d0c1e56f4e139fe64b6bbad
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sat Aug 10 08:56:41 2024 -0500
 
     -Restructured queue handling and formalized variable and method names.
     - added ManagedChunk field to group cluster-chunk related variables
 
-commit 34111dc66709d2cc8002ec3a0b28f8cb06742857
+commit 233b90c2fff3f21bdc43c1a64dfe0bd5d6e13dab
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Fri Aug 9 02:38:42 2024 -0500
 
@@ -414,7 +779,7 @@ Date:   Fri Aug 9 02:38:42 2024 -0500
     - Added one or two new methods and a few new variables to handle ore cluster generation and manifestion, and also general chunk handling
     - added some methods to OreClusterCalculator to help with chunk generation
 
-commit 5005f16798df175c7682b6e666e4b9457d0510a8
+commit 499907ca2dac3b8ace3d3627ad55abe3cb994b4d
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Thu Aug 8 00:05:23 2024 -0500
 
@@ -424,19 +789,19 @@ Date:   Thu Aug 8 00:05:23 2024 -0500
     - Removed any call to get Chunk call via position as its a very expense library call, maybe need to hash the chunks in the future instead
     - Reworked cluster placement algorithm to pull random positions at a time and try to place rather than space with gaussians
 
-commit 08500ec14253a74fe35f6e2c47f6d09a89dc1f24
+commit cc582a69f2b6c9158a97aaaa9205c5f3381448cb
 Author: jhw2167 (aider) <jhw2167@columbia.edu>
 Date:   Wed Aug 7 15:16:24 2024 -0500
 
     feat: Add timing measurements to calculateClusterLocations method
 
-commit 979d1e9e4017e332df38f365d101b29368ad1ea6
+commit 076a8146f23c30221e422201f7b9e6d7757b5d4c
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Wed Aug 7 15:16:23 2024 -0500
 
     fix: Reduce logging output in OreClusterCalculator
 
-commit 91f280824361dfc2bd54acb144d6af1d00dc6e91
+commit 6808656f0858a5825b43ed9e3634382b79c7aca3
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Wed Aug 7 01:28:17 2024 -0500
 
@@ -446,20 +811,20 @@ Date:   Wed Aug 7 01:28:17 2024 -0500
     - Need to test out of spiral bounds
     - Should maybe test in more granular fashion and determine where the large cost is
 
-commit 70b7f7c79e6f96b49ce163decaa31e5ad1fbccf3
+commit 5f58bd1a84306134476dcc3ee1a381ef0143fc3d
 Author: jhw2167 (aider) <jhw2167@columbia.edu>
 Date:   Tue Aug 6 18:07:33 2024 -0500
 
     (no commit message provided)
 
-commit bfce3a3ed6accaba38a63ac46586066728010429
+commit 8c18b46cf05c033f298bbce35a94327223dc606b
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Tue Aug 6 18:02:55 2024 -0500
 
     -Minor fixes to ore cluster manager and calculator consistent with bug testing the ore distribution algorithm over the first set of chunnks
     - Added removeAll call on clusterPositions with respect to exploredChunks so clusters are not duplicated on existing chunks given overlapping areas
 
-commit b5f4b4323db65a4a5e3aa58b034392ab90ba2e91
+commit 460b8297ab038baae62aa3c19feb4bff69baa085
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Tue Aug 6 00:36:00 2024 -0500
 
@@ -467,7 +832,7 @@ Date:   Tue Aug 6 00:36:00 2024 -0500
     - Added many if and exception checks for possible errors that arise during processing like empty data structures and divide by 0 values
     - Math and spread of ores seems valid for now, not seeing any duplicate ore placement
 
-commit 7eaf2ba794c8bc837201632d0b803e6d83be0cd0
+commit c0185b1799f82b8b53ed4ae5339117a3ecd85a0a
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sun Aug 4 23:44:06 2024 -0500
 
@@ -475,7 +840,7 @@ Date:   Sun Aug 4 23:44:06 2024 -0500
     - Added thread support to OreClusterManager
     - Need to resolve difficult issue with overlapping ore areas
 
-commit cdd89e22bca46f8fe3d52a3031d4239939249730
+commit a476c1f88730aecf3d0b340d45a22cd68af8702c
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sun Aug 4 18:57:22 2024 -0500
 
@@ -483,7 +848,7 @@ Date:   Sun Aug 4 18:57:22 2024 -0500
     -added new packages specific to event, core behavior and commands
     -Added new variable to detect player load accross the application
 
-commit 6812b026f394df0ec6a8a459b9e3a4feb5bbc599
+commit 2867916a699c3ece9f8ba7f7b2195e26adb3c04b
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sun Aug 4 01:25:17 2024 -0500
 
@@ -493,7 +858,7 @@ Date:   Sun Aug 4 01:25:17 2024 -0500
     - Added validation for minSpacingBetweenClusters to RealTimeConfig, spacing will be reduced if net spawnrate is high
     - Added additional chunk pos utility methods
 
-commit 13a624ec474f53e1e4e35fed80d448dc0472ff37
+commit ab5401225602319d094e7e218d96162645df5d2f
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sat Aug 3 02:11:25 2024 -0500
 
@@ -502,7 +867,7 @@ Date:   Sat Aug 3 02:11:25 2024 -0500
     - Added new private static class to OreClusterManager to handle spiral generation
     - Added static spiralGenerator class as private static variable to OreClusterManager
 
-commit d25f82125dded1a10619da673bbdb767906f68c3
+commit e45aff807579919ee96b22d8565d5196b23dfff4
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Fri Aug 2 00:29:54 2024 -0500
 
@@ -510,45 +875,45 @@ Date:   Fri Aug 2 00:29:54 2024 -0500
     added determineSpiralDirection function to oreClusterManager to help determine spiral build algorithm for ore cluster generation on worldspawn.
     Added various methods to HolyBucketsUtility relating to chunk position math
 
-commit ced936fcb3962b780cbf527fc648e7ff530e7cc6
+commit 39b75edfad21d26559efd3a0aa939883ad4a3b15
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Wed Jul 31 01:35:22 2024 -0500
 
     -Successfully set the WORLD and SEED values on first chunk load
 
-commit d70b0bfcd828866ea65da5e3452ebb5a1e29785e
+commit 09c0fc5589b8f856a294c1e89bd86b14f50f99e4
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Wed Jul 31 00:47:18 2024 -0500
 
     -Removed maxChunksBetweenClusters field as it overcomplicated spawning
 
-commit ef36532a92817425d460c357b526d9b31347a8c6
+commit 2775a42bd6164397e484a7e8c701a022e9f490df
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Wed Jul 31 00:27:41 2024 -0500
 
     set the onClusterEventHandler to listen to FORGE events, not minecraft events
 
-commit 9055d1a77e141d8de18c4100aca57500c6ba56f2
+commit 271dce48800a86ef4ec6840fb284772e09e6e462
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Tue Jul 30 22:10:55 2024 -0500
 
     fixed issue where MOD annotation on OreCluseterEventHandler class prevented config from being loaded
 
-commit b482e835d1c9e21def582640d03a0d2a4178fefe
+commit ec4fa234663d76bff6bb11a26cb824fc104154c8
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Tue Jul 30 21:51:37 2024 -0500
 
     -Attempting to use different events to extract world data on startup
     - Added MC instance to AllConfigs to extract world and seed data
 
-commit b5397af8dbaa03cd5da9637e4897509ea52bf47c
+commit 7e61eaa9b5d17355c2372cebd55d3a12ae8a97ba
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Mon Jul 29 23:42:55 2024 -0500
 
     - Reverted static methods in OreClusterConfigModel so they can log property errors correctly
     - Cleaned up processing volume and other deserialization methods to handle validation errors more cleanly
 
-commit 6d639f2fcfe09b738d5d9934264c2b5af379b900
+commit cfd21074c075597adced4cc79a5892ed43c4513e
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Mon Jul 29 23:33:47 2024 -0500
 
@@ -560,7 +925,7 @@ Date:   Mon Jul 29 23:33:47 2024 -0500
      - Added HolyBucketsUtility class for static utility methods like chunk distances and ids
      - NOTE validate min/max chunk dist formulas on startup
 
-commit 73aba0d0eaf3a35e07abc81af09195cc91745206
+commit 8fc37044aba4785b768797ab21ab457a87ce044a
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sun Jul 28 23:10:03 2024 -0500
 
@@ -568,19 +933,19 @@ Date:   Sun Jul 28 23:10:03 2024 -0500
     - For Default configs, these cannot be set until the user starts the world
     - fine tuned property names and validation issues, added min and max to ConfigBase class
 
-commit 3580caccadb93d243c5b9b08e0279b88e1ebc429
+commit 1bb5e148e7104f3b5f8b99986d112c5f2e9ab1ce
 Author: jhw2167 (aider) <jhw2167@columbia.edu>
 Date:   Sun Jul 28 19:20:04 2024 -0500
 
     Rewrote the deserialize function of OreClusterConfigModel.java to use the setProperty methods and improved error logging.
 
-commit 211868299e9a75d4158514bc39b07920dbc04b8c
+commit a334374f247306fa660ac6900c7e071bee851ac3
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sun Jul 28 19:20:03 2024 -0500
 
     Refactored OreClusterConfigModel to use a setter method for parsing the defaultOreClusterVolume field.
 
-commit cf11e8c200cc5137cde8800a2fc89530fb2e143a
+commit a16d55e72231aaa48c4105d2e1bc117e4166496e
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sun Jul 28 19:14:48 2024 -0500
 
@@ -591,13 +956,13 @@ Date:   Sun Jul 28 19:14:48 2024 -0500
     - Added validation for config values upon deserialization
     - Addded ConfigModelBase and Moved validation core functionality there
 
-commit a400d5b4e58f0d91dea200115036ff843643f228
+commit e091b678de48adf1ace4291846833c08d498efd7
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sun Jul 28 12:09:53 2024 -0500
 
     -Renamed main file to designate it as such
 
-commit 8bfcf606b2f5967c2a413156540c6282bcc88922
+commit 59ceea94fec95a5d9336030ba6947d060ad7e4d4
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sun Jul 28 02:58:07 2024 -0500
 
@@ -606,38 +971,38 @@ Date:   Sun Jul 28 02:58:07 2024 -0500
     - Aider wrote serializing methods using gson to output the oreclusters property to toml, there is no way to pretty print the json at this time, undesirable
     - Next, need to test deserialization and properly named oreTypes
 
-commit 43eeedda843ff4c9f252e4e2c5105d423bcbe888
+commit f899afdd891b57c176111d624e73e7b6ce28c272
 Author: jhw2167 (aider) <jhw2167@columbia.edu>
 Date:   Sun Jul 28 01:17:38 2024 -0500
 
     Implemented serialization and deserialization of OreClusterConfigModel using Gson library.
 
-commit 149e0ec19c92c0dedf84748e6b01e19bd1397fc5
+commit 6ad91a602b2a0c93f851c1b81e924df565476067
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sun Jul 28 01:17:37 2024 -0500
 
     Added Gson library dependency to the build.gradle file.
 
-commit b4326c8f8ab2f00115cccc95cf80b4fbce507a67
+commit 2bc7f3f90e9603fa70326c2c4c1b6415d9f0bc41
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sun Jul 28 01:17:16 2024 -0500
 
     Added a new Java class `OreClusterConfigModel` to handle the configuration of ore clusters.
 
-commit 28d32677837cb9a3cae171aab2cd8c0d0fc6f923
+commit dfadab72bc4b3614500a5689ee7ec3254c79eeb5
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sat Jul 27 04:26:29 2024 -0500
 
     - Editing COreCluster to add support for arrays. it is proving difficult
 
-commit cfe492e32fcf9344ef98c984102bc29212a48bac
+commit 7a9fcf2b823eaa2eca40ff569e762a5c18684c7b
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sat Jul 27 03:27:47 2024 -0500
 
     - Ensured AllConfigs was being registered in Main function
     - Fixed issue where Config was subscribing to config load without loading any data and causing crashes
 
-commit 9d4b7a5ae2e9529397fd4c87877029a849da3e0f
+commit 88103ae391a067da29842959115eff2b58ccb26f
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sat Jul 27 01:44:33 2024 -0500
 
@@ -648,61 +1013,61 @@ Date:   Sat Jul 27 01:44:33 2024 -0500
     - Removed all create variables from config classes
     - Added configString and configList types to  ConfigBases array
 
-commit a784102fdd58271a928fd1f4563fd10f0f851d84
+commit f233fb51de08ca14a8a6277eec3156758a6c589f
 Author: jhw2167 (aider) <jhw2167@columbia.edu>
 Date:   Sat Jul 27 00:31:12 2024 -0500
 
     Cleaned up CServer.java, CClient.java and CCommon.java to remove variables and classes not found in this project. Imported the correct directory for the ConfigBase class and set the correct package in each class.
 
-commit d1dcef6073d4ba84a3c5c5f7afa1b28ff0241e0a
+commit bcabfec1eecb8338ef140db3df85be7c420b0b95
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sat Jul 27 00:30:10 2024 -0500
 
     Added new CClient configuration class.
 
-commit 85fc7da74b4e1fe4dd7b93f36f3cc4689825f0e2
+commit 1c7388e758129fce2e55b9c2c77c9f3ac3e024ce
 Author: jhw2167 (aider) <jhw2167@columbia.edu>
 Date:   Sat Jul 27 00:24:05 2024 -0500
 
     Initialized the state variables in COreClusters as public final variables, and implemented the s method in ConfigBase.
 
-commit 292ddd9ba7d1792bbe631d2977ddc53b8c4c1289
+commit 93dbbcf191a722c04b3a3424a18caf90217d6502
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sat Jul 27 00:24:03 2024 -0500
 
     Converted class COreClusters to use final fields and removed unnecessary constructor.
 
-commit ba494b57947ef5369dacf864b6c3fdd9cb9a3553
+commit de4d483ee6706ed194374e07e6e366b163001909
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Sat Jul 27 00:23:47 2024 -0500
 
     Added a new ConfigString class that extends CValue and uses the ValueSpec from the forge library to define a configuration for a String value.
 
-commit ae6b622a37fb0055b0cc26c27a10cf010737d931
+commit 4f1d4948c6cbdf7da7bbd1aa6700ade72417b9c4
 Author: jhw2167 (aider) <jhw2167@columbia.edu>
 Date:   Sat Jul 27 00:16:59 2024 -0500
 
     Implemented a static Comments class to store string comments and moved value initialization to a separate method.
 
-commit 8570a08bdd5b26d673f4a2013c7c8145de5a78ea
+commit cb64280f16337758b32935b8ceb55fec3ec9db86
 Author: jhw2167 (aider) <jhw2167@columbia.edu>
 Date:   Sat Jul 27 00:06:23 2024 -0500
 
     Implemented new COreClusters.java class based on the provided context and requirements.
 
-commit 9403892f757f85711661ee020f1079e65ba6ae9e
+commit 8967eee7fa47b6dbc53cc1eebb990cbd94a986d1
 Author: jhw2167 (aider) <jhw2167@columbia.edu>
 Date:   Fri Jul 26 22:06:30 2024 -0500
 
     Implemented COreClusters class with configurations from oreClusters.yaml file.
 
-commit 96876c3e77ed708ba83ecc84433f9cb2d7f3b5ac
+commit 442818f1755802eb41d098a505cb16f648c8e8c2
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Fri Jul 26 22:06:28 2024 -0500
 
     Added a new Java class `COreClusters` in the `com.holybuckets.config` package.
 
-commit 98c0748a81351ce6df22d7d710f6ec46c9777a35
+commit 1d065c56f329272e34c4432c73a5077ff33d6858
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Fri Jul 26 19:48:52 2024 -0500
 
@@ -710,7 +1075,7 @@ Date:   Fri Jul 26 19:48:52 2024 -0500
     -
     - Add configBase class to serve as base for different kinds of configs
 
-commit d9060ec6445bedfa3e4b5d69f6087a75cee95644
+commit 262e3305c453e3d3c7975ddb80c905aa133793ff
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Fri Jul 26 19:02:58 2024 -0500
 
@@ -718,13 +1083,13 @@ Date:   Fri Jul 26 19:02:58 2024 -0500
     - Removed example mod class
     - added idea modules
 
-commit 17a90e60b57361b6433d4d45aa589181bf7af258
+commit f9d5c0d20b301af15896691abac7bf63537c93c2
 Author: jhw2167 <jhw2167@columbia.edu>
 Date:   Tue Jul 23 01:53:33 2024 -0500
 
     Initial Commit - added forge template and core note taking sheets. Prepared notes to begin defining objectives
 
-commit 59f7efd5eed0e35e6c4101c2655470314f9c73d0
+commit 34d22a2c2bf7a20903e61412e7c2de6d05c21379
 Author: jhw2167 <54991158+jhw2167@users.noreply.github.com>
 Date:   Tue Jul 23 00:52:14 2024 -0500
 
